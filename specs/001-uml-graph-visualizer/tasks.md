@@ -239,22 +239,22 @@
 
 ### Contract Tests for User Story 7
 
-- [ ] T094 [P] [US7] Contract test for applyLayout() with 10+ nodes using dagre in frontend/src/diagram-visualization/**tests**/LayoutEngine.contract.test.ts
-- [ ] T095 [P] [US7] Contract test for applyLayout() minimizing edge crossings in frontend/src/diagram-visualization/**tests**/LayoutEngine.contract.test.ts
+- [X] T094 [P] [US7] Contract test for applyLayout() with 10+ nodes using dagre in frontend/src/diagram-visualization/**tests**/LayoutEngine.contract.test.ts
+- [X] T095 [P] [US7] Contract test for applyLayout() minimizing edge crossings in frontend/src/diagram-visualization/**tests**/LayoutEngine.contract.test.ts
 
 ### Implementation for User Story 7
 
-- [ ] T096 [P] [US7] Implement LayoutEngine.applyLayout() using dagre algorithm in frontend/src/diagram-visualization/LayoutEngine.ts
-- [ ] T097 [P] [US7] Implement LayoutEngine.calculateNodeDimensions() based on content in frontend/src/diagram-visualization/LayoutEngine.ts
-- [ ] T098 [US7] Update DiagramGenerator to call LayoutEngine after creating nodes/edges
-- [ ] T099 [US7] Enable React Flow zoom controls in DiagramRenderer (already built-in, configure UI)
-- [ ] T100 [US7] Enable React Flow pan functionality in DiagramRenderer (already built-in, configure)
-- [ ] T101 [US7] Add React Flow MiniMap component in DiagramRenderer for navigation overview
-- [ ] T102 [US7] Add React Flow Controls component for zoom buttons
-- [ ] T103 [US7] Implement auto-fit functionality to center diagram on load
-- [ ] T104 [US7] Create E2E test for large diagram navigation using Playwright in frontend/tests/e2e/large-diagram-navigation.spec.ts
+- [X] T096 [P] [US7] Implement LayoutEngine.applyLayout() using dagre algorithm in frontend/src/diagram-visualization/LayoutEngine.ts
+- [X] T097 [P] [US7] Implement LayoutEngine.calculateNodeDimensions() based on content in frontend/src/diagram-visualization/LayoutEngine.ts
+- [X] T098 [US7] Update DiagramGenerator to call LayoutEngine after creating nodes/edges
+- [X] T099 [US7] Enable React Flow zoom controls in DiagramRenderer (already built-in, configure UI)
+- [X] T100 [US7] Enable React Flow pan functionality in DiagramRenderer (already built-in, configure)
+- [X] T101 [US7] Add React Flow MiniMap component in DiagramRenderer for navigation overview
+- [X] T102 [US7] Add React Flow Controls component for zoom buttons
+- [X] T103 [US7] Implement auto-fit functionality to center diagram on load
+- [X] T104 [US7] Create E2E test for large diagram navigation using Playwright in frontend/tests/e2e/large-diagram-navigation.spec.ts
 
-**Checkpoint**: At this point, User Story 7 is complete - large diagrams are navigable and well-laid-out
+**Checkpoint**: ✅ User Story 7 is complete - large diagrams are navigable and well-laid-out with automatic layout, zoom, pan, and minimap support
 
 ---
 

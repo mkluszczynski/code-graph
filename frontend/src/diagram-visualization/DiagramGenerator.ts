@@ -1,6 +1,6 @@
 /**
  * DiagramGenerator - Generates React Flow diagram nodes and edges
- * Implementation for T061
+ * Implementation for T061, T098
  */
 
 import dagre from '@dagrejs/dagre';
@@ -12,6 +12,7 @@ import type {
     DiagramEdge,
 } from '../shared/types';
 import { formatProperty, formatMethod } from './UMLFormatter';
+import { LayoutEngine } from './LayoutEngine';
 
 /**
  * Result of diagram generation
@@ -66,11 +67,13 @@ export function generateDiagram(
         }
     }
 
-    // Apply layout to position nodes
-    const layoutedData = applyLayout(nodes, edges, 'TB');
+    // Apply layout to position nodes using LayoutEngine
+    const layoutEngine = new LayoutEngine({ rankdir: 'TB' });
+    const layoutedNodes = layoutEngine.applyLayout(nodes, edges);
 
     return {
-        ...layoutedData,
+        nodes: layoutedNodes,
+        edges,
         layoutDirection: 'TB',
     };
 }

@@ -7,10 +7,12 @@
 
 import {
     ReactFlow,
+    ReactFlowProvider,
     Background,
     Controls,
     MiniMap,
     Panel,
+    useReactFlow,
     type Edge,
     type Node,
     type OnNodesChange,
@@ -44,14 +46,9 @@ export interface DiagramRendererProps {
 }
 
 /**
- * DiagramRenderer Component
- *
- * Renders UML class diagrams using React Flow.
- * - Displays class and interface nodes
- * - Handles node click to select files
- * - Supports zoom, pan, and layout features
+ * DiagramRenderer - Internal component that uses React Flow hooks
  */
-export const DiagramRenderer: React.FC<DiagramRendererProps> = ({
+const DiagramRendererInternal: React.FC<DiagramRendererProps> = ({
     className,
 }) => {
     const nodes = useStore((state) => state.nodes);
@@ -61,6 +58,9 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({
     const selectedNodeId = useStore((state) => state.selectedNodeId);
     const activeFileId = useStore((state) => state.activeFileId);
     const parseErrors = useStore((state) => state.parseErrors);
+
+    // React Flow instance for programmatic control (T103)
+    const { fitView } = useReactFlow();
 
     // Local state for React Flow nodes and edges
     const [flowNodes, setFlowNodes] = useState<Node[]>([]);
@@ -134,8 +134,14 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({
             // Update previous state reference
             previousNodesRef.current = nodesToDisplay;
             previousEdgesRef.current = edgesToDisplay;
+
+            // Auto-fit diagram when nodes change (T103)
+            // Wait for next tick to ensure nodes are rendered
+            setTimeout(() => {
+                fitView({ padding: 0.2, duration: 300 });
+            }, 50);
         }
-    }, [nodes, edges, selectedNodeId, hasParseErrors]);
+    }, [nodes, edges, selectedNodeId, hasParseErrors, fitView]);
 
     /**
      * Handle node click - navigate to the corresponding file
@@ -316,5 +322,18 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({
                 )}
             </ReactFlow>
         </div>
+    );
+};
+
+/**
+ * DiagramRenderer - Wrapper component with ReactFlow provider
+ * 
+ * Exports the main component wrapped with ReactFlowProvider for hook access (T103)
+ */
+export const DiagramRenderer: React.FC<DiagramRendererProps> = (props) => {
+    return (
+        <ReactFlowProvider>
+            <DiagramRendererInternal {...props} />
+        </ReactFlowProvider>
     );
 };

@@ -108,6 +108,7 @@ export const DiagramNode: React.FC<DiagramNodeProps> = ({ data, selected }) => {
 /**
  * Node type configuration for React Flow
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const nodeTypes = {
     class: DiagramNode,
     interface: DiagramNode,

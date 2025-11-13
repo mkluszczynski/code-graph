@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { ClassDefinition, InterfaceDefinition, Relationship } from "../../shared/types";
+import type { ClassDefinition, InterfaceDefinition } from "../../shared/types";
 import { extractRelationships } from "../RelationshipAnalyzer";
 
 describe("RelationshipAnalyzer Contract Tests", () => {

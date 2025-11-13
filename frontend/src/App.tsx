@@ -1,10 +1,20 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AddButton } from "./components/AddButton";
+import { FileTreeManager } from "./file-tree/FileTreeManager";
+import { FileTreeView } from "./file-tree/FileTreeView";
 import { useProjectManager } from "./shared/hooks/useProjectManager";
+import { useStore } from "./shared/store";
 
 function App() {
   const { createFile, isInitialized } = useProjectManager();
   const [isCreatingFile, setIsCreatingFile] = useState(false);
+  const files = useStore((state) => state.files);
+
+  // Build file tree from files
+  const fileTreeManager = useMemo(() => new FileTreeManager(), []);
+  const fileTree = useMemo(() => {
+    return fileTreeManager.buildTree(files);
+  }, [files, fileTreeManager]);
 
   const handleCreateClass = async () => {
     if (isCreatingFile) return;
@@ -65,10 +75,14 @@ function App() {
             />
           </div>
           <div className="flex-1 overflow-auto p-2">
-            {/* File tree will be rendered here */}
-            <div className="text-sm text-muted-foreground">
-              {isInitialized ? "No files yet" : "Loading..."}
-            </div>
+            {/* File tree */}
+            {isInitialized && fileTree.length > 0 ? (
+              <FileTreeView nodes={fileTree} />
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                {isInitialized ? "No files yet" : "Loading..."}
+              </div>
+            )}
           </div>
         </aside>
 

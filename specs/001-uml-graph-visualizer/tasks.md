@@ -92,19 +92,19 @@
 
 ### Contract Tests for User Story 3
 
-- [ ] T031 [P] [US3] Contract test for FileTreeManager.buildTree() with multiple files in frontend/src/file-tree/**tests**/FileTreeManager.contract.test.ts
-- [ ] T032 [P] [US3] Contract test for FileTreeManager.findFileInTree() in frontend/src/file-tree/**tests**/FileTreeManager.contract.test.ts
+- [x] T031 [P] [US3] Contract test for FileTreeManager.buildTree() with multiple files in frontend/src/file-tree/**tests**/FileTreeManager.contract.test.ts
+- [x] T032 [P] [US3] Contract test for FileTreeManager.findFileInTree() in frontend/src/file-tree/**tests**/FileTreeManager.contract.test.ts
 
 ### Implementation for User Story 3
 
-- [ ] T033 [P] [US3] Define FileTreeNode type in frontend/src/file-tree/types.ts
-- [ ] T034 [US3] Implement FileTreeManager.buildTree() to construct hierarchical tree from flat file list in frontend/src/file-tree/FileTreeManager.ts
-- [ ] T035 [US3] Implement FileTreeManager.sortFiles() for alphabetical ordering in frontend/src/file-tree/FileTreeManager.ts
-- [ ] T036 [US3] Create FileTreeView component with recursive rendering in frontend/src/file-tree/FileTreeView.tsx
-- [ ] T037 [US3] Add file selection handling in FileTreeView (update Zustand activeFileId on click)
-- [ ] T038 [US3] Add visual highlighting for selected file in FileTreeView using Tailwind classes
-- [ ] T039 [US3] Add file tree to App.tsx layout in left panel using ResizablePanels
-- [ ] T040 [US3] Create integration test for file tree rendering and selection in frontend/tests/integration/file-tree-navigation.test.ts
+- [x] T033 [P] [US3] Define FileTreeNode type in frontend/src/file-tree/types.ts
+- [x] T034 [US3] Implement FileTreeManager.buildTree() to construct hierarchical tree from flat file list in frontend/src/file-tree/FileTreeManager.ts
+- [x] T035 [US3] Implement FileTreeManager.sortFiles() for alphabetical ordering in frontend/src/file-tree/FileTreeManager.ts
+- [x] T036 [US3] Create FileTreeView component with recursive rendering in frontend/src/file-tree/FileTreeView.tsx
+- [x] T037 [US3] Add file selection handling in FileTreeView (update Zustand activeFileId on click)
+- [x] T038 [US3] Add visual highlighting for selected file in FileTreeView using Tailwind classes
+- [x] T039 [US3] Add file tree to App.tsx layout in left panel using ResizablePanels
+- [x] T040 [US3] Create integration test for file tree rendering and selection in frontend/tests/integration/file-tree-navigation.test.ts
 
 **Checkpoint**: At this point, User Stories 1 AND 3 should work together - create files and navigate them via file tree
 

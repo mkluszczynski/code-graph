@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "./components/ui/resizable";
 import { AddButton } from "./components/AddButton";
+import { DiagramRenderer } from "./diagram-visualization/DiagramRenderer";
 import { FileTreeManager } from "./file-tree/FileTreeManager";
 import { FileTreeView } from "./file-tree/FileTreeView";
 import { useProjectManager } from "./shared/hooks/useProjectManager";
@@ -64,53 +70,62 @@ function App() {
       </header>
 
       {/* Main content area with three panels */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left panel: File Tree */}
-        <aside className="w-64 bg-muted border-r flex flex-col">
-          <div className="p-3 border-b bg-background flex items-center justify-between">
-            <h2 className="text-sm font-medium">Project Files</h2>
-            <AddButton
-              onCreateClass={handleCreateClass}
-              onCreateInterface={handleCreateInterface}
-            />
-          </div>
-          <div className="flex-1 overflow-auto p-2">
-            {/* File tree */}
-            {isInitialized && fileTree.length > 0 ? (
-              <FileTreeView nodes={fileTree} />
-            ) : (
-              <div className="text-sm text-muted-foreground">
-                {isInitialized ? "No files yet" : "Loading..."}
+      <div className="flex-1 overflow-hidden">
+        <ResizablePanelGroup direction="horizontal">
+          {/* Left panel: File Tree */}
+          <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+            <aside className="h-full bg-muted border-r flex flex-col">
+              <div className="p-3 border-b bg-background flex items-center justify-between">
+                <h2 className="text-sm font-medium">Project Files</h2>
+                <AddButton
+                  onCreateClass={handleCreateClass}
+                  onCreateInterface={handleCreateInterface}
+                />
               </div>
-            )}
-          </div>
-        </aside>
+              <div className="flex-1 overflow-auto p-2">
+                {/* File tree */}
+                {isInitialized && fileTree.length > 0 ? (
+                  <FileTreeView nodes={fileTree} />
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    {isInitialized ? "No files yet" : "Loading..."}
+                  </div>
+                )}
+              </div>
+            </aside>
+          </ResizablePanel>
 
-        {/* Center panel: Code Editor */}
-        <main className="flex-1 flex flex-col bg-background">
-          <div className="p-3 border-b">
-            <h2 className="text-sm font-medium">Code Editor</h2>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            {/* Monaco editor will be rendered here */}
-            <div className="h-full flex items-center justify-center text-muted-foreground">
-              Select or create a file to start editing
-            </div>
-          </div>
-        </main>
+          <ResizableHandle withHandle />
 
-        {/* Right panel: UML Diagram */}
-        <aside className="w-96 bg-background border-l flex flex-col">
-          <div className="p-3 border-b">
-            <h2 className="text-sm font-medium">UML Diagram</h2>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            {/* React Flow diagram will be rendered here */}
-            <div className="h-full flex items-center justify-center text-muted-foreground">
-              No diagram to display
-            </div>
-          </div>
-        </aside>
+          {/* Center panel: Code Editor */}
+          <ResizablePanel defaultSize={50} minSize={30}>
+            <main className="h-full flex flex-col bg-background">
+              <div className="p-3 border-b">
+                <h2 className="text-sm font-medium">Code Editor</h2>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                {/* Monaco editor will be rendered here */}
+                <div className="h-full flex items-center justify-center text-muted-foreground">
+                  Select or create a file to start editing
+                </div>
+              </div>
+            </main>
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* Right panel: UML Diagram */}
+          <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+            <aside className="h-full bg-background border-l flex flex-col">
+              <div className="p-3 border-b">
+                <h2 className="text-sm font-medium">UML Diagram</h2>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <DiagramRenderer className="h-full w-full" />
+              </div>
+            </aside>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </div>
   );

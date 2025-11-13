@@ -204,6 +204,8 @@ export interface DiagramNodeData {
   stereotype?: string;
   /** Link back to source file */
   fileId: string;
+  /** Index signature for React Flow compatibility */
+  [key: string]: unknown;
 }
 
 /**

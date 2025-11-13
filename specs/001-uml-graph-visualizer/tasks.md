@@ -120,16 +120,16 @@
 
 ### Contract Tests for User Story 2
 
-- [ ] T041 [P] [US2] Contract test for handleNodeClick() updates activeFileId in frontend/src/diagram-visualization/**tests**/DiagramRenderer.contract.test.ts
+- [x] T041 [P] [US2] Contract test for handleNodeClick() updates activeFileId in frontend/src/diagram-visualization/__tests__/DiagramRenderer.contract.test.ts
 
 ### Implementation for User Story 2
 
-- [ ] T042 [P] [US2] Create basic DiagramNode component for rendering class/interface boxes in frontend/src/diagram-visualization/NodeRenderer.tsx
-- [ ] T043 [US2] Create DiagramRenderer component using React Flow in frontend/src/diagram-visualization/DiagramRenderer.tsx
-- [ ] T044 [US2] Implement handleNodeClick() to update activeFileId in Zustand store in frontend/src/diagram-visualization/DiagramRenderer.tsx
-- [ ] T045 [US2] Connect FileTreeView to activeFileId store to auto-highlight selected file
-- [ ] T046 [US2] Add diagram panel to App.tsx layout in right panel using ResizablePanels
-- [ ] T047 [US2] Create integration test for diagram node click → file selection → tree highlight in frontend/tests/integration/graph-to-code-navigation.test.ts
+- [x] T042 [P] [US2] Create basic DiagramNode component for rendering class/interface boxes in frontend/src/diagram-visualization/NodeRenderer.tsx
+- [x] T043 [US2] Create DiagramRenderer component using React Flow in frontend/src/diagram-visualization/DiagramRenderer.tsx
+- [x] T044 [US2] Implement handleNodeClick() to update activeFileId in Zustand store in frontend/src/diagram-visualization/DiagramRenderer.tsx
+- [x] T045 [US2] Connect FileTreeView to activeFileId store to auto-highlight selected file
+- [x] T046 [US2] Add diagram panel to App.tsx layout in right panel using ResizablePanels
+- [x] T047 [US2] Create integration test for diagram node click → file selection → tree highlight in frontend/tests/integration/graph-to-code-navigation.test.ts
 
 **Checkpoint**: At this point, User Stories 1, 2, AND 3 should work together - bidirectional navigation between file tree and diagram
 

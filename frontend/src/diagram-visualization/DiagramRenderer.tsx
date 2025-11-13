@@ -148,6 +148,10 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({
                 defaultEdgeOptions={{
                     animated: false,
                 }}
+                // Disable spacebar for panning to prevent interference with editor typing
+                panOnScroll={true}
+                selectionOnDrag={false}
+                panActivationKeyCode={null}
             >
                 {/* Background grid */}
                 <Background gap={16} size={1} />

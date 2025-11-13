@@ -236,6 +236,55 @@ export class ProjectManager {
   }
 
   /**
+   * Updates an existing file's content and persists to IndexedDB
+   *
+   * @param id - File ID
+   * @param updates - Partial file updates
+   * @returns Updated file
+   * @throws StorageError if file doesn't exist or IndexedDB operation fails
+   */
+  async updateFile(
+    id: string,
+    updates: Partial<ProjectFile>
+  ): Promise<ProjectFile> {
+    await this.ensureDB();
+
+    try {
+      // Get existing file
+      const existingFile = await this.db!.get("files", id);
+      if (!existingFile) {
+        throw new StorageError("updateFile", `File with ID ${id} not found`);
+      }
+
+      // Merge updates with existing file
+      const updatedFile: ProjectFile = {
+        ...existingFile,
+        ...updates,
+        id, // Ensure ID doesn't change
+        lastModified: Date.now(), // Update timestamp
+      };
+
+      // If name changed, validate it
+      if (updates.name && updates.name !== existingFile.name) {
+        this.validateFileName(updates.name);
+      }
+
+      // Persist to IndexedDB
+      await this.db!.put("files", updatedFile);
+
+      return updatedFile;
+    } catch (error) {
+      if (error instanceof StorageError) {
+        throw error;
+      }
+      throw new StorageError(
+        "updateFile",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
+
+  /**
    * Ensures database is initialized
    *
    * @throws StorageError if database is not initialized

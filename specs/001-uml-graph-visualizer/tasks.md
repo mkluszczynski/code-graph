@@ -145,31 +145,31 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T048 [P] [US4] Contract test for parse() with simple class in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
-- [ ] T049 [P] [US4] Contract test for parse() with properties and methods in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
-- [ ] T050 [P] [US4] Contract test for parse() with access modifiers in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
-- [ ] T051 [P] [US4] Contract test for parse() with interface in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
-- [ ] T052 [P] [US4] Contract test for parse() with syntax errors in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
-- [ ] T053 [P] [US4] Contract test for generateDiagram() with single class in frontend/src/diagram-visualization/**tests**/DiagramGenerator.contract.test.ts
-- [ ] T054 [P] [US4] Contract test for generateDiagram() with class and interface in frontend/src/diagram-visualization/**tests**/DiagramGenerator.contract.test.ts
+- [X] T048 [P] [US4] Contract test for parse() with simple class in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
+- [X] T049 [P] [US4] Contract test for parse() with properties and methods in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
+- [X] T050 [P] [US4] Contract test for parse() with access modifiers in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
+- [X] T051 [P] [US4] Contract test for parse() with interface in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
+- [X] T052 [P] [US4] Contract test for parse() with syntax errors in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
+- [X] T053 [P] [US4] Contract test for generateDiagram() with single class in frontend/src/diagram-visualization/**tests**/DiagramGenerator.contract.test.ts
+- [X] T054 [P] [US4] Contract test for generateDiagram() with class and interface in frontend/src/diagram-visualization/**tests**/DiagramGenerator.contract.test.ts
 
 ### Implementation for User Story 4
 
-- [ ] T055 [P] [US4] Implement TypeScriptParser.parse() using TypeScript Compiler API in frontend/src/typescript-parser/TypeScriptParser.ts
-- [ ] T056 [P] [US4] Implement ClassExtractor.extractClass() to parse class definitions in frontend/src/typescript-parser/ClassExtractor.ts
-- [ ] T057 [P] [US4] Implement ClassExtractor.extractInterface() to parse interface definitions in frontend/src/typescript-parser/ClassExtractor.ts
-- [ ] T058 [P] [US4] Implement PropertyExtractor to parse class properties with types and visibility in frontend/src/typescript-parser/PropertyExtractor.ts
-- [ ] T059 [P] [US4] Implement MethodExtractor to parse class methods with signatures in frontend/src/typescript-parser/MethodExtractor.ts
-- [ ] T060 [US4] Implement error handling for syntax errors in TypeScriptParser.ts (return ParseError array)
-- [ ] T061 [US4] Implement DiagramGenerator.generateDiagram() in frontend/src/diagram-visualization/DiagramGenerator.ts
-- [ ] T062 [US4] Implement UML formatting helper functions (formatProperty, formatMethod, formatVisibility) in frontend/src/diagram-visualization/UMLFormatter.ts
-- [ ] T063 [US4] Create CodeEditor component using Monaco Editor in frontend/src/code-editor/CodeEditor.tsx
-- [ ] T064 [US4] Implement EditorController.handleContentChange() with debouncing (500ms) in frontend/src/code-editor/EditorController.ts
-- [ ] T065 [US4] Connect EditorController to parse code on change and update Zustand store with parsed entities
-- [ ] T066 [US4] Connect DiagramRenderer to subscribe to Zustand store and re-render on entity changes
-- [ ] T067 [US4] Implement ProjectManager.updateFile() to persist content changes to IndexedDB in frontend/src/project-management/ProjectManager.ts
-- [ ] T068 [US4] Add editor panel to App.tsx layout in center panel using ResizablePanels
-- [ ] T069 [US4] Create integration test for code editing → parsing → diagram update pipeline in frontend/tests/integration/code-to-diagram.test.ts
+- [X] T055 [P] [US4] Implement TypeScriptParser.parse() using TypeScript Compiler API in frontend/src/typescript-parser/TypeScriptParser.ts
+- [X] T056 [P] [US4] Implement ClassExtractor.extractClass() to parse class definitions in frontend/src/typescript-parser/ClassExtractor.ts
+- [X] T057 [P] [US4] Implement ClassExtractor.extractInterface() to parse interface definitions in frontend/src/typescript-parser/InterfaceExtractor.ts
+- [X] T058 [P] [US4] Implement PropertyExtractor to parse class properties with types and visibility in frontend/src/typescript-parser/PropertyExtractor.ts
+- [X] T059 [P] [US4] Implement MethodExtractor to parse class methods with signatures in frontend/src/typescript-parser/MethodExtractor.ts
+- [X] T060 [US4] Implement error handling for syntax errors in TypeScriptParser.ts (return ParseError array)
+- [X] T061 [US4] Implement DiagramGenerator.generateDiagram() in frontend/src/diagram-visualization/DiagramGenerator.ts
+- [X] T062 [US4] Implement UML formatting helper functions (formatProperty, formatMethod, formatVisibility) in frontend/src/diagram-visualization/UMLFormatter.ts
+- [X] T063 [US4] Create CodeEditor component using Monaco Editor in frontend/src/code-editor/CodeEditor.tsx
+- [X] T064 [US4] Implement EditorController.handleContentChange() with debouncing (500ms) in frontend/src/code-editor/EditorController.ts
+- [X] T065 [US4] Connect EditorController to parse code on change and update Zustand store with parsed entities
+- [X] T066 [US4] Connect DiagramRenderer to subscribe to Zustand store and re-render on entity changes
+- [X] T067 [US4] Implement ProjectManager.updateFile() to persist content changes to IndexedDB in frontend/src/project-management/ProjectManager.ts
+- [X] T068 [US4] Add editor panel to App.tsx layout in center panel using ResizablePanels
+- [X] T069 [US4] Create integration test for code editing → parsing → diagram update pipeline in frontend/tests/integration/code-to-diagram.test.ts
 
 **Checkpoint**: At this point, the core MVP is complete - users can create files, write code, and see real-time UML diagrams
 

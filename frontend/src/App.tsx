@@ -5,6 +5,7 @@ import {
   ResizablePanelGroup,
 } from "./components/ui/resizable";
 import { AddButton } from "./components/AddButton";
+import { CodeEditor } from "./code-editor/CodeEditor";
 import { DiagramRenderer } from "./diagram-visualization/DiagramRenderer";
 import { FileTreeManager } from "./file-tree/FileTreeManager";
 import { FileTreeView } from "./file-tree/FileTreeView";
@@ -104,10 +105,7 @@ function App() {
                 <h2 className="text-sm font-medium">Code Editor</h2>
               </div>
               <div className="flex-1 overflow-hidden">
-                {/* Monaco editor will be rendered here */}
-                <div className="h-full flex items-center justify-center text-muted-foreground">
-                  Select or create a file to start editing
-                </div>
+                <CodeEditor />
               </div>
             </main>
           </ResizablePanel>

@@ -29,9 +29,35 @@
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-[Gates determined based on constitution file]
+- **Clean Code Gate**:
+
+  - [ ] No functions planned >50 lines
+  - [ ] No files planned >300 lines
+  - [ ] All names are descriptive and reveal intent
+  - [ ] No code duplication in design
+  - [ ] Complexity justified in writing (if applicable)
+
+- **Feature-Driven Structure Gate**:
+
+  - [ ] Code organized by feature/domain, not technical layers
+  - [ ] Feature modules have clear boundaries
+  - [ ] Feature is independently understandable
+  - [ ] Shared code has clear purpose and justification
+
+- **Test-First Gate**:
+
+  - [ ] User scenarios defined with acceptance criteria
+  - [ ] Test strategy documented (contract, integration, unit)
+  - [ ] Tests will be written before implementation
+  - [ ] Coverage targets defined (>80% for business logic)
+
+- **User Experience Gate**:
+  - [ ] Feature starts with user scenarios, not technical specs
+  - [ ] User stories prioritized (P1, P2, P3...)
+  - [ ] Error messages are actionable and user-friendly
+  - [ ] Performance expectations defined from user perspective
 
 ## Project Structure
 
@@ -48,6 +74,7 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
+
 <!--
   ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
   for this feature. Delete unused options and expand the chosen structure with
@@ -98,7 +125,7 @@ directories captured above]
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| Violation                  | Why Needed         | Simpler Alternative Rejected Because |
+| -------------------------- | ------------------ | ------------------------------------ |
+| [e.g., 4th project]        | [current need]     | [why 3 projects insufficient]        |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient]  |

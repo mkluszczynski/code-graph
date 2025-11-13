@@ -270,7 +270,7 @@
 - [X] T110 [P] Add dark mode support using Tailwind dark: classes
 - [X] T111 Implement diagram export functionality (save as PNG/SVG)
 - [X] T112 [P] Add performance monitoring for parsing and diagram generation
-- [ ] T113 Run quickstart.md validation steps
+- [X] T113 Run quickstart.md validation steps
 - [ ] T114 [P] Create E2E test suite covering all 7 user stories in frontend/tests/e2e/user-scenarios.spec.ts
 - [ ] T115 Code cleanup and refactoring for maintainability
 - [ ] T116 Final constitution check (clean code, feature-driven structure, test coverage)

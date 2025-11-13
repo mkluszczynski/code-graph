@@ -6,10 +6,6 @@
 import ts from 'typescript';
 import type {
     ParseResult,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ClassDefinition,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    InterfaceDefinition,
     ParseError,
 } from '../shared/types';
 import { extractClassInfo } from './ClassExtractor';

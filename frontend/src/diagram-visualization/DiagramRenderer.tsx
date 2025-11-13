@@ -31,6 +31,8 @@ import { InheritanceEdge } from "./edges/InheritanceEdge";
 import { ImplementationEdge } from "./edges/ImplementationEdge";
 import { AssociationEdge } from "./edges/AssociationEdge";
 import { computeDiagramDiff, hasSignificantChanges, mergeNodesPreservingPositions } from "./DiagramDiffer";
+import { ExportButton } from "../components/ExportButton";
+import { exportToPng, exportToSvg, getSuggestedFileName } from "./DiagramExporter";
 
 // Define custom edge types for UML relationships
 const edgeTypes = {
@@ -201,6 +203,40 @@ const DiagramRendererInternal: React.FC<DiagramRendererProps> = ({
         []
     );
 
+    /**
+     * Handle diagram export to PNG format
+     */
+    const handleExportPng = useCallback(async () => {
+        // Get the React Flow viewport element
+        const viewportElement = document.querySelector(".react-flow__viewport") as HTMLElement;
+        if (!viewportElement) {
+            throw new Error("Unable to find diagram viewport");
+        }
+
+        // Generate a suggested file name
+        const fileName = getSuggestedFileName();
+
+        // Export the diagram
+        await exportToPng(viewportElement, flowNodes, { fileName });
+    }, [flowNodes]);
+
+    /**
+     * Handle diagram export to SVG format
+     */
+    const handleExportSvg = useCallback(async () => {
+        // Get the React Flow viewport element
+        const viewportElement = document.querySelector(".react-flow__viewport") as HTMLElement;
+        if (!viewportElement) {
+            throw new Error("Unable to find diagram viewport");
+        }
+
+        // Generate a suggested file name
+        const fileName = getSuggestedFileName();
+
+        // Export the diagram
+        await exportToSvg(viewportElement, flowNodes, { fileName });
+    }, [flowNodes]);
+
     return (
         <div className={className} style={{ width: "100%", height: "100%" }}>
             <ReactFlow
@@ -294,6 +330,15 @@ const DiagramRendererInternal: React.FC<DiagramRendererProps> = ({
                     zoomable
                     className="!bg-background !border-border"
                 />
+
+                {/* Export button panel */}
+                <Panel position="top-right" className="mt-4 mr-4">
+                    <ExportButton
+                        onExportPng={handleExportPng}
+                        onExportSvg={handleExportSvg}
+                        disabled={flowNodes.length === 0}
+                    />
+                </Panel>
 
                 {/* Loading state panel */}
                 {(isParsing || isGeneratingDiagram) && (

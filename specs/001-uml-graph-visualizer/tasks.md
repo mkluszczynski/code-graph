@@ -268,7 +268,7 @@
 - [X] T108 [P] Create user documentation in frontend/docs/user-guide.md
 - [X] T109 Optimize Monaco Editor bundle size (lazy load, exclude unnecessary languages)
 - [X] T110 [P] Add dark mode support using Tailwind dark: classes
-- [ ] T111 Implement diagram export functionality (save as PNG/SVG)
+- [X] T111 Implement diagram export functionality (save as PNG/SVG)
 - [X] T112 [P] Add performance monitoring for parsing and diagram generation
 - [ ] T113 Run quickstart.md validation steps
 - [ ] T114 [P] Create E2E test suite covering all 7 user stories in frontend/tests/e2e/user-scenarios.spec.ts

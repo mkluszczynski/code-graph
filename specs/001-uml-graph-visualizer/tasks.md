@@ -40,13 +40,13 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T012 Define all TypeScript types in frontend/src/shared/types/index.ts (ProjectFile, ClassDefinition, InterfaceDefinition, Property, Method, Relationship, DiagramNode, DiagramEdge, ParseResult)
-- [ ] T013 [P] Install shadcn/ui components: button, dropdown-menu, dialog, resizable panels, scroll-area
-- [ ] T014 [P] Create shared utility functions in frontend/src/shared/utils/index.ts (generateId, validateFileName)
-- [ ] T015 Create IndexedDB schema and database initialization in frontend/src/shared/utils/db.ts using idb library
-- [ ] T016 Create Zustand store in frontend/src/shared/store/index.ts with slices for files, activeFileId, diagram state
-- [ ] T017 [P] Create error classes in frontend/src/shared/types/errors.ts (FileExistsError, InvalidFileNameError, StorageError, ParseError)
-- [ ] T018 Setup base Monaco Editor configuration in frontend/src/shared/utils/monaco-config.ts (TypeScript compiler options, theme)
+- [x] T012 Define all TypeScript types in frontend/src/shared/types/index.ts (ProjectFile, ClassDefinition, InterfaceDefinition, Property, Method, Relationship, DiagramNode, DiagramEdge, ParseResult)
+- [x] T013 [P] Install shadcn/ui components: button, dropdown-menu, dialog, resizable panels, scroll-area
+- [x] T014 [P] Create shared utility functions in frontend/src/shared/utils/index.ts (generateId, validateFileName)
+- [x] T015 Create IndexedDB schema and database initialization in frontend/src/shared/utils/db.ts using idb library
+- [x] T016 Create Zustand store in frontend/src/shared/store/index.ts with slices for files, activeFileId, diagram state
+- [x] T017 [P] Create error classes in frontend/src/shared/types/errors.ts (FileExistsError, InvalidFileNameError, StorageError, ParseError)
+- [x] T018 Setup base Monaco Editor configuration in frontend/src/shared/utils/monaco-config.ts (TypeScript compiler options, theme)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 

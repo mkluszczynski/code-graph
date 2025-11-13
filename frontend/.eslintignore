@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# Generated files
+*.min.js
+*.bundle.js
+
+# Test files
+test-results/
+playwright-report/
+.nyc_output/
+
+# Cache
+.cache/
+.eslintcache

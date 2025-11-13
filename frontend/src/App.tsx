@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useCallback } from "react";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -11,11 +11,20 @@ import { FileTreeManager } from "./file-tree/FileTreeManager";
 import { FileTreeView } from "./file-tree/FileTreeView";
 import { useProjectManager } from "./shared/hooks/useProjectManager";
 import { useStore } from "./shared/store";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { useKeyboardShortcuts } from "./shared/hooks/useKeyboardShortcuts";
+import { ThemeToggle } from "./components/ThemeToggle";
 
 function App() {
   const { createFile, isInitialized } = useProjectManager();
-  const [isCreatingFile, setIsCreatingFile] = useState(false);
   const files = useStore((state) => state.files);
+  const isCreatingFile = useStore((state) => state.isCreatingFile);
+  const setCreatingFile = useStore((state) => state.setCreatingFile);
+  const activeFileId = useStore((state) => state.activeFileId);
+  const updateFile = useStore((state) => state.updateFile);
+  const editorContent = useStore((state) => state.editorContent);
+  const isDirty = useStore((state) => state.isDirty);
+  const setIsDirty = useStore((state) => state.setIsDirty);
 
   // Build file tree from files
   const fileTreeManager = useMemo(() => new FileTreeManager(), []);
@@ -23,13 +32,47 @@ function App() {
     return fileTreeManager.buildTree(files);
   }, [files, fileTreeManager]);
 
+  // Show dialog for creating a new file
+  const handleNewFileDialog = useCallback(() => {
+    const choice = prompt(
+      "Choose file type:\n1. Class\n2. Interface\n\nEnter 1 or 2:"
+    );
+
+    if (choice === "1") {
+      handleCreateClass();
+    } else if (choice === "2") {
+      handleCreateInterface();
+    }
+  }, []);
+
+  // Save current file
+  const handleSave = useCallback(() => {
+    if (!activeFileId || !isDirty) return;
+
+    updateFile(activeFileId, {
+      content: editorContent,
+      lastModified: Date.now(),
+    });
+    setIsDirty(false);
+
+    // Show save confirmation
+    console.log("File saved successfully");
+  }, [activeFileId, isDirty, editorContent, updateFile, setIsDirty]);
+
+  // Setup keyboard shortcuts
+  useKeyboardShortcuts({
+    onNewFile: handleNewFileDialog,
+    onSave: handleSave,
+    enabled: true,
+  });
+
   const handleCreateClass = async () => {
     if (isCreatingFile) return;
 
     const className = prompt("Enter class name:");
     if (!className) return;
 
-    setIsCreatingFile(true);
+    setCreatingFile(true);
     try {
       await createFile(className, "class");
     } catch (error) {
@@ -37,7 +80,7 @@ function App() {
         error instanceof Error ? error.message : "Failed to create class file"
       );
     } finally {
-      setIsCreatingFile(false);
+      setCreatingFile(false);
     }
   };
 
@@ -47,7 +90,7 @@ function App() {
     const interfaceName = prompt("Enter interface name:");
     if (!interfaceName) return;
 
-    setIsCreatingFile(true);
+    setCreatingFile(true);
     try {
       await createFile(interfaceName, "interface");
     } catch (error) {
@@ -57,17 +100,18 @@ function App() {
           : "Failed to create interface file"
       );
     } finally {
-      setIsCreatingFile(false);
+      setCreatingFile(false);
     }
   };
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="h-12 bg-primary text-primary-foreground flex items-center px-4 border-b">
+      <header className="h-12 bg-primary text-primary-foreground flex items-center justify-between px-4 border-b">
         <h1 className="text-lg font-semibold">
           TypeScript UML Graph Visualizer
         </h1>
+        <ThemeToggle />
       </header>
 
       {/* Main content area with three panels */}
@@ -81,12 +125,21 @@ function App() {
                 <AddButton
                   onCreateClass={handleCreateClass}
                   onCreateInterface={handleCreateInterface}
+                  isLoading={isCreatingFile}
                 />
               </div>
               <div className="flex-1 overflow-auto p-2">
                 {/* File tree */}
                 {isInitialized && fileTree.length > 0 ? (
-                  <FileTreeView nodes={fileTree} />
+                  <ErrorBoundary
+                    fallback={
+                      <div className="text-sm text-destructive p-2">
+                        Error loading file tree
+                      </div>
+                    }
+                  >
+                    <FileTreeView nodes={fileTree} />
+                  </ErrorBoundary>
                 ) : (
                   <div className="text-sm text-muted-foreground">
                     {isInitialized ? "No files yet" : "Loading..."}
@@ -105,7 +158,15 @@ function App() {
                 <h2 className="text-sm font-medium">Code Editor</h2>
               </div>
               <div className="flex-1 overflow-hidden">
-                <CodeEditor />
+                <ErrorBoundary
+                  fallback={
+                    <div className="flex items-center justify-center h-full text-destructive">
+                      Error loading code editor
+                    </div>
+                  }
+                >
+                  <CodeEditor />
+                </ErrorBoundary>
               </div>
             </main>
           </ResizablePanel>
@@ -119,7 +180,15 @@ function App() {
                 <h2 className="text-sm font-medium">UML Diagram</h2>
               </div>
               <div className="flex-1 overflow-hidden">
-                <DiagramRenderer className="h-full w-full" />
+                <ErrorBoundary
+                  fallback={
+                    <div className="flex items-center justify-center h-full text-destructive">
+                      Error loading diagram
+                    </div>
+                  }
+                >
+                  <DiagramRenderer className="h-full w-full" />
+                </ErrorBoundary>
               </div>
             </aside>
           </ResizablePanel>

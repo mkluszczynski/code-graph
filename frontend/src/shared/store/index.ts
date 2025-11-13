@@ -24,6 +24,8 @@ import type {
 interface FileSlice {
   files: ProjectFile[];
   activeFileId: string | null;
+  isLoadingFiles: boolean;
+  isCreatingFile: boolean;
 
   setFiles: (files: ProjectFile[]) => void;
   addFile: (file: ProjectFile) => void;
@@ -31,11 +33,15 @@ interface FileSlice {
   removeFile: (fileId: string) => void;
   setActiveFile: (fileId: string | null) => void;
   getFileById: (fileId: string) => ProjectFile | undefined;
+  setLoadingFiles: (isLoading: boolean) => void;
+  setCreatingFile: (isCreating: boolean) => void;
 }
 
 const createFileSlice = (set: any, get: any): FileSlice => ({
   files: [],
   activeFileId: null,
+  isLoadingFiles: false,
+  isCreatingFile: false,
 
   setFiles: (files: ProjectFile[]) => set({ files }),
 
@@ -63,6 +69,11 @@ const createFileSlice = (set: any, get: any): FileSlice => ({
     const state = get();
     return state.files.find((file: ProjectFile) => file.id === fileId);
   },
+
+  setLoadingFiles: (isLoading: boolean) => set({ isLoadingFiles: isLoading }),
+
+  setCreatingFile: (isCreating: boolean) =>
+    set({ isCreatingFile: isCreating }),
 });
 
 // ============================================================================
@@ -104,6 +115,7 @@ interface DiagramSlice {
   viewport: { x: number; y: number; zoom: number };
   selectedNodeId: string | null;
   isLayoutLocked: boolean;
+  isGeneratingDiagram: boolean;
   lastUpdated: number;
 
   setNodes: (nodes: DiagramNode[]) => void;
@@ -112,6 +124,7 @@ interface DiagramSlice {
   setViewport: (viewport: { x: number; y: number; zoom: number }) => void;
   setSelectedNode: (nodeId: string | null) => void;
   setLayoutLocked: (locked: boolean) => void;
+  setGeneratingDiagram: (isGenerating: boolean) => void;
   updateDiagram: (nodes: DiagramNode[], edges: DiagramEdge[]) => void;
 }
 
@@ -121,6 +134,7 @@ const createDiagramSlice = (set: any): DiagramSlice => ({
   viewport: { x: 0, y: 0, zoom: 1 },
   selectedNodeId: null,
   isLayoutLocked: false,
+  isGeneratingDiagram: false,
   lastUpdated: Date.now(),
 
   setNodes: (nodes: DiagramNode[]) =>
@@ -149,6 +163,9 @@ const createDiagramSlice = (set: any): DiagramSlice => ({
   setSelectedNode: (nodeId: string | null) => set({ selectedNodeId: nodeId }),
 
   setLayoutLocked: (locked: boolean) => set({ isLayoutLocked: locked }),
+
+  setGeneratingDiagram: (isGenerating: boolean) =>
+    set({ isGeneratingDiagram: isGenerating }),
 
   updateDiagram: (nodes: DiagramNode[], edges: DiagramEdge[]) =>
     set({

@@ -15,6 +15,7 @@ import type {
 import { extractClassInfo } from './ClassExtractor';
 import { extractInterfaceInfo } from './InterfaceExtractor';
 import { extractRelationships } from './RelationshipAnalyzer';
+import { performanceMonitor } from '../shared/utils/performance';
 
 /**
  * Parses TypeScript source code and extracts class and interface definitions.
@@ -24,6 +25,8 @@ import { extractRelationships } from './RelationshipAnalyzer';
  * @returns ParseResult containing classes, interfaces, and any errors
  */
 export function parse(sourceCode: string, fileName: string): ParseResult {
+    performanceMonitor.startTimer('TypeScript Parsing');
+
     const result: ParseResult = {
         classes: [],
         interfaces: [],
@@ -34,6 +37,7 @@ export function parse(sourceCode: string, fileName: string): ParseResult {
 
     // Handle empty source
     if (!sourceCode.trim()) {
+        performanceMonitor.endTimer('TypeScript Parsing');
         return result;
     }
 
@@ -95,6 +99,13 @@ export function parse(sourceCode: string, fileName: string): ParseResult {
 
         // Extract relationships from parsed classes and interfaces (Phase 7 - US5)
         result.relationships = extractRelationships(result.classes, result.interfaces);
+
+        performanceMonitor.endTimer('TypeScript Parsing', {
+            fileName,
+            classCount: result.classes.length,
+            interfaceCount: result.interfaces.length,
+            relationshipCount: result.relationships.length,
+        });
     } catch (error) {
         // Unexpected error during parsing
         result.success = false;
@@ -104,6 +115,7 @@ export function parse(sourceCode: string, fileName: string): ParseResult {
             message: error instanceof Error ? error.message : 'Unknown parsing error',
             severity: 'error',
         });
+        performanceMonitor.endTimer('TypeScript Parsing');
     }
 
     return result;

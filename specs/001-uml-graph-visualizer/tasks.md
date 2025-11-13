@@ -262,14 +262,14 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T105 [P] Add loading states to all async operations (file creation, parsing, diagram generation)
-- [ ] T106 [P] Implement error boundaries in React components for graceful error handling
-- [ ] T107 Add keyboard shortcuts for common actions (Ctrl+N for new file, Ctrl+S for save)
-- [ ] T108 [P] Create user documentation in frontend/docs/user-guide.md
-- [ ] T109 Optimize Monaco Editor bundle size (lazy load, exclude unnecessary languages)
-- [ ] T110 [P] Add dark mode support using Tailwind dark: classes
+- [X] T105 [P] Add loading states to all async operations (file creation, parsing, diagram generation)
+- [X] T106 [P] Implement error boundaries in React components for graceful error handling
+- [X] T107 Add keyboard shortcuts for common actions (Ctrl+N for new file, Ctrl+S for save)
+- [X] T108 [P] Create user documentation in frontend/docs/user-guide.md
+- [X] T109 Optimize Monaco Editor bundle size (lazy load, exclude unnecessary languages)
+- [X] T110 [P] Add dark mode support using Tailwind dark: classes
 - [ ] T111 Implement diagram export functionality (save as PNG/SVG)
-- [ ] T112 [P] Add performance monitoring for parsing and diagram generation
+- [X] T112 [P] Add performance monitoring for parsing and diagram generation
 - [ ] T113 Run quickstart.md validation steps
 - [ ] T114 [P] Create E2E test suite covering all 7 user stories in frontend/tests/e2e/user-scenarios.spec.ts
 - [ ] T115 Code cleanup and refactoring for maintainability

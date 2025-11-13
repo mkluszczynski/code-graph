@@ -13,6 +13,7 @@ import type {
 } from '../shared/types';
 import { formatProperty, formatMethod } from './UMLFormatter';
 import { LayoutEngine } from './LayoutEngine';
+import { performanceMonitor } from '../shared/utils/performance';
 
 /**
  * Result of diagram generation
@@ -36,6 +37,8 @@ export function generateDiagram(
     interfaces: InterfaceDefinition[],
     relationships: Relationship[]
 ): DiagramData {
+    performanceMonitor.startTimer('Diagram Generation');
+
     const nodes: DiagramNode[] = [];
     const edges: DiagramEdge[] = [];
 
@@ -70,6 +73,13 @@ export function generateDiagram(
     // Apply layout to position nodes using LayoutEngine
     const layoutEngine = new LayoutEngine({ rankdir: 'TB' });
     const layoutedNodes = layoutEngine.applyLayout(nodes, edges);
+
+    performanceMonitor.endTimer('Diagram Generation', {
+        nodeCount: nodes.length,
+        edgeCount: edges.length,
+        classCount: classes.length,
+        interfaceCount: interfaces.length,
+    });
 
     return {
         nodes: layoutedNodes,

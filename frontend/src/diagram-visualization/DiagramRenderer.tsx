@@ -20,13 +20,15 @@ import {
     applyEdgeChanges,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
+import { AlertCircle } from "lucide-react";
 import { useStore } from "../shared/store";
 import type { DiagramEdge, DiagramNode } from "../shared/types";
 import { nodeTypes } from "./NodeRenderer";
 import { InheritanceEdge } from "./edges/InheritanceEdge";
 import { ImplementationEdge } from "./edges/ImplementationEdge";
 import { AssociationEdge } from "./edges/AssociationEdge";
+import { computeDiagramDiff, hasSignificantChanges, mergeNodesPreservingPositions } from "./DiagramDiffer";
 
 // Define custom edge types for UML relationships
 const edgeTypes = {
@@ -57,34 +59,83 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({
     const setActiveFile = useStore((state) => state.setActiveFile);
     const setSelectedNode = useStore((state) => state.setSelectedNode);
     const selectedNodeId = useStore((state) => state.selectedNodeId);
+    const activeFileId = useStore((state) => state.activeFileId);
+    const parseErrors = useStore((state) => state.parseErrors);
 
     // Local state for React Flow nodes and edges
     const [flowNodes, setFlowNodes] = useState<Node[]>([]);
     const [flowEdges, setFlowEdges] = useState<Edge[]>([]);
 
-    // Convert store nodes/edges to React Flow format
+    // Track previous state for efficient updates (T091)
+    const previousNodesRef = useRef<DiagramNode[]>([]);
+    const previousEdgesRef = useRef<DiagramEdge[]>([]);
+
+    // Track last valid diagram state for error recovery (T092)
+    const lastValidNodesRef = useRef<DiagramNode[]>([]);
+    const lastValidEdgesRef = useRef<DiagramEdge[]>([]);
+
+    // Check if there are parse errors for the active file (T092)
+    const hasParseErrors = activeFileId ? parseErrors.has(activeFileId) : false;
+    const currentErrors = activeFileId ? parseErrors.get(activeFileId) : [];
+
+    // Convert store nodes/edges to React Flow format with efficient updates (T091)
     useEffect(() => {
-        const convertedNodes: Node[] = nodes.map((node: DiagramNode) => ({
-            id: node.id,
-            type: node.type,
-            data: node.data,
-            position: node.position,
-            selected: selectedNodeId === node.id,
-        }));
+        // Compute diagram diff
+        const diff = computeDiagramDiff(
+            previousNodesRef.current,
+            nodes,
+            previousEdgesRef.current,
+            edges
+        );
 
-        const convertedEdges: Edge[] = edges.map((edge: DiagramEdge) => ({
-            id: edge.id,
-            source: edge.source,
-            target: edge.target,
-            type: edge.type,
-            label: edge.label,
-            animated: edge.animated,
-            style: edge.style,
-        }));
+        // If there are parse errors, use last valid diagram (T092)
+        let nodesToDisplay = nodes;
+        let edgesToDisplay = edges;
 
-        setFlowNodes(convertedNodes);
-        setFlowEdges(convertedEdges);
-    }, [nodes, edges, selectedNodeId]);
+        if (hasParseErrors && lastValidNodesRef.current.length > 0) {
+            // Use last valid diagram when there are errors
+            nodesToDisplay = lastValidNodesRef.current;
+            edgesToDisplay = lastValidEdgesRef.current;
+        } else if (!hasParseErrors && nodes.length > 0) {
+            // Update last valid diagram when parse is successful
+            lastValidNodesRef.current = nodes;
+            lastValidEdgesRef.current = edges;
+        }
+
+        // Only update if there are significant changes (T091 optimization)
+        if (hasSignificantChanges(diff) || hasParseErrors) {
+            // Preserve node positions for unchanged nodes (T091)
+            const mergedNodes = mergeNodesPreservingPositions(
+                previousNodesRef.current,
+                nodesToDisplay
+            );
+
+            const convertedNodes: Node[] = mergedNodes.map((node: DiagramNode) => ({
+                id: node.id,
+                type: node.type,
+                data: node.data,
+                position: node.position,
+                selected: selectedNodeId === node.id,
+            }));
+
+            const convertedEdges: Edge[] = edgesToDisplay.map((edge: DiagramEdge) => ({
+                id: edge.id,
+                source: edge.source,
+                target: edge.target,
+                type: edge.type,
+                label: edge.label,
+                animated: edge.animated,
+                style: edge.style,
+            }));
+
+            setFlowNodes(convertedNodes);
+            setFlowEdges(convertedEdges);
+
+            // Update previous state reference
+            previousNodesRef.current = nodesToDisplay;
+            previousEdgesRef.current = edgesToDisplay;
+        }
+    }, [nodes, edges, selectedNodeId, hasParseErrors]);
 
     /**
      * Handle node click - navigate to the corresponding file
@@ -237,10 +288,29 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({
                 />
 
                 {/* Empty state panel */}
-                {flowNodes.length === 0 && (
+                {flowNodes.length === 0 && !hasParseErrors && (
                     <Panel position="top-center" className="mt-4">
                         <div className="bg-muted border border-border rounded-md px-4 py-2 text-sm text-muted-foreground">
                             No classes or interfaces to display. Create a file to get started.
+                        </div>
+                    </Panel>
+                )}
+
+                {/* Error state panel (T092) */}
+                {hasParseErrors && (
+                    <Panel position="top-center" className="mt-4">
+                        <div className="bg-destructive/10 border border-destructive rounded-md px-4 py-2 flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4 text-destructive" />
+                            <div className="text-sm">
+                                <span className="font-medium text-destructive">Syntax Error:</span>
+                                <span className="text-muted-foreground ml-2">
+                                    Showing last valid diagram. {currentErrors && currentErrors.length > 0 && (
+                                        <>
+                                            {currentErrors[0].message} (Line {currentErrors[0].line})
+                                        </>
+                                    )}
+                                </span>
+                            </div>
                         </div>
                     </Panel>
                 )}

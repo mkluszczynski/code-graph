@@ -215,17 +215,17 @@
 
 ### Contract Tests for User Story 6
 
-- [ ] T086 [P] [US6] Contract test for parse() after class rename in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
-- [ ] T087 [P] [US6] Contract test for parse() after property removal in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
-- [ ] T088 [P] [US6] Contract test for parse() after visibility change in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
+- [X] T086 [P] [US6] Contract test for parse() after class rename in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
+- [X] T087 [P] [US6] Contract test for parse() after property removal in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
+- [X] T088 [P] [US6] Contract test for parse() after visibility change in frontend/src/typescript-parser/**tests**/TypeScriptParser.contract.test.ts
 
 ### Implementation for User Story 6
 
-- [ ] T089 [US6] Verify EditorController debouncing handles rapid changes correctly (already implemented in T064, add specific tests)
-- [ ] T090 [US6] Implement diagram diffing to only update changed nodes in frontend/src/diagram-visualization/DiagramDiffer.ts
-- [ ] T091 [US6] Update DiagramRenderer to use React Flow's updateNode() for efficient partial updates
-- [ ] T092 [US6] Add error state visualization in DiagramRenderer when parse fails (show last valid diagram + error badge)
-- [ ] T093 [US6] Create integration test for incremental edits → progressive diagram updates in frontend/tests/integration/edit-and-rerender.test.ts
+- [X] T089 [US6] Verify EditorController debouncing handles rapid changes correctly (already implemented in T064, add specific tests)
+- [X] T090 [US6] Implement diagram diffing to only update changed nodes in frontend/src/diagram-visualization/DiagramDiffer.ts
+- [X] T091 [US6] Update DiagramRenderer to use React Flow's updateNode() for efficient partial updates
+- [X] T092 [US6] Add error state visualization in DiagramRenderer when parse fails (show last valid diagram + error badge)
+- [X] T093 [US6] Create integration test for incremental edits → progressive diagram updates in frontend/tests/integration/edit-and-rerender.test.ts
 
 **Checkpoint**: At this point, User Story 6 is complete - editing experience is smooth with real-time updates
 

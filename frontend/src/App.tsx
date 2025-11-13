@@ -1,4 +1,49 @@
+import { useState } from "react";
+import { AddButton } from "./components/AddButton";
+import { useProjectManager } from "./shared/hooks/useProjectManager";
+
 function App() {
+  const { createFile, isInitialized } = useProjectManager();
+  const [isCreatingFile, setIsCreatingFile] = useState(false);
+
+  const handleCreateClass = async () => {
+    if (isCreatingFile) return;
+
+    const className = prompt("Enter class name:");
+    if (!className) return;
+
+    setIsCreatingFile(true);
+    try {
+      await createFile(className, "class");
+    } catch (error) {
+      alert(
+        error instanceof Error ? error.message : "Failed to create class file"
+      );
+    } finally {
+      setIsCreatingFile(false);
+    }
+  };
+
+  const handleCreateInterface = async () => {
+    if (isCreatingFile) return;
+
+    const interfaceName = prompt("Enter interface name:");
+    if (!interfaceName) return;
+
+    setIsCreatingFile(true);
+    try {
+      await createFile(interfaceName, "interface");
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to create interface file"
+      );
+    } finally {
+      setIsCreatingFile(false);
+    }
+  };
+
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden">
       {/* Header */}
@@ -12,12 +57,18 @@ function App() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left panel: File Tree */}
         <aside className="w-64 bg-muted border-r flex flex-col">
-          <div className="p-3 border-b bg-background">
+          <div className="p-3 border-b bg-background flex items-center justify-between">
             <h2 className="text-sm font-medium">Project Files</h2>
+            <AddButton
+              onCreateClass={handleCreateClass}
+              onCreateInterface={handleCreateInterface}
+            />
           </div>
           <div className="flex-1 overflow-auto p-2">
             {/* File tree will be rendered here */}
-            <div className="text-sm text-muted-foreground">No files yet</div>
+            <div className="text-sm text-muted-foreground">
+              {isInitialized ? "No files yet" : "Loading..."}
+            </div>
           </div>
         </aside>
 

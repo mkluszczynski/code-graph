@@ -62,21 +62,21 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T019 [P] [US1] Contract test for createFile('class') in frontend/src/project-management/**tests**/ProjectManager.contract.test.ts
-- [ ] T020 [P] [US1] Contract test for createFile('interface') in frontend/src/project-management/**tests**/ProjectManager.contract.test.ts
-- [ ] T021 [P] [US1] Contract test for getAllFiles() in frontend/src/project-management/**tests**/ProjectManager.contract.test.ts
+- [x] T019 [P] [US1] Contract test for createFile('class') in frontend/src/project-management/**tests**/ProjectManager.contract.test.ts
+- [x] T020 [P] [US1] Contract test for createFile('interface') in frontend/src/project-management/**tests**/ProjectManager.contract.test.ts
+- [x] T021 [P] [US1] Contract test for getAllFiles() in frontend/src/project-management/**tests**/ProjectManager.contract.test.ts
 
 ### Implementation for User Story 1
 
-- [ ] T022 [P] [US1] Implement FileCreator.createClassTemplate() in frontend/src/project-management/FileCreator.ts
-- [ ] T023 [P] [US1] Implement FileCreator.createInterfaceTemplate() in frontend/src/project-management/FileCreator.ts
-- [ ] T024 [US1] Implement ProjectManager.createFile() with IndexedDB persistence in frontend/src/project-management/ProjectManager.ts
-- [ ] T025 [US1] Implement ProjectManager.getAllFiles() in frontend/src/project-management/ProjectManager.ts
-- [ ] T026 [US1] Implement ProjectManager.getFile() in frontend/src/project-management/ProjectManager.ts
-- [ ] T027 [P] [US1] Create AddButton component with dropdown menu in frontend/src/components/AddButton.tsx
-- [ ] T028 [US1] Integrate AddButton with ProjectManager to create files on menu selection
-- [ ] T029 [US1] Update Zustand store to add new files to state when created
-- [ ] T030 [US1] Create integration test for Add button → file creation → store update in frontend/tests/integration/create-file.test.ts
+- [x] T022 [P] [US1] Implement FileCreator.createClassTemplate() in frontend/src/project-management/FileCreator.ts
+- [x] T023 [P] [US1] Implement FileCreator.createInterfaceTemplate() in frontend/src/project-management/FileCreator.ts
+- [x] T024 [US1] Implement ProjectManager.createFile() with IndexedDB persistence in frontend/src/project-management/ProjectManager.ts
+- [x] T025 [US1] Implement ProjectManager.getAllFiles() in frontend/src/project-management/ProjectManager.ts
+- [x] T026 [US1] Implement ProjectManager.getFile() in frontend/src/project-management/ProjectManager.ts
+- [x] T027 [P] [US1] Create AddButton component with dropdown menu in frontend/src/components/AddButton.tsx
+- [x] T028 [US1] Integrate AddButton with ProjectManager to create files on menu selection
+- [x] T029 [US1] Update Zustand store to add new files to state when created
+- [x] T030 [US1] Create integration test for Add button → file creation → store update in frontend/tests/integration/create-file.test.ts
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - users can create classes/interfaces and they appear in the store
 

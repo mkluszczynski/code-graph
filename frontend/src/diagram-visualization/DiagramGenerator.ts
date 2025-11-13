@@ -219,8 +219,17 @@ function getEdgeStyle(relationshipType: string): {
                 type: 'association',
                 animated: false,
                 style: {
-                    stroke: '#000',
-                    strokeWidth: 2,
+                    stroke: '#666',
+                    strokeWidth: 1.5,
+                },
+            };
+        case 'aggregation':
+            return {
+                type: 'aggregation',
+                animated: false,
+                style: {
+                    stroke: '#666',
+                    strokeWidth: 1.5,
                 },
             };
         default:

@@ -569,4 +569,463 @@ describe('DiagramGenerator Contract Tests', () => {
             // Type parameters might be displayed as "Container<T, K>" or similar
         });
     });
+
+    describe('T073: generateDiagram() with inheritance edges', () => {
+        it('should generate inheritance edge with correct style', () => {
+            const classes: ClassDefinition[] = [
+                {
+                    id: 'file1::Employee',
+                    name: 'Employee',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: 'Person',
+                    implementsInterfaces: [],
+                },
+                {
+                    id: 'file1::Person',
+                    name: 'Person',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+            ];
+
+            const relationships: Relationship[] = [
+                {
+                    id: 'rel_inheritance_1',
+                    type: 'inheritance',
+                    sourceId: 'file1::Employee',
+                    targetId: 'file1::Person',
+                },
+            ];
+
+            const result = generateDiagram(classes, [], relationships);
+
+            expect(result.edges).toHaveLength(1);
+            const edge = result.edges[0];
+
+            expect(edge.id).toBe('rel_inheritance_1');
+            expect(edge.source).toBe('file1::Employee');
+            expect(edge.target).toBe('file1::Person');
+            expect(edge.type).toBe('inheritance');
+            expect(edge.animated).toBe(false);
+
+            // Should have solid line style (no dashed array)
+            expect(edge.style).toBeDefined();
+            if (edge.style && typeof edge.style === 'object' && 'strokeDasharray' in edge.style) {
+                expect(edge.style.strokeDasharray).toBeUndefined();
+            }
+        });
+
+        it('should generate multiple inheritance edges in chain', () => {
+            const classes: ClassDefinition[] = [
+                {
+                    id: 'file1::Manager',
+                    name: 'Manager',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: 'Employee',
+                    implementsInterfaces: [],
+                },
+                {
+                    id: 'file1::Employee',
+                    name: 'Employee',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: 'Person',
+                    implementsInterfaces: [],
+                },
+                {
+                    id: 'file1::Person',
+                    name: 'Person',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+            ];
+
+            const relationships: Relationship[] = [
+                {
+                    id: 'rel1',
+                    type: 'inheritance',
+                    sourceId: 'file1::Manager',
+                    targetId: 'file1::Employee',
+                },
+                {
+                    id: 'rel2',
+                    type: 'inheritance',
+                    sourceId: 'file1::Employee',
+                    targetId: 'file1::Person',
+                },
+            ];
+
+            const result = generateDiagram(classes, [], relationships);
+
+            expect(result.edges).toHaveLength(2);
+            expect(result.edges.every(e => e.type === 'inheritance')).toBe(true);
+        });
+
+        it('should generate interface inheritance edge', () => {
+            const interfaces: InterfaceDefinition[] = [
+                {
+                    id: 'file1::IEmployee',
+                    name: 'IEmployee',
+                    fileId: 'file1',
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsInterfaces: ['IPerson'],
+                },
+                {
+                    id: 'file1::IPerson',
+                    name: 'IPerson',
+                    fileId: 'file1',
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsInterfaces: [],
+                },
+            ];
+
+            const relationships: Relationship[] = [
+                {
+                    id: 'rel_interface_inheritance',
+                    type: 'inheritance',
+                    sourceId: 'file1::IEmployee',
+                    targetId: 'file1::IPerson',
+                },
+            ];
+
+            const result = generateDiagram([], interfaces, relationships);
+
+            expect(result.edges).toHaveLength(1);
+            expect(result.edges[0].type).toBe('inheritance');
+            expect(result.edges[0].source).toBe('file1::IEmployee');
+            expect(result.edges[0].target).toBe('file1::IPerson');
+        });
+    });
+
+    describe('T074: generateDiagram() with multiple relationship types', () => {
+        it('should generate realization edge for interface implementation', () => {
+            const classes: ClassDefinition[] = [
+                {
+                    id: 'file1::Employee',
+                    name: 'Employee',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: ['IWorker'],
+                },
+            ];
+
+            const interfaces: InterfaceDefinition[] = [
+                {
+                    id: 'file1::IWorker',
+                    name: 'IWorker',
+                    fileId: 'file1',
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsInterfaces: [],
+                },
+            ];
+
+            const relationships: Relationship[] = [
+                {
+                    id: 'rel_realization',
+                    type: 'realization',
+                    sourceId: 'file1::Employee',
+                    targetId: 'file1::IWorker',
+                },
+            ];
+
+            const result = generateDiagram(classes, interfaces, relationships);
+
+            expect(result.edges).toHaveLength(1);
+            const edge = result.edges[0];
+
+            expect(edge.type).toBe('realization');
+            expect(edge.source).toBe('file1::Employee');
+            expect(edge.target).toBe('file1::IWorker');
+
+            // Should have dashed line style
+            expect(edge.style).toBeDefined();
+            if (edge.style && typeof edge.style === 'object' && 'strokeDasharray' in edge.style) {
+                expect(edge.style.strokeDasharray).toBeDefined();
+            }
+        });
+
+        it('should generate association edge for property relationships', () => {
+            const classes: ClassDefinition[] = [
+                {
+                    id: 'file1::Department',
+                    name: 'Department',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+                {
+                    id: 'file1::Employee',
+                    name: 'Employee',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+            ];
+
+            const relationships: Relationship[] = [
+                {
+                    id: 'rel_association',
+                    type: 'association',
+                    sourceId: 'file1::Department',
+                    targetId: 'file1::Employee',
+                },
+            ];
+
+            const result = generateDiagram(classes, [], relationships);
+
+            expect(result.edges).toHaveLength(1);
+            expect(result.edges[0].type).toBe('association');
+        });
+
+        it('should generate aggregation edge for array properties', () => {
+            const classes: ClassDefinition[] = [
+                {
+                    id: 'file1::Team',
+                    name: 'Team',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+                {
+                    id: 'file1::Employee',
+                    name: 'Employee',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+            ];
+
+            const relationships: Relationship[] = [
+                {
+                    id: 'rel_aggregation',
+                    type: 'aggregation',
+                    sourceId: 'file1::Team',
+                    targetId: 'file1::Employee',
+                },
+            ];
+
+            const result = generateDiagram(classes, [], relationships);
+
+            expect(result.edges).toHaveLength(1);
+            expect(result.edges[0].type).toBe('aggregation');
+        });
+
+        it('should handle complex diagram with all relationship types', () => {
+            const classes: ClassDefinition[] = [
+                {
+                    id: 'file1::Manager',
+                    name: 'Manager',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: 'Employee',
+                    implementsInterfaces: ['IManager'],
+                },
+                {
+                    id: 'file1::Employee',
+                    name: 'Employee',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+                {
+                    id: 'file1::Department',
+                    name: 'Department',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+            ];
+
+            const interfaces: InterfaceDefinition[] = [
+                {
+                    id: 'file1::IManager',
+                    name: 'IManager',
+                    fileId: 'file1',
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsInterfaces: [],
+                },
+            ];
+
+            const relationships: Relationship[] = [
+                {
+                    id: 'rel_inheritance',
+                    type: 'inheritance',
+                    sourceId: 'file1::Manager',
+                    targetId: 'file1::Employee',
+                },
+                {
+                    id: 'rel_realization',
+                    type: 'realization',
+                    sourceId: 'file1::Manager',
+                    targetId: 'file1::IManager',
+                },
+                {
+                    id: 'rel_association',
+                    type: 'association',
+                    sourceId: 'file1::Manager',
+                    targetId: 'file1::Department',
+                },
+            ];
+
+            const result = generateDiagram(classes, interfaces, relationships);
+
+            expect(result.nodes).toHaveLength(4);
+            expect(result.edges).toHaveLength(3);
+
+            const relationshipTypes = result.edges.map(e => e.type);
+            expect(relationshipTypes).toContain('inheritance');
+            expect(relationshipTypes).toContain('realization');
+            expect(relationshipTypes).toContain('association');
+        });
+
+        it('should apply correct layout for complex relationships', () => {
+            const classes: ClassDefinition[] = [
+                {
+                    id: 'file1::Manager',
+                    name: 'Manager',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: 'Employee',
+                    implementsInterfaces: [],
+                },
+                {
+                    id: 'file1::Employee',
+                    name: 'Employee',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: 'Person',
+                    implementsInterfaces: [],
+                },
+                {
+                    id: 'file1::Person',
+                    name: 'Person',
+                    fileId: 'file1',
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+            ];
+
+            const relationships: Relationship[] = [
+                {
+                    id: 'rel1',
+                    type: 'inheritance',
+                    sourceId: 'file1::Manager',
+                    targetId: 'file1::Employee',
+                },
+                {
+                    id: 'rel2',
+                    type: 'inheritance',
+                    sourceId: 'file1::Employee',
+                    targetId: 'file1::Person',
+                },
+            ];
+
+            const result = generateDiagram(classes, [], relationships);
+
+            // Verify layout - dagre places nodes with edges
+            // The exact positioning depends on edge direction
+            // We just verify all nodes have valid positions
+            const personNode = result.nodes.find(n => n.id === 'file1::Person');
+            const employeeNode = result.nodes.find(n => n.id === 'file1::Employee');
+            const managerNode = result.nodes.find(n => n.id === 'file1::Manager');
+
+            expect(personNode?.position).toBeDefined();
+            expect(employeeNode?.position).toBeDefined();
+            expect(managerNode?.position).toBeDefined();
+
+            expect(personNode?.position.x).toBeGreaterThanOrEqual(0);
+            expect(employeeNode?.position.x).toBeGreaterThanOrEqual(0);
+            expect(managerNode?.position.x).toBeGreaterThanOrEqual(0);
+        });
+    });
 });

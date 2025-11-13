@@ -24,6 +24,17 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useStore } from "../shared/store";
 import type { DiagramEdge, DiagramNode } from "../shared/types";
 import { nodeTypes } from "./NodeRenderer";
+import { InheritanceEdge } from "./edges/InheritanceEdge";
+import { ImplementationEdge } from "./edges/ImplementationEdge";
+import { AssociationEdge } from "./edges/AssociationEdge";
+
+// Define custom edge types for UML relationships
+const edgeTypes = {
+    inheritance: InheritanceEdge,
+    realization: ImplementationEdge,
+    association: AssociationEdge,
+    aggregation: AssociationEdge, // Use same component for now
+};
 
 export interface DiagramRendererProps {
     /** Optional className for styling */
@@ -142,6 +153,7 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({
                 onNodeClick={handleNodeClick}
                 onPaneClick={handlePaneClick}
                 nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
                 fitView
                 minZoom={0.1}
                 maxZoom={2}
@@ -153,6 +165,63 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({
                 selectionOnDrag={false}
                 panActivationKeyCode={null}
             >
+                {/* SVG marker definitions for UML edges */}
+                <svg>
+                    <defs>
+                        {/* Inheritance marker - hollow triangle */}
+                        <marker
+                            id="inheritance-marker"
+                            markerWidth="12"
+                            markerHeight="12"
+                            refX="10"
+                            refY="6"
+                            orient="auto"
+                            markerUnits="userSpaceOnUse"
+                        >
+                            <path
+                                d="M 0 0 L 10 6 L 0 12 Z"
+                                fill="white"
+                                stroke="black"
+                                strokeWidth="1.5"
+                            />
+                        </marker>
+
+                        {/* Realization marker - hollow triangle (dashed line handled in component) */}
+                        <marker
+                            id="realization-marker"
+                            markerWidth="12"
+                            markerHeight="12"
+                            refX="10"
+                            refY="6"
+                            orient="auto"
+                            markerUnits="userSpaceOnUse"
+                        >
+                            <path
+                                d="M 0 0 L 10 6 L 0 12 Z"
+                                fill="white"
+                                stroke="black"
+                                strokeWidth="1.5"
+                            />
+                        </marker>
+
+                        {/* Association marker - simple arrow */}
+                        <marker
+                            id="association-marker"
+                            markerWidth="10"
+                            markerHeight="10"
+                            refX="9"
+                            refY="5"
+                            orient="auto"
+                            markerUnits="userSpaceOnUse"
+                        >
+                            <path
+                                d="M 0 0 L 10 5 L 0 10 L 3 5 Z"
+                                fill="#666"
+                            />
+                        </marker>
+                    </defs>
+                </svg>
+
                 {/* Background grid */}
                 <Background gap={16} size={1} />
 

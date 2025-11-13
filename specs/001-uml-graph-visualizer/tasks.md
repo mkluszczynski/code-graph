@@ -183,25 +183,25 @@
 
 ### Contract Tests for User Story 5
 
-- [ ] T070 [P] [US5] Contract test for extractRelationships() with inheritance in frontend/src/typescript-parser/**tests**/RelationshipAnalyzer.contract.test.ts
-- [ ] T071 [P] [US5] Contract test for extractRelationships() with interface implementation in frontend/src/typescript-parser/**tests**/RelationshipAnalyzer.contract.test.ts
-- [ ] T072 [P] [US5] Contract test for extractRelationships() with composition/association in frontend/src/typescript-parser/**tests**/RelationshipAnalyzer.contract.test.ts
-- [ ] T073 [P] [US5] Contract test for generateDiagram() with inheritance edges in frontend/src/diagram-visualization/**tests**/DiagramGenerator.contract.test.ts
-- [ ] T074 [P] [US5] Contract test for generateDiagram() with multiple relationship types in frontend/src/diagram-visualization/**tests**/DiagramGenerator.contract.test.ts
+- [X] T070 [P] [US5] Contract test for extractRelationships() with inheritance in frontend/src/typescript-parser/**tests**/RelationshipAnalyzer.contract.test.ts
+- [X] T071 [P] [US5] Contract test for extractRelationships() with interface implementation in frontend/src/typescript-parser/**tests**/RelationshipAnalyzer.contract.test.ts
+- [X] T072 [P] [US5] Contract test for extractRelationships() with composition/association in frontend/src/typescript-parser/**tests**/RelationshipAnalyzer.contract.test.ts
+- [X] T073 [P] [US5] Contract test for generateDiagram() with inheritance edges in frontend/src/diagram-visualization/**tests**/DiagramGenerator.contract.test.ts
+- [X] T074 [P] [US5] Contract test for generateDiagram() with multiple relationship types in frontend/src/diagram-visualization/**tests**/DiagramGenerator.contract.test.ts
 
 ### Implementation for User Story 5
 
-- [ ] T075 [P] [US5] Implement RelationshipAnalyzer.extractRelationships() in frontend/src/typescript-parser/RelationshipAnalyzer.ts
-- [ ] T076 [P] [US5] Implement RelationshipAnalyzer.detectInheritance() for extends relationships in frontend/src/typescript-parser/RelationshipAnalyzer.ts
-- [ ] T077 [P] [US5] Implement RelationshipAnalyzer.detectImplementation() for implements relationships in frontend/src/typescript-parser/RelationshipAnalyzer.ts
-- [ ] T078 [P] [US5] Implement RelationshipAnalyzer.detectAssociation() for property type relationships in frontend/src/typescript-parser/RelationshipAnalyzer.ts
-- [ ] T079 [US5] Update TypeScriptParser.parse() to include extractRelationships() call
-- [ ] T080 [US5] Create InheritanceEdge component with solid line and triangle marker in frontend/src/diagram-visualization/edges/InheritanceEdge.tsx
-- [ ] T081 [US5] Create ImplementationEdge component with dashed line and triangle marker in frontend/src/diagram-visualization/edges/ImplementationEdge.tsx
-- [ ] T082 [US5] Create AssociationEdge component with solid line and arrow marker in frontend/src/diagram-visualization/edges/AssociationEdge.tsx
-- [ ] T083 [US5] Update DiagramGenerator.generateDiagram() to create edges from relationships using correct edge types
-- [ ] T084 [US5] Update DiagramRenderer to use custom edge components
-- [ ] T085 [US5] Create integration test for complex multi-class relationships in frontend/tests/integration/relationship-visualization.test.ts
+- [X] T075 [P] [US5] Implement RelationshipAnalyzer.extractRelationships() in frontend/src/typescript-parser/RelationshipAnalyzer.ts
+- [X] T076 [P] [US5] Implement RelationshipAnalyzer.detectInheritance() for extends relationships in frontend/src/typescript-parser/RelationshipAnalyzer.ts
+- [X] T077 [P] [US5] Implement RelationshipAnalyzer.detectImplementation() for implements relationships in frontend/src/typescript-parser/RelationshipAnalyzer.ts
+- [X] T078 [P] [US5] Implement RelationshipAnalyzer.detectAssociation() for property type relationships in frontend/src/typescript-parser/RelationshipAnalyzer.ts
+- [X] T079 [US5] Update TypeScriptParser.parse() to include extractRelationships() call
+- [X] T080 [US5] Create InheritanceEdge component with solid line and triangle marker in frontend/src/diagram-visualization/edges/InheritanceEdge.tsx
+- [X] T081 [US5] Create ImplementationEdge component with dashed line and triangle marker in frontend/src/diagram-visualization/edges/ImplementationEdge.tsx
+- [X] T082 [US5] Create AssociationEdge component with solid line and arrow marker in frontend/src/diagram-visualization/edges/AssociationEdge.tsx
+- [X] T083 [US5] Update DiagramGenerator.generateDiagram() to create edges from relationships using correct edge types
+- [X] T084 [US5] Update DiagramRenderer to use custom edge components
+- [X] T085 [US5] Create integration test for complex multi-class relationships in frontend/tests/integration/relationship-visualization.test.ts
 
 **Checkpoint**: At this point, User Story 5 is complete - complex relationships are visualized correctly
 

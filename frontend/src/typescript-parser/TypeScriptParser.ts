@@ -14,6 +14,7 @@ import type {
 } from '../shared/types';
 import { extractClassInfo } from './ClassExtractor';
 import { extractInterfaceInfo } from './InterfaceExtractor';
+import { extractRelationships } from './RelationshipAnalyzer';
 
 /**
  * Parses TypeScript source code and extracts class and interface definitions.
@@ -26,7 +27,7 @@ export function parse(sourceCode: string, fileName: string): ParseResult {
     const result: ParseResult = {
         classes: [],
         interfaces: [],
-        relationships: [], // Phase 7 (US5) - not implemented in Phase 6
+        relationships: [],
         errors: [],
         success: true,
     };
@@ -91,6 +92,9 @@ export function parse(sourceCode: string, fileName: string): ParseResult {
 
         // Start visiting from the source file root
         visit(sourceFile);
+
+        // Extract relationships from parsed classes and interfaces (Phase 7 - US5)
+        result.relationships = extractRelationships(result.classes, result.interfaces);
     } catch (error) {
         // Unexpected error during parsing
         result.success = false;

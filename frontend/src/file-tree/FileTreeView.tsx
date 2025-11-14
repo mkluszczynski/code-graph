@@ -34,6 +34,20 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
     new Set()
   );
 
+  // Auto-expand src folder when it has children (for better UX)
+  React.useEffect(() => {
+    if (level === 0) {
+      const srcFolder = nodes.find(node => node.name === 'src' && node.type === 'folder');
+      if (srcFolder && srcFolder.children.length > 0) {
+        setExpandedFolders(prev => {
+          const newSet = new Set(prev);
+          newSet.add(srcFolder.id);
+          return newSet;
+        });
+      }
+    }
+  }, [nodes, level]);
+
   const toggleFolder = (folderId: string) => {
     setExpandedFolders((prev) => {
       const newSet = new Set(prev);
@@ -64,11 +78,12 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
                   "cursor-pointer select-none"
                 )}
                 style={{ paddingLeft: `${level * 12 + 8}px` }}
+                data-testid={`folder-${node.name}`}
               >
                 {expandedFolders.has(node.id) ? (
-                  <ChevronDown className="h-4 w-4 shrink-0" />
+                  <ChevronDown className="h-4 w-4 shrink-0" data-lucide="chevron-down" />
                 ) : (
-                  <ChevronRight className="h-4 w-4 shrink-0" />
+                  <ChevronRight className="h-4 w-4 shrink-0" data-lucide="chevron-right" />
                 )}
                 <Folder className="h-4 w-4 shrink-0 text-blue-500" />
                 <span className="truncate">{node.name}</span>
@@ -86,13 +101,14 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
             <button
               onClick={() => handleFileClick(node.id)}
               className={cn(
-                "flex items-center gap-1 w-full px-2 py-1 text-sm rounded-sm transition-colors",
+                "file-tree-item flex items-center gap-1 w-full px-2 py-1 text-sm rounded-sm transition-colors",
                 "cursor-pointer select-none",
                 activeFileId === node.id
-                  ? "bg-accent text-accent-foreground font-medium"
+                  ? "selected bg-accent text-accent-foreground font-medium"
                   : "hover:bg-accent/50 hover:text-accent-foreground"
               )}
               style={{ paddingLeft: `${level * 12 + 24}px` }}
+              data-testid={`file-${node.name}`}
             >
               <File className="h-4 w-4 shrink-0 text-gray-500" />
               <span className="truncate">{node.name}</span>

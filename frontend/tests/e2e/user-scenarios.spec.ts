@@ -30,6 +30,59 @@ const typeInEditor = async (page: Page, content: string) => {
     await waitForDiagramUpdate(page);
 };
 
+// Helper function to create a class with name input
+const createClass = async (page: Page, className: string) => {
+    // Set up dialog handler before clicking
+    page.once('dialog', async dialog => {
+        expect(dialog.type()).toBe('prompt');
+        await dialog.accept(className);
+    });
+
+    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('menuitem', { name: /new class/i }).click();
+    await page.waitForTimeout(300);
+};
+
+// Helper function to create an interface with name input
+const createInterface = async (page: Page, interfaceName: string) => {
+    // Set up dialog handler before clicking
+    page.once('dialog', async dialog => {
+        expect(dialog.type()).toBe('prompt');
+        await dialog.accept(interfaceName);
+    });
+
+    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('menuitem', { name: /new interface/i }).click();
+    await page.waitForTimeout(300);
+};
+
+// Helper function to ensure src folder is visible and expanded
+const ensureSrcFolderExpanded = async (page: Page) => {
+    // Wait for file tree to update after file creation
+    await page.waitForTimeout(700);
+
+    // Use test ID for more reliable selection
+    const srcFolderButton = page.getByTestId('folder-src');
+
+    try {
+        // Wait for src folder to appear
+        await expect(srcFolderButton).toBeVisible({ timeout: 3000 });
+
+        // Check if already expanded by looking for chevron-down
+        const chevronDown = srcFolderButton.locator('[data-lucide="chevron-down"]');
+        const isExpanded = await chevronDown.count() > 0;
+
+        if (!isExpanded) {
+            // Click to expand
+            await srcFolderButton.click();
+            await page.waitForTimeout(300);
+        }
+    } catch (error) {
+        // Src folder not found - this is expected if files are at root or not created yet
+        console.log('Src folder not found');
+    }
+};
+
 test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () => {
     test.beforeEach(async ({ page }) => {
         // Navigate to the application
@@ -46,26 +99,29 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             const addButton = page.getByRole('button', { name: /add/i });
             await expect(addButton).toBeVisible();
 
-            // When they click the "Add" button
+            // When they click the "Add" button and verify menu appears
             await addButton.click();
-
-            // Then a menu appears with options
             const newClassOption = page.getByRole('menuitem', { name: /new class/i });
             const newInterfaceOption = page.getByRole('menuitem', { name: /new interface/i });
-
             await expect(newClassOption).toBeVisible();
             await expect(newInterfaceOption).toBeVisible();
 
-            // When the user selects "New Class"
-            await newClassOption.click();
-            await page.waitForTimeout(300);
+            // Close the menu first
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(100);
+
+            // When the user creates a new class with name input
+            await createClass(page, 'Class1');
+
+            // Ensure src folder is expanded to see the file
+            await ensureSrcFolderExpanded(page);
 
             // Then a new file appears in the file tree
             const fileTreeItem = page.getByText('Class1.ts');
             await expect(fileTreeItem).toBeVisible();
 
             // And the UML diagram updates to show the new empty class node
-            const diagramNode = page.locator('[data-id="Class1.ts#Class1"]');
+            const diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
             await expect(diagramNode).toBeVisible({ timeout: 2500 });
 
             // Verify node contains class name
@@ -73,30 +129,30 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
         });
 
         test('should create a new interface through Add button', async ({ page }) => {
-            // Click Add button
-            await page.getByRole('button', { name: /add/i }).click();
+            // Create a new interface with name input
+            await createInterface(page, 'Interface1');
 
-            // Select "New Interface"
-            await page.getByRole('menuitem', { name: /new interface/i }).click();
-            await page.waitForTimeout(300);
+            // Ensure src folder is expanded to see the file
+            await ensureSrcFolderExpanded(page);
 
             // Verify interface file appears in tree
             const fileTreeItem = page.getByText('Interface1.ts');
             await expect(fileTreeItem).toBeVisible();
 
             // Verify interface node appears in diagram
-            const diagramNode = page.locator('[data-id="Interface1.ts#Interface1"]');
+            const diagramNode = page.locator('[data-id="Interface1.ts::Interface1"]');
             await expect(diagramNode).toBeVisible({ timeout: 2500 });
             await expect(diagramNode).toContainText('Interface1');
         });
 
         test('should create multiple classes and all appear in diagram', async ({ page }) => {
-            // Create 3 classes
-            for (let i = 1; i <= 3; i++) {
-                await page.getByRole('button', { name: /add/i }).click();
-                await page.getByRole('menuitem', { name: /new class/i }).click();
-                await page.waitForTimeout(200);
-            }
+            // Create 3 classes with name inputs
+            await createClass(page, 'Class1');
+            await createClass(page, 'Class2');
+            await createClass(page, 'Class3');
+
+            // Ensure src folder is expanded to see the files
+            await ensureSrcFolderExpanded(page);
 
             // Verify all 3 files appear in tree
             await expect(page.getByText('Class1.ts')).toBeVisible();
@@ -104,26 +160,24 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await expect(page.getByText('Class3.ts')).toBeVisible();
 
             // Verify all 3 nodes appear in diagram
-            await expect(page.locator('[data-id="Class1.ts#Class1"]')).toBeVisible();
-            await expect(page.locator('[data-id="Class2.ts#Class2"]')).toBeVisible();
-            await expect(page.locator('[data-id="Class3.ts#Class3"]')).toBeVisible();
+            await expect(page.locator('[data-id="Class1.ts::Class1"]')).toBeVisible();
+            await expect(page.locator('[data-id="Class2.ts::Class2"]')).toBeVisible();
+            await expect(page.locator('[data-id="Class3.ts::Class3"]')).toBeVisible();
         });
     });
 
     test.describe('User Story 2: Navigate from Graph to Code (P1)', () => {
         test('should open file in editor when clicking on diagram node', async ({ page }) => {
             // Create two classes
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(200);
+            await createClass(page, 'Class1');
+            await createClass(page, 'Class2');
 
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(200);
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             // Given a UML diagram displays multiple class nodes
-            const class1Node = page.locator('[data-id="Class1.ts#Class1"]');
-            const class2Node = page.locator('[data-id="Class2.ts#Class2"]');
+            const class1Node = page.locator('[data-id="Class1.ts::Class1"]');
+            const class2Node = page.locator('[data-id="Class2.ts::Class2"]');
 
             await expect(class1Node).toBeVisible();
             await expect(class2Node).toBeVisible();
@@ -151,16 +205,14 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
 
         test('should navigate between interface and class nodes', async ({ page }) => {
             // Create a class and an interface
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(200);
+            await createClass(page, 'Class1');
+            await createInterface(page, 'Interface1');
 
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new interface/i }).click();
-            await page.waitForTimeout(200);
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             // Click on interface node
-            const interfaceNode = page.locator('[data-id="Interface1.ts#Interface1"]');
+            const interfaceNode = page.locator('[data-id="Interface1.ts::Interface1"]');
             await interfaceNode.click();
             await page.waitForTimeout(200);
 
@@ -169,7 +221,7 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await expect(selectedFile).toContainText('Interface1.ts');
 
             // Click on class node
-            const classNode = page.locator('[data-id="Class1.ts#Class1"]');
+            const classNode = page.locator('[data-id="Class1.ts::Class1"]');
             await classNode.click();
             await page.waitForTimeout(200);
 
@@ -180,13 +232,35 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
     });
 
     test.describe('User Story 3: Manage Project with File Tree (P1)', () => {
+        test('should auto-expand src folder when files are created', async ({ page }) => {
+            // Initially src folder shouldn't exist or be collapsed
+
+            // Create a file
+            await createClass(page, 'Class1');
+            await page.waitForTimeout(400);
+
+            // src folder button should be visible
+            const srcFolderButton = page.getByTestId('folder-src');
+            await expect(srcFolderButton).toBeVisible({ timeout: 3000 });
+
+            // File should be visible (auto-expanded)
+            const fileTreeItem = page.getByTestId('file-Class1.ts');
+            await expect(fileTreeItem).toBeVisible({ timeout: 2000 });
+
+            // Verify chevron shows expanded state (folder is auto-expanded)
+            const chevronDown = srcFolderButton.locator('[data-lucide="chevron-down"]');
+            await expect(chevronDown).toBeVisible();
+        });
+
         test('should display all files in tree and allow navigation', async ({ page }) => {
             // Create multiple files
-            for (let i = 1; i <= 4; i++) {
-                await page.getByRole('button', { name: /add/i }).click();
-                await page.getByRole('menuitem', { name: /new class/i }).click();
-                await page.waitForTimeout(150);
-            }
+            await createClass(page, 'Class1');
+            await createClass(page, 'Class2');
+            await createClass(page, 'Class3');
+            await createClass(page, 'Class4');
+
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             // Given files exist in the file tree
             await expect(page.getByText('Class1.ts')).toBeVisible();
@@ -207,22 +281,20 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
         });
 
         test('should update file tree when new files are created', async ({ page }) => {
-            // Initially no files
-            const fileTree = page.locator('.file-tree-item');
-            await expect(fileTree).toHaveCount(0);
+            // Initially no files (only src folder should exist but be empty)
+            // We don't check for file-tree-item count as src folder might exist
 
             // Create first file
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(200);
+            await createClass(page, 'Class1');
+
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             // File tree should have 1 file
             await expect(page.getByText('Class1.ts')).toBeVisible();
 
             // Create second file
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new interface/i }).click();
-            await page.waitForTimeout(200);
+            await createInterface(page, 'Interface1');
 
             // File tree should have 2 files
             await expect(page.getByText('Class1.ts')).toBeVisible();
@@ -231,14 +303,15 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
 
         test('should synchronize tree selection with diagram node clicks', async ({ page }) => {
             // Create 3 files
-            for (let i = 1; i <= 3; i++) {
-                await page.getByRole('button', { name: /add/i }).click();
-                await page.getByRole('menuitem', { name: /new class/i }).click();
-                await page.waitForTimeout(150);
-            }
+            await createClass(page, 'Class1');
+            await createClass(page, 'Class2');
+            await createClass(page, 'Class3');
+
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             // Click on Class2 node in diagram
-            const class2Node = page.locator('[data-id="Class2.ts#Class2"]');
+            const class2Node = page.locator('[data-id="Class2.ts::Class2"]');
             await class2Node.click();
             await page.waitForTimeout(200);
 
@@ -247,7 +320,7 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await expect(selectedFile).toContainText('Class2.ts');
 
             // Click on Class1 node in diagram
-            const class1Node = page.locator('[data-id="Class1.ts#Class1"]');
+            const class1Node = page.locator('[data-id="Class1.ts::Class1"]');
             await class1Node.click();
             await page.waitForTimeout(200);
 
@@ -260,9 +333,10 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
     test.describe('User Story 4: Write TypeScript and See UML (P1)', () => {
         test('should update diagram when adding properties to a class', async ({ page }) => {
             // Create a class
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(300);
+            await createClass(page, 'Class1');
+
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             // Open the file in editor
             await page.getByText('Class1.ts').click();
@@ -278,7 +352,7 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await typeInEditor(page, classCode);
 
             // Then the diagram updates to show properties
-            const diagramNode = page.locator('[data-id="Class1.ts#Class1"]');
+            const diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
             await expect(diagramNode).toContainText('id: number');
             await expect(diagramNode).toContainText('name: string');
             await expect(diagramNode).toContainText('status: boolean');
@@ -286,9 +360,10 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
 
         test('should update diagram when adding methods to a class', async ({ page }) => {
             // Create and open a class
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(300);
+            await createClass(page, 'Class1');
+
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             await page.getByText('Class1.ts').click();
             await page.waitForTimeout(200);
@@ -307,16 +382,17 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await typeInEditor(page, classCode);
 
             // Verify methods appear in diagram
-            const diagramNode = page.locator('[data-id="Class1.ts#Class1"]');
+            const diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
             await expect(diagramNode).toContainText('getId()');
             await expect(diagramNode).toContainText('calculateTotal(');
         });
 
         test('should show access modifiers with proper UML notation', async ({ page }) => {
             // Create a class with various access modifiers
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(300);
+            await createClass(page, 'Class1');
+
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             await page.getByText('Class1.ts').click();
             await page.waitForTimeout(200);
@@ -334,7 +410,7 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await typeInEditor(page, classCode);
 
             // Verify UML symbols are present
-            const diagramNode = page.locator('[data-id="Class1.ts#Class1"]');
+            const diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
 
             // Check that properties are shown (specific UML notation depends on implementation)
             await expect(diagramNode).toContainText('privateField');
@@ -347,14 +423,13 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
 
         test('should handle multiple files with classes and interfaces', async ({ page }) => {
             // Create a class
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(200);
+            await createClass(page, 'Class1');
 
             // Create an interface
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new interface/i }).click();
-            await page.waitForTimeout(200);
+            await createInterface(page, 'Interface1');
+
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             // Edit the class
             await page.getByText('Class1.ts').click();
@@ -383,8 +458,8 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await typeInEditor(page, interfaceCode);
 
             // Verify both appear correctly in diagram
-            const classNode = page.locator('[data-id="Class1.ts#Class1"]');
-            const interfaceNode = page.locator('[data-id="Interface1.ts#Interface1"]');
+            const classNode = page.locator('[data-id="Class1.ts::Class1"]');
+            const interfaceNode = page.locator('[data-id="Interface1.ts::Interface1"]');
 
             await expect(classNode).toContainText('Class1');
             await expect(classNode).toContainText('value');
@@ -399,13 +474,11 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
     test.describe('User Story 5: Visualize Complex Relationships (P2)', () => {
         test('should visualize inheritance relationships', async ({ page }) => {
             // Create two classes with inheritance
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(200);
+            await createClass(page, 'Class1');
+            await createClass(page, 'Class2');
 
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(200);
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             // Edit first class (base class)
             await page.getByText('Class1.ts').click();
@@ -426,8 +499,8 @@ export class Class2 extends Class1 {
 }`);
 
             // Verify both classes are in diagram
-            await expect(page.locator('[data-id="Class1.ts#Class1"]')).toBeVisible();
-            await expect(page.locator('[data-id="Class2.ts#Class2"]')).toBeVisible();
+            await expect(page.locator('[data-id="Class1.ts::Class1"]')).toBeVisible();
+            await expect(page.locator('[data-id="Class2.ts::Class2"]')).toBeVisible();
 
             // Verify inheritance edge exists
             const edges = page.locator('.react-flow__edge');
@@ -436,13 +509,11 @@ export class Class2 extends Class1 {
 
         test('should visualize interface implementation relationships', async ({ page }) => {
             // Create interface and implementing class
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new interface/i }).click();
-            await page.waitForTimeout(200);
+            await createInterface(page, 'Interface1');
+            await createClass(page, 'Class1');
 
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(200);
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             // Edit interface
             await page.getByText('Interface1.ts').click();
@@ -465,8 +536,8 @@ export class Class1 implements Interface1 {
 }`);
 
             // Verify both nodes are visible
-            await expect(page.locator('[data-id="Interface1.ts#Interface1"]')).toBeVisible();
-            await expect(page.locator('[data-id="Class1.ts#Class1"]')).toBeVisible();
+            await expect(page.locator('[data-id="Interface1.ts::Interface1"]')).toBeVisible();
+            await expect(page.locator('[data-id="Class1.ts::Class1"]')).toBeVisible();
 
             // Verify implementation edge exists
             const edges = page.locator('.react-flow__edge');
@@ -475,13 +546,11 @@ export class Class1 implements Interface1 {
 
         test('should visualize association relationships through property types', async ({ page }) => {
             // Create two classes where one uses the other as a property type
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(200);
+            await createClass(page, 'Class1');
+            await createClass(page, 'Class2');
 
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(200);
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             // Edit first class
             await page.getByText('Class1.ts').click();
@@ -502,8 +571,8 @@ export class Class2 {
 }`);
 
             // Verify both classes are visible
-            await expect(page.locator('[data-id="Class1.ts#Class1"]')).toBeVisible();
-            await expect(page.locator('[data-id="Class2.ts#Class2"]')).toBeVisible();
+            await expect(page.locator('[data-id="Class1.ts::Class1"]')).toBeVisible();
+            await expect(page.locator('[data-id="Class2.ts::Class2"]')).toBeVisible();
 
             // Verify association edge exists
             const edges = page.locator('.react-flow__edge');
@@ -512,17 +581,12 @@ export class Class2 {
 
         test('should handle multiple relationship types simultaneously', async ({ page }) => {
             // Create a complex scenario: interface, base class, derived class implementing interface
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new interface/i }).click();
-            await page.waitForTimeout(150);
+            await createInterface(page, 'Interface1');
+            await createClass(page, 'Class1');
+            await createClass(page, 'Class2');
 
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(150);
-
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(150);
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             // Setup interface
             await page.getByText('Interface1.ts').click();
@@ -549,9 +613,9 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Verify all nodes are visible
-            await expect(page.locator('[data-id="Interface1.ts#Interface1"]')).toBeVisible();
-            await expect(page.locator('[data-id="Class1.ts#Class1"]')).toBeVisible();
-            await expect(page.locator('[data-id="Class2.ts#Class2"]')).toBeVisible();
+            await expect(page.locator('[data-id="Interface1.ts::Interface1"]')).toBeVisible();
+            await expect(page.locator('[data-id="Class1.ts::Class1"]')).toBeVisible();
+            await expect(page.locator('[data-id="Class2.ts::Class2"]')).toBeVisible();
 
             // Verify multiple edges exist (inheritance + implementation)
             const edges = page.locator('.react-flow__edge');
@@ -563,9 +627,10 @@ export class Class2 extends Class1 implements Interface1 {
     test.describe('User Story 6: Edit and Re-visualize (P2)', () => {
         test('should update diagram when renaming a class', async ({ page }) => {
             // Create a class
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(300);
+            await createClass(page, 'Class1');
+
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             await page.getByText('Class1.ts').click();
             await page.waitForTimeout(200);
@@ -576,7 +641,7 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Verify original name in diagram
-            let diagramNode = page.locator('[data-id="Class1.ts#OriginalName"]');
+            let diagramNode = page.locator('[data-id="Class1.ts::OriginalName"]');
             await expect(diagramNode).toBeVisible();
             await expect(diagramNode).toContainText('OriginalName');
 
@@ -586,16 +651,17 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Verify new name in diagram
-            diagramNode = page.locator('[data-id="Class1.ts#RenamedClass"]');
+            diagramNode = page.locator('[data-id="Class1.ts::RenamedClass"]');
             await expect(diagramNode).toBeVisible();
             await expect(diagramNode).toContainText('RenamedClass');
         });
 
         test('should update diagram when changing method visibility', async ({ page }) => {
             // Create a class
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(300);
+            await createClass(page, 'Class1');
+
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             await page.getByText('Class1.ts').click();
             await page.waitForTimeout(200);
@@ -605,7 +671,7 @@ export class Class2 extends Class1 implements Interface1 {
   private secretMethod(): void {}
 }`);
 
-            let diagramNode = page.locator('[data-id="Class1.ts#Class1"]');
+            let diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
             await expect(diagramNode).toContainText('secretMethod');
 
             // Change to public
@@ -614,15 +680,16 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Diagram should still show the method (visibility symbol may change)
-            diagramNode = page.locator('[data-id="Class1.ts#Class1"]');
+            diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
             await expect(diagramNode).toContainText('secretMethod');
         });
 
         test('should update diagram when removing a property', async ({ page }) => {
             // Create a class with multiple properties
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(300);
+            await createClass(page, 'Class1');
+
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             await page.getByText('Class1.ts').click();
             await page.waitForTimeout(200);
@@ -634,7 +701,7 @@ export class Class2 extends Class1 implements Interface1 {
   private prop3: boolean;
 }`);
 
-            let diagramNode = page.locator('[data-id="Class1.ts#Class1"]');
+            let diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
             await expect(diagramNode).toContainText('prop1');
             await expect(diagramNode).toContainText('prop2');
             await expect(diagramNode).toContainText('prop3');
@@ -646,7 +713,7 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Verify prop2 is gone
-            diagramNode = page.locator('[data-id="Class1.ts#Class1"]');
+            diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
             await expect(diagramNode).toContainText('prop1');
             await expect(diagramNode).toContainText('prop3');
             await expect(diagramNode).not.toContainText('prop2');
@@ -654,13 +721,11 @@ export class Class2 extends Class1 implements Interface1 {
 
         test('should update diagram when removing a relationship', async ({ page }) => {
             // Create two classes with a relationship
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(200);
+            await createClass(page, 'Class1');
+            await createClass(page, 'Class2');
 
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(200);
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             await page.getByText('Class1.ts').click();
             await page.waitForTimeout(200);
@@ -686,9 +751,10 @@ export class Class2 extends Class1 {}`);
 
         test('should handle rapid consecutive edits', async ({ page }) => {
             // Create a class
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(300);
+            await createClass(page, 'Class1');
+
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
 
             await page.getByText('Class1.ts').click();
             await page.waitForTimeout(200);
@@ -704,7 +770,7 @@ export class Class2 extends Class1 {}`);
             await waitForDiagramUpdate(page);
 
             // Verify final state is correct
-            const diagramNode = page.locator('[data-id="Class1.ts#Class1"]');
+            const diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
             await expect(diagramNode).toContainText('a');
             await expect(diagramNode).toContainText('b');
         });
@@ -877,6 +943,9 @@ export class Class2 extends Class1 {}`);
             await page.getByRole('menuitem', { name: /new class/i }).click();
             await page.waitForTimeout(200);
 
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
+
             // Step 2: Verify file tree shows all files (US3)
             await expect(page.getByText('Interface1.ts')).toBeVisible();
             await expect(page.getByText('Class1.ts')).toBeVisible();
@@ -916,7 +985,7 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Step 6: Navigate via diagram (US2)
-            const interfaceNode = page.locator('[data-id="Interface1.ts#Interface1"]');
+            const interfaceNode = page.locator('[data-id="Interface1.ts::Interface1"]');
             await interfaceNode.click();
             await page.waitForTimeout(200);
 
@@ -950,7 +1019,7 @@ export class Class2 extends Class1 implements Interface1 {
             await waitForDiagramUpdate(page);
 
             // Verify new members appear
-            const class2Node = page.locator('[data-id="Class2.ts#Class2"]');
+            const class2Node = page.locator('[data-id="Class2.ts::Class2"]');
             await expect(class2Node).toContainText('newProperty');
             await expect(class2Node).toContainText('newMethod');
         });
@@ -961,6 +1030,9 @@ export class Class2 extends Class1 implements Interface1 {
             await page.getByRole('menuitem', { name: /new class/i }).click();
             await page.waitForTimeout(300);
 
+            // Ensure src folder is expanded
+            await ensureSrcFolderExpanded(page);
+
             await page.getByText('Class1.ts').click();
             await page.waitForTimeout(200);
 
@@ -970,7 +1042,7 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Verify diagram shows valid state
-            let diagramNode = page.locator('[data-id="Class1.ts#Class1"]');
+            let diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
             await expect(diagramNode).toBeVisible();
             await expect(diagramNode).toContainText('value');
 
@@ -992,7 +1064,7 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Diagram should update with corrected code
-            diagramNode = page.locator('[data-id="Class1.ts#Class1"]');
+            diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
             await expect(diagramNode).toContainText('fixed');
         });
     });

@@ -22,7 +22,7 @@ function getProjectManager(): ProjectManager {
 }
 
 export function useProjectManager() {
-  const { setFiles, addFile } = useStore();
+  const { setFiles, addFile, setActiveFile } = useStore();
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Initialize ProjectManager and load files on mount
@@ -51,9 +51,13 @@ export function useProjectManager() {
       // Add to store
       addFile(file);
 
+      // Automatically focus on the newly created file
+      // Note: Editor content will be loaded automatically by useEditorController
+      setActiveFile(file.id);
+
       return file;
     },
-    [addFile]
+    [addFile, setActiveFile]
   );
 
   return {

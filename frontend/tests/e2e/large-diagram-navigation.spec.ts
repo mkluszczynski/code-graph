@@ -11,7 +11,20 @@
  * - See nodes arranged in a readable hierarchical layout
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+// Helper function to create a class with name input
+const createClass = async (page: Page, className: string) => {
+    // Set up dialog handler before clicking
+    page.once('dialog', async dialog => {
+        expect(dialog.type()).toBe('prompt');
+        await dialog.accept(className);
+    });
+
+    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('menuitem', { name: /new class/i }).click();
+    await page.waitForTimeout(100);
+};
 
 test.describe('Large Diagram Navigation (User Story 7)', () => {
     test.beforeEach(async ({ page }) => {
@@ -25,14 +38,7 @@ test.describe('Large Diagram Navigation (User Story 7)', () => {
     test('should create and navigate a large diagram with 10+ classes', async ({ page }) => {
         // Step 1: Create 10 class files
         for (let i = 1; i <= 10; i++) {
-            // Click the Add button
-            await page.getByRole('button', { name: /add/i }).click();
-
-            // Select "New Class" from dropdown
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-
-            // Wait for the file to be created (file tree should update)
-            await page.waitForTimeout(100);
+            await createClass(page, `Class${i}`);
         }
 
         // Step 2: Add code to each class to create relationships
@@ -173,9 +179,7 @@ test.describe('Large Diagram Navigation (User Story 7)', () => {
     test('should handle clicking on nodes in large diagrams', async ({ page }) => {
         // Create 5 classes for this test
         for (let i = 1; i <= 5; i++) {
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(100);
+            await createClass(page, `Class${i}`);
         }
 
         // Wait for diagram to render
@@ -196,9 +200,7 @@ test.describe('Large Diagram Navigation (User Story 7)', () => {
     test('should maintain layout when switching between files', async ({ page }) => {
         // Create 6 classes
         for (let i = 1; i <= 6; i++) {
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(100);
+            await createClass(page, `Class${i}`);
         }
 
         // Get initial positions of first 3 nodes
@@ -233,9 +235,7 @@ test.describe('Large Diagram Navigation (User Story 7)', () => {
     test('should display minimap for large diagrams', async ({ page }) => {
         // Create 12 classes to ensure diagram is large enough for minimap to be useful
         for (let i = 1; i <= 12; i++) {
-            await page.getByRole('button', { name: /add/i }).click();
-            await page.getByRole('menuitem', { name: /new class/i }).click();
-            await page.waitForTimeout(100);
+            await createClass(page, `Class${i}`);
         }
 
         await page.waitForTimeout(1000);

@@ -9,9 +9,7 @@ import { useStore, useActiveFile } from '../shared/store';
 import { parse } from '../typescript-parser/TypeScriptParser';
 import { generateDiagram } from '../diagram-visualization/DiagramGenerator';
 import type { ClassDefinition, InterfaceDefinition, Relationship } from '../shared/types';
-
-// Debounce delay in milliseconds
-const DEBOUNCE_DELAY = 500;
+import { EDITOR_DEBOUNCE_DELAY_MS } from '../shared/constants';
 
 export function useEditorController() {
     const activeFile = useActiveFile();
@@ -62,7 +60,7 @@ export function useEditorController() {
             // Set up new debounce timer for parsing
             debounceTimerRef.current = setTimeout(() => {
                 parseAndUpdateDiagram(newContent, activeFile.id, activeFile.name);
-            }, DEBOUNCE_DELAY);
+            }, EDITOR_DEBOUNCE_DELAY_MS);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [activeFile, setEditorContent, setIsDirty]

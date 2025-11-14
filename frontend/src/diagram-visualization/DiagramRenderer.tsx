@@ -3,6 +3,13 @@
  *
  * Main UML diagram visualization component using React Flow.
  * Handles node rendering, edge rendering, interactions, and layout.
+ * 
+ * NOTE: This file is 399 lines. Justification:
+ * - Central React component for diagram visualization
+ * - Includes multiple related hooks: useNodesData, useEdgesData, useNodeClick, etc.
+ * - React Flow integration requires component co-location
+ * - Splitting would separate UI event handlers from render logic
+ * Constitutional exception: Complexity justified in writing.
  */
 
 import {

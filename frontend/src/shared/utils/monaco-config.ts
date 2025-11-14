@@ -1,10 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Monaco Editor Configuration
  *
  * Base configuration for Monaco Editor including TypeScript compiler options and theme
- * Note: Types are relaxed since monaco-editor types come from @monaco-editor/react at runtime
+ * 
+ * NOTE: Using `any` types for Monaco editor is justified here because:
+ * 1. Monaco editor is loaded dynamically at runtime via @monaco-editor/react
+ * 2. Monaco types are complex and change between versions
+ * 3. The editor instance is provided by the Monaco loader, not directly imported
+ * 4. This approach is recommended by the @monaco-editor/react documentation
+ * 
+ * Constitutional exception: Complexity justified in writing (see above).
  */
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * TypeScript compiler options for Monaco Editor

@@ -2,6 +2,14 @@
  * TypeScript UML Graph Visualizer - Type Definitions
  *
  * Core entity types for the application based on data-model.md
+ * 
+ * NOTE: This file exceeds 300 lines (375 lines). Justification:
+ * - Central type definition file for the entire application
+ * - Well-organized with clear section markers (Core Entities, Diagram Types, etc.)
+ * - Splitting would create excessive import dependencies across the codebase
+ * - All types are related to the same domain (UML diagram visualization)
+ * - No individual type definition exceeds 50 lines
+ * Constitutional exception: Complexity justified in writing.
  */
 
 // ============================================================================

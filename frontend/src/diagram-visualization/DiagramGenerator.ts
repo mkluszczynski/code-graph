@@ -1,6 +1,13 @@
 /**
  * DiagramGenerator - Generates React Flow diagram nodes and edges
  * Implementation for T061, T098
+ * 
+ * NOTE: This file is 412 lines. Justification:
+ * - Core diagram generation module with cohesive responsibility
+ * - Functions are well-scoped: generateDiagram, createClassNode, createInterfaceNode, etc.
+ * - All functions under 50 lines
+ * - Splitting would separate tightly coupled diagram generation logic
+ * Constitutional exception: Complexity justified in writing.
  */
 
 import dagre from '@dagrejs/dagre';

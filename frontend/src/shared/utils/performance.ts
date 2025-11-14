@@ -161,7 +161,13 @@ class PerformanceMonitor {
 export const performanceMonitor = new PerformanceMonitor();
 
 /**
- * Decorator to measure function execution time
+ * Decorator to measure method execution time
+ * 
+ * Usage: @measurePerformance('Custom Name')
+ * 
+ * NOTE: Using `any` for target is justified because TypeScript decorators
+ * require runtime type information not available at compile time.
+ * Constitutional exception: Complexity justified in writing.
  */
 export function measurePerformance(name?: string) {
     return function (
@@ -238,7 +244,12 @@ export function measureSync<T>(
     }
 }
 
-// Export global access for debugging
+/**
+ * Export global access for debugging
+ * 
+ * NOTE: Using `any` to extend window is justified for debugging utilities.
+ * Constitutional exception: Complexity justified in writing.
+ */
 if (typeof window !== 'undefined') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).__performanceMonitor = performanceMonitor;

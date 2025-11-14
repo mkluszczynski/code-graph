@@ -49,7 +49,7 @@ describe("DiagramExporter", () => {
             download: "",
             href: "",
         };
-        vi.spyOn(document, "createElement").mockReturnValue(mockLink as any);
+        vi.spyOn(document, "createElement").mockReturnValue(mockLink as unknown as HTMLElement);
     });
 
     afterEach(() => {

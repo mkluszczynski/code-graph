@@ -59,9 +59,13 @@ function applyTheme(theme: 'light' | 'dark') {
  */
 export function useTheme() {
     const [theme, setThemeState] = useState<Theme>(getStoredTheme);
-    const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() =>
-        resolveTheme(getStoredTheme())
-    );
+    const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
+        // Initialize and apply theme immediately on first render
+        const initialTheme = getStoredTheme();
+        const resolved = resolveTheme(initialTheme);
+        applyTheme(resolved);
+        return resolved;
+    });
 
     /**
      * Set theme and persist to localStorage
@@ -81,16 +85,6 @@ export function useTheme() {
     const toggleTheme = useCallback(() => {
         setTheme(resolvedTheme === 'light' ? 'dark' : 'light');
     }, [resolvedTheme, setTheme]);
-
-    /**
-     * Initialize theme on mount
-     */
-    useEffect(() => {
-        const initialTheme = getStoredTheme();
-        const resolved = resolveTheme(initialTheme);
-        setResolvedTheme(resolved);
-        applyTheme(resolved);
-    }, []);
 
     /**
      * Listen for system theme changes (when theme is 'system')

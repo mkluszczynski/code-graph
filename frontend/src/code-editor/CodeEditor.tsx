@@ -3,7 +3,7 @@
  * Implementation for T063, T109
  */
 
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy } from 'react';
 import type { EditorProps } from '@monaco-editor/react';
 import { useStore, useActiveFile } from '../shared/store';
 import { useEditorController } from './useEditorController';
@@ -34,15 +34,8 @@ export function CodeEditor() {
     const { handleEditorChange, handleEditorMount } = useEditorController();
     const { resolvedTheme } = useTheme();
 
-    // Monaco theme based on current app theme
-    const [monacoTheme, setMonacoTheme] = useState<string>(
-        resolvedTheme === 'dark' ? 'vs-dark' : 'vs'
-    );
-
-    // Update Monaco theme when app theme changes
-    useEffect(() => {
-        setMonacoTheme(resolvedTheme === 'dark' ? 'vs-dark' : 'vs');
-    }, [resolvedTheme]);
+    // Monaco theme based on current app theme - derived from resolvedTheme
+    const monacoTheme = resolvedTheme === 'dark' ? 'vs-dark' : 'vs';
 
     if (!activeFile) {
         return (

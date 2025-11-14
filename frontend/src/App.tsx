@@ -32,6 +32,44 @@ function App() {
     return fileTreeManager.buildTree(files);
   }, [files, fileTreeManager]);
 
+  const handleCreateClass = useCallback(async () => {
+    if (isCreatingFile) return;
+
+    const className = prompt("Enter class name:");
+    if (!className) return;
+
+    setCreatingFile(true);
+    try {
+      await createFile(className, "class");
+    } catch (error) {
+      alert(
+        error instanceof Error ? error.message : "Failed to create class file"
+      );
+    } finally {
+      setCreatingFile(false);
+    }
+  }, [isCreatingFile, createFile, setCreatingFile]);
+
+  const handleCreateInterface = useCallback(async () => {
+    if (isCreatingFile) return;
+
+    const interfaceName = prompt("Enter interface name:");
+    if (!interfaceName) return;
+
+    setCreatingFile(true);
+    try {
+      await createFile(interfaceName, "interface");
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to create interface file"
+      );
+    } finally {
+      setCreatingFile(false);
+    }
+  }, [isCreatingFile, createFile, setCreatingFile]);
+
   // Show dialog for creating a new file
   const handleNewFileDialog = useCallback(() => {
     const choice = prompt(
@@ -43,7 +81,7 @@ function App() {
     } else if (choice === "2") {
       handleCreateInterface();
     }
-  }, []);
+  }, [handleCreateClass, handleCreateInterface]);
 
   // Save current file
   const handleSave = useCallback(() => {
@@ -65,44 +103,6 @@ function App() {
     onSave: handleSave,
     enabled: true,
   });
-
-  const handleCreateClass = async () => {
-    if (isCreatingFile) return;
-
-    const className = prompt("Enter class name:");
-    if (!className) return;
-
-    setCreatingFile(true);
-    try {
-      await createFile(className, "class");
-    } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Failed to create class file"
-      );
-    } finally {
-      setCreatingFile(false);
-    }
-  };
-
-  const handleCreateInterface = async () => {
-    if (isCreatingFile) return;
-
-    const interfaceName = prompt("Enter interface name:");
-    if (!interfaceName) return;
-
-    setCreatingFile(true);
-    try {
-      await createFile(interfaceName, "interface");
-    } catch (error) {
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Failed to create interface file"
-      );
-    } finally {
-      setCreatingFile(false);
-    }
-  };
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden">

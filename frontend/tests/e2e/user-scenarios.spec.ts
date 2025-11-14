@@ -16,15 +16,15 @@
  * ensuring all features work together seamlessly.
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 // Helper function to wait for diagram update
-const waitForDiagramUpdate = async (page: any) => {
+const waitForDiagramUpdate = async (page: Page) => {
     await page.waitForTimeout(600); // Matches debounce time + render
 };
 
 // Helper function to clear and type in Monaco editor
-const typeInEditor = async (page: any, content: string) => {
+const typeInEditor = async (page: Page, content: string) => {
     await page.keyboard.press('Control+A');
     await page.keyboard.type(content);
     await waitForDiagramUpdate(page);
@@ -673,7 +673,7 @@ export class Class2 extends Class1 implements Interface1 {
 export class Class2 extends Class1 {}`);
 
             // Verify edge exists
-            let edges = page.locator('.react-flow__edge');
+            const edges = page.locator('.react-flow__edge');
             await expect(edges.first()).toBeVisible();
 
             // Remove inheritance

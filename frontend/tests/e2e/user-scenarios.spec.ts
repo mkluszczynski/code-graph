@@ -25,8 +25,46 @@ const waitForDiagramUpdate = async (page: Page) => {
 
 // Helper function to clear and type in Monaco editor
 const typeInEditor = async (page: Page, content: string) => {
-    await page.keyboard.press('Control+A');
-    await page.keyboard.type(content);
+    // Direct manipulation via Monaco's API using page.evaluate
+    // This accesses the editor instance and triggers the onDidChangeModelContent event
+    const success = await page.evaluate((newContent: string) => {
+        // The Monaco editor from @monaco-editor/react stores its instance
+        // We need to find it via the global monaco object
+        const monaco = (window as any).monaco;
+        if (!monaco || !monaco.editor) {
+            return false;
+        }
+
+        // Get all editor instances
+        const editors = monaco.editor.getEditors();
+        if (!editors || editors.length === 0) {
+            return false;
+        }
+
+        // Get the first editor instance
+        const editor = editors[0];
+        const model = editor.getModel();
+        if (!model) {
+            return false;
+        }
+
+        // Use pushEditOperations to modify the content
+        // This triggers the onDidChangeModelContent event which React listens to
+        const fullRange = model.getFullModelRange();
+        editor.executeEdits('test', [{
+            range: fullRange,
+            text: newContent,
+            forceMoveMarkers: true
+        }]);
+
+        return true;
+    }, content);
+
+    if (!success) {
+        throw new Error('Failed to update Monaco editor content');
+    }
+
+    // Wait for debounce and diagram update
     await waitForDiagramUpdate(page);
 };
 

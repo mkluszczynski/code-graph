@@ -59,7 +59,7 @@ export function useEditorController() {
 
             // Set up new debounce timer for parsing
             debounceTimerRef.current = setTimeout(() => {
-                parseAndUpdateDiagram(newContent, activeFile.id, activeFile.name);
+                parseAndUpdateDiagram(newContent, activeFile.id);
             }, EDITOR_DEBOUNCE_DELAY_MS);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,12 +70,12 @@ export function useEditorController() {
      * Parses TypeScript code and updates diagram
      */
     const parseAndUpdateDiagram = useCallback(
-        (content: string, fileId: string, fileName: string) => {
+        (content: string, fileId: string) => {
             setIsParsing(true);
 
             try {
                 // Parse the TypeScript code
-                const parseResult = parse(content, fileName);
+                const parseResult = parse(content, fileId);
 
                 // Update parse errors
                 if (parseResult.errors.length > 0) {
@@ -177,7 +177,7 @@ export function useEditorController() {
             setIsDirty(false);
 
             // Parse immediately when file is loaded
-            parseAndUpdateDiagram(activeFile.content, activeFile.id, activeFile.name);
+            parseAndUpdateDiagram(activeFile.content, activeFile.id);
         } else {
             setEditorContent('');
             setIsDirty(false);

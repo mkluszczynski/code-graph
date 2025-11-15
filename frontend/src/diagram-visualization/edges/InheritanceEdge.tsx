@@ -5,23 +5,31 @@
 
 import { BaseEdge, type EdgeProps, getStraightPath } from '@xyflow/react';
 
-export function InheritanceEdge(props: EdgeProps) {
+export function InheritanceEdge({
+    id,
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    markerStart,
+}: EdgeProps) {
     const [edgePath] = getStraightPath({
-        sourceX: props.sourceX,
-        sourceY: props.sourceY,
-        targetX: props.targetX,
-        targetY: props.targetY,
+        sourceX,
+        sourceY,
+        targetX,
+        targetY,
     });
 
     return (
         <BaseEdge
+            id={id}
             path={edgePath}
             markerEnd="url(#inheritance-marker)"
+            markerStart={markerStart}
             style={{
                 stroke: '#000',
                 strokeWidth: 2,
             }}
-            {...props}
         />
     );
 }

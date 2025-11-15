@@ -381,3 +381,27 @@ export interface FileTreeNode {
   /** Whether directory is expanded */
   isExpanded?: boolean;
 }
+
+// ============================================================================
+// Persistence Types (Feature 002)
+// ============================================================================
+
+/**
+ * Tracks storage usage and health
+ */
+export interface StorageMetadata {
+  /** Available storage space (bytes) */
+  available: number;
+  /** Used storage space (bytes) */
+  used: number;
+  /** Total storage quota (bytes) */
+  quota: number;
+  /** Percentage of quota used (0-100) */
+  percentUsed: number;
+  /** Whether IndexedDB is available */
+  isAvailable: boolean;
+  /** Unix timestamp of last quota check */
+  lastChecked: number;
+  /** Whether multiple tabs are detected */
+  hasMultipleTabs: boolean;
+}

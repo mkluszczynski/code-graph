@@ -15,6 +15,8 @@ export interface DiagramNodeProps {
     data: DiagramNodeData;
     /** Whether the node is selected */
     selected?: boolean;
+    /** React Flow internal props - need to be destructured to prevent DOM warnings */
+    [key: string]: unknown;
 }
 
 /**
@@ -26,6 +28,8 @@ export interface DiagramNodeProps {
  * 3. Methods: List of methods with UML notation
  */
 export const DiagramNode: React.FC<DiagramNodeProps> = ({ data, selected }) => {
+    // Note: React Flow passes additional props like sourcePosition, targetPosition, etc.
+    // We only destructure what we need (data, selected) to prevent these from being passed to DOM elements
     return (
         <div
             data-testid={`diagram-node-${data.name}`}

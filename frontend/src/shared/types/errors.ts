@@ -65,9 +65,8 @@ export class ParseError extends Error {
    * Returns a formatted error message with location
    */
   toFormattedString(): string {
-    return `[${this.severity.toUpperCase()}] Line ${this.line}, Column ${
-      this.column
-    }: ${this.message}`;
+    return `[${this.severity.toUpperCase()}] Line ${this.line}, Column ${this.column
+      }: ${this.message}`;
   }
 }
 
@@ -98,5 +97,25 @@ export class DiagramGenerationError extends Error {
   constructor(reason: string) {
     super(`Diagram generation failed: ${reason}`);
     this.name = "DiagramGenerationError";
+  }
+}
+
+/**
+ * Error thrown when storage quota is exceeded
+ */
+export class QuotaExceededError extends Error {
+  constructor(message: string = "Storage quota exceeded. Try deleting unused files.") {
+    super(message);
+    this.name = "QuotaExceededError";
+  }
+}
+
+/**
+ * Error thrown when storage is unavailable
+ */
+export class StorageUnavailableError extends Error {
+  constructor(message: string = "Browser storage is unavailable. Changes will not persist after refresh.") {
+    super(message);
+    this.name = "StorageUnavailableError";
   }
 }

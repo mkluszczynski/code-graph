@@ -152,3 +152,29 @@ export const APP_MAX_ENTITIES_PER_FILE = 30;
  * Maximum number of nodes to render in diagram (performance limit)
  */
 export const APP_MAX_DIAGRAM_NODES = 100;
+
+// ============================================================================
+// Persistence Configuration (Feature 002)
+// ============================================================================
+
+/**
+ * Debounce delay for auto-save (milliseconds)
+ * 
+ * How long to wait after the user stops typing before auto-saving.
+ * Industry standard is 500ms - balances responsiveness and performance.
+ */
+export const AUTO_SAVE_DEBOUNCE_MS = 500;
+
+/**
+ * Storage warning threshold (percentage)
+ * 
+ * Show warning when storage usage exceeds this percentage
+ */
+export const STORAGE_WARNING_THRESHOLD = 90;
+
+/**
+ * Storage error threshold (percentage)
+ * 
+ * Block saves when storage usage exceeds this percentage
+ */
+export const STORAGE_ERROR_THRESHOLD = 95;

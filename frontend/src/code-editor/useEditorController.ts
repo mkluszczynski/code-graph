@@ -10,6 +10,7 @@ import { parse } from '../typescript-parser/TypeScriptParser';
 import { generateDiagram } from '../diagram-visualization/DiagramGenerator';
 import type { ClassDefinition, InterfaceDefinition, Relationship } from '../shared/types';
 import { EDITOR_DEBOUNCE_DELAY_MS } from '../shared/constants';
+import { usePersistenceController } from '../project-management/usePersistenceController';
 
 export function useEditorController() {
     const activeFile = useActiveFile();
@@ -22,6 +23,9 @@ export function useEditorController() {
     const setParsedEntities = useStore((state) => state.setParsedEntities);
     const updateDiagram = useStore((state) => state.updateDiagram);
     const allParsedEntities = useStore((state) => state.parsedEntities);
+    const autoSaveEnabled = useStore((state) => state.autoSaveEnabled);
+
+    const persistenceController = usePersistenceController();
 
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
@@ -52,6 +56,11 @@ export function useEditorController() {
             const isDirty = newContent !== activeFile.content;
             setIsDirty(isDirty);
 
+            // Trigger auto-save if content changed and auto-save is enabled
+            if (isDirty && autoSaveEnabled && persistenceController) {
+                persistenceController.debouncedSaveFile(activeFile.id, newContent);
+            }
+
             // Clear existing debounce timer
             if (debounceTimerRef.current) {
                 clearTimeout(debounceTimerRef.current);
@@ -63,7 +72,7 @@ export function useEditorController() {
             }, EDITOR_DEBOUNCE_DELAY_MS);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [activeFile, setEditorContent, setIsDirty]
+        [activeFile, setEditorContent, setIsDirty, autoSaveEnabled, persistenceController]
     );
 
     /**
@@ -181,11 +190,17 @@ export function useEditorController() {
             setEditorContent(activeFile.content);
             setIsDirty(false);
 
+            // Persist last active file ID to localStorage
+            localStorage.setItem('lastActiveFileId', activeFile.id);
+
             // Parse immediately when file is loaded
             parseAndUpdateDiagram(activeFile.content, activeFile.id);
         } else {
             setEditorContent('');
             setIsDirty(false);
+
+            // Clear last active file from localStorage
+            localStorage.removeItem('lastActiveFileId');
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeFile?.id]); // Only re-run when activeFile ID changes

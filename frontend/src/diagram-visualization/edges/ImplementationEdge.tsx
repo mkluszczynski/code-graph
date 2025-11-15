@@ -5,24 +5,32 @@
 
 import { BaseEdge, type EdgeProps, getStraightPath } from '@xyflow/react';
 
-export function ImplementationEdge(props: EdgeProps) {
+export function ImplementationEdge({
+    id,
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    markerStart,
+}: EdgeProps) {
     const [edgePath] = getStraightPath({
-        sourceX: props.sourceX,
-        sourceY: props.sourceY,
-        targetX: props.targetX,
-        targetY: props.targetY,
+        sourceX,
+        sourceY,
+        targetX,
+        targetY,
     });
 
     return (
         <BaseEdge
+            id={id}
             path={edgePath}
             markerEnd="url(#realization-marker)"
+            markerStart={markerStart}
             style={{
                 stroke: '#000',
                 strokeWidth: 2,
                 strokeDasharray: '5 5', // Dashed line for interface implementation
             }}
-            {...props}
         />
     );
 }

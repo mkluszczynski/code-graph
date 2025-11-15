@@ -74,8 +74,13 @@ export function useEditorController() {
             setIsParsing(true);
 
             try {
+                // Get the filename from the active file
+                const file = useStore.getState().files.find(f => f.id === fileId);
+                const fileName = file?.name || 'Untitled.ts';
+
                 // Parse the TypeScript code
-                const parseResult = parse(content, fileId);
+                // Pass both fileName (for TS compiler) and fileId (for entity references)
+                const parseResult = parse(content, fileName, fileId);
 
                 // Update parse errors
                 if (parseResult.errors.length > 0) {

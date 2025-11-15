@@ -105,7 +105,7 @@ describe('useEditorController - Debouncing (T089)', () => {
 
         // Now parse should be called exactly once with final value
         expect(TypeScriptParser.parse).toHaveBeenCalledTimes(1);
-        expect(TypeScriptParser.parse).toHaveBeenCalledWith('class Test { abc: string }', 'Test.ts');
+        expect(TypeScriptParser.parse).toHaveBeenCalledWith('class Test { abc: string }', 'Test.ts', 'test-1');
     });
 
     it('should reset debounce timer on each new change', () => {
@@ -146,9 +146,14 @@ describe('useEditorController - Debouncing (T089)', () => {
             vi.advanceTimersByTime(100);
         });
 
+        // Wait another 500ms to trigger debounce
+        act(() => {
+            vi.advanceTimersByTime(500);
+        });
+
         // Now called with second value
         expect(TypeScriptParser.parse).toHaveBeenCalledTimes(1);
-        expect(TypeScriptParser.parse).toHaveBeenCalledWith('class B {}', 'Test.ts');
+        expect(TypeScriptParser.parse).toHaveBeenCalledWith('class B {}', 'Test.ts', 'test-2');
     });
 
     it('should update isDirty flag immediately without waiting for debounce', () => {
@@ -264,7 +269,7 @@ describe('useEditorController - Debouncing (T089)', () => {
         });
 
         expect(TypeScriptParser.parse).toHaveBeenCalledTimes(1);
-        expect(TypeScriptParser.parse).toHaveBeenCalledWith('class A { x: string }', 'Test.ts');
+        expect(TypeScriptParser.parse).toHaveBeenCalledWith('class A { x: string }', 'Test.ts', 'test-6');
 
         vi.clearAllMocks();
 
@@ -284,6 +289,6 @@ describe('useEditorController - Debouncing (T089)', () => {
 
         // Parse called again with new value
         expect(TypeScriptParser.parse).toHaveBeenCalledTimes(1);
-        expect(TypeScriptParser.parse).toHaveBeenCalledWith('class A { x: string; y: number }', 'Test.ts');
+        expect(TypeScriptParser.parse).toHaveBeenCalledWith('class A { x: string; y: number }', 'Test.ts', 'test-6');
     });
 });

@@ -121,7 +121,7 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await expect(fileTreeItem).toBeVisible();
 
             // And the UML diagram updates to show the new empty class node
-            const diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
+            const diagramNode = page.getByTestId('diagram-node-Class1');
             await expect(diagramNode).toBeVisible({ timeout: 2500 });
 
             // Verify node contains class name
@@ -140,7 +140,7 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await expect(fileTreeItem).toBeVisible();
 
             // Verify interface node appears in diagram
-            const diagramNode = page.locator('[data-id="Interface1.ts::Interface1"]');
+            const diagramNode = page.getByTestId('diagram-node-Interface1');
             await expect(diagramNode).toBeVisible({ timeout: 2500 });
             await expect(diagramNode).toContainText('Interface1');
         });
@@ -160,9 +160,9 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await expect(page.getByText('Class3.ts')).toBeVisible();
 
             // Verify all 3 nodes appear in diagram
-            await expect(page.locator('[data-id="Class1.ts::Class1"]')).toBeVisible();
-            await expect(page.locator('[data-id="Class2.ts::Class2"]')).toBeVisible();
-            await expect(page.locator('[data-id="Class3.ts::Class3"]')).toBeVisible();
+            await expect(page.getByTestId('diagram-node-Class1')).toBeVisible();
+            await expect(page.getByTestId('diagram-node-Class2')).toBeVisible();
+            await expect(page.getByTestId('diagram-node-Class3')).toBeVisible();
         });
     });
 
@@ -176,8 +176,8 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await ensureSrcFolderExpanded(page);
 
             // Given a UML diagram displays multiple class nodes
-            const class1Node = page.locator('[data-id="Class1.ts::Class1"]');
-            const class2Node = page.locator('[data-id="Class2.ts::Class2"]');
+            const class1Node = page.getByTestId('diagram-node-Class1');
+            const class2Node = page.getByTestId('diagram-node-Class2');
 
             await expect(class1Node).toBeVisible();
             await expect(class2Node).toBeVisible();
@@ -212,7 +212,7 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await ensureSrcFolderExpanded(page);
 
             // Click on interface node
-            const interfaceNode = page.locator('[data-id="Interface1.ts::Interface1"]');
+            const interfaceNode = page.getByTestId('diagram-node-Interface1');
             await interfaceNode.click();
             await page.waitForTimeout(200);
 
@@ -221,7 +221,7 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await expect(selectedFile).toContainText('Interface1.ts');
 
             // Click on class node
-            const classNode = page.locator('[data-id="Class1.ts::Class1"]');
+            const classNode = page.getByTestId('diagram-node-Class1');
             await classNode.click();
             await page.waitForTimeout(200);
 
@@ -311,7 +311,7 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await ensureSrcFolderExpanded(page);
 
             // Click on Class2 node in diagram
-            const class2Node = page.locator('[data-id="Class2.ts::Class2"]');
+            const class2Node = page.getByTestId('diagram-node-Class2');
             await class2Node.click();
             await page.waitForTimeout(200);
 
@@ -320,7 +320,7 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await expect(selectedFile).toContainText('Class2.ts');
 
             // Click on Class1 node in diagram
-            const class1Node = page.locator('[data-id="Class1.ts::Class1"]');
+            const class1Node = page.getByTestId('diagram-node-Class1');
             await class1Node.click();
             await page.waitForTimeout(200);
 
@@ -352,7 +352,7 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await typeInEditor(page, classCode);
 
             // Then the diagram updates to show properties
-            const diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
+            const diagramNode = page.getByTestId('diagram-node-Class1');
             await expect(diagramNode).toContainText('id: number');
             await expect(diagramNode).toContainText('name: string');
             await expect(diagramNode).toContainText('status: boolean');
@@ -382,7 +382,7 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await typeInEditor(page, classCode);
 
             // Verify methods appear in diagram
-            const diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
+            const diagramNode = page.getByTestId('diagram-node-Class1');
             await expect(diagramNode).toContainText('getId()');
             await expect(diagramNode).toContainText('calculateTotal(');
         });
@@ -410,7 +410,7 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await typeInEditor(page, classCode);
 
             // Verify UML symbols are present
-            const diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
+            const diagramNode = page.getByTestId('diagram-node-Class1');
 
             // Check that properties are shown (specific UML notation depends on implementation)
             await expect(diagramNode).toContainText('privateField');
@@ -458,8 +458,8 @@ test.describe('TypeScript UML Graph Visualizer - Complete User Scenarios', () =>
             await typeInEditor(page, interfaceCode);
 
             // Verify both appear correctly in diagram
-            const classNode = page.locator('[data-id="Class1.ts::Class1"]');
-            const interfaceNode = page.locator('[data-id="Interface1.ts::Interface1"]');
+            const classNode = page.getByTestId('diagram-node-Class1');
+            const interfaceNode = page.getByTestId('diagram-node-Interface1');
 
             await expect(classNode).toContainText('Class1');
             await expect(classNode).toContainText('value');
@@ -499,8 +499,8 @@ export class Class2 extends Class1 {
 }`);
 
             // Verify both classes are in diagram
-            await expect(page.locator('[data-id="Class1.ts::Class1"]')).toBeVisible();
-            await expect(page.locator('[data-id="Class2.ts::Class2"]')).toBeVisible();
+            await expect(page.getByTestId('diagram-node-Class1')).toBeVisible();
+            await expect(page.getByTestId('diagram-node-Class2')).toBeVisible();
 
             // Verify inheritance edge exists
             const edges = page.locator('.react-flow__edge');
@@ -536,8 +536,8 @@ export class Class1 implements Interface1 {
 }`);
 
             // Verify both nodes are visible
-            await expect(page.locator('[data-id="Interface1.ts::Interface1"]')).toBeVisible();
-            await expect(page.locator('[data-id="Class1.ts::Class1"]')).toBeVisible();
+            await expect(page.getByTestId('diagram-node-Interface1')).toBeVisible();
+            await expect(page.getByTestId('diagram-node-Class1')).toBeVisible();
 
             // Verify implementation edge exists
             const edges = page.locator('.react-flow__edge');
@@ -571,8 +571,8 @@ export class Class2 {
 }`);
 
             // Verify both classes are visible
-            await expect(page.locator('[data-id="Class1.ts::Class1"]')).toBeVisible();
-            await expect(page.locator('[data-id="Class2.ts::Class2"]')).toBeVisible();
+            await expect(page.getByTestId('diagram-node-Class1')).toBeVisible();
+            await expect(page.getByTestId('diagram-node-Class2')).toBeVisible();
 
             // Verify association edge exists
             const edges = page.locator('.react-flow__edge');
@@ -613,9 +613,9 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Verify all nodes are visible
-            await expect(page.locator('[data-id="Interface1.ts::Interface1"]')).toBeVisible();
-            await expect(page.locator('[data-id="Class1.ts::Class1"]')).toBeVisible();
-            await expect(page.locator('[data-id="Class2.ts::Class2"]')).toBeVisible();
+            await expect(page.getByTestId('diagram-node-Interface1')).toBeVisible();
+            await expect(page.getByTestId('diagram-node-Class1')).toBeVisible();
+            await expect(page.getByTestId('diagram-node-Class2')).toBeVisible();
 
             // Verify multiple edges exist (inheritance + implementation)
             const edges = page.locator('.react-flow__edge');
@@ -641,7 +641,7 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Verify original name in diagram
-            let diagramNode = page.locator('[data-id="Class1.ts::OriginalName"]');
+            let diagramNode = page.getByTestId('diagram-node-OriginalName');
             await expect(diagramNode).toBeVisible();
             await expect(diagramNode).toContainText('OriginalName');
 
@@ -651,7 +651,7 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Verify new name in diagram
-            diagramNode = page.locator('[data-id="Class1.ts::RenamedClass"]');
+            diagramNode = page.getByTestId('diagram-node-RenamedClass');
             await expect(diagramNode).toBeVisible();
             await expect(diagramNode).toContainText('RenamedClass');
         });
@@ -671,7 +671,7 @@ export class Class2 extends Class1 implements Interface1 {
   private secretMethod(): void {}
 }`);
 
-            let diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
+            let diagramNode = page.getByTestId('diagram-node-Class1');
             await expect(diagramNode).toContainText('secretMethod');
 
             // Change to public
@@ -680,7 +680,7 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Diagram should still show the method (visibility symbol may change)
-            diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
+            diagramNode = page.getByTestId('diagram-node-Class1');
             await expect(diagramNode).toContainText('secretMethod');
         });
 
@@ -701,7 +701,7 @@ export class Class2 extends Class1 implements Interface1 {
   private prop3: boolean;
 }`);
 
-            let diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
+            let diagramNode = page.getByTestId('diagram-node-Class1');
             await expect(diagramNode).toContainText('prop1');
             await expect(diagramNode).toContainText('prop2');
             await expect(diagramNode).toContainText('prop3');
@@ -713,7 +713,7 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Verify prop2 is gone
-            diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
+            diagramNode = page.getByTestId('diagram-node-Class1');
             await expect(diagramNode).toContainText('prop1');
             await expect(diagramNode).toContainText('prop3');
             await expect(diagramNode).not.toContainText('prop2');
@@ -770,7 +770,7 @@ export class Class2 extends Class1 {}`);
             await waitForDiagramUpdate(page);
 
             // Verify final state is correct
-            const diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
+            const diagramNode = page.getByTestId('diagram-node-Class1');
             await expect(diagramNode).toContainText('a');
             await expect(diagramNode).toContainText('b');
         });
@@ -881,13 +881,13 @@ export class Class2 extends Class1 {}`);
 
             // Verify all nodes are visible
             for (let i = 1; i <= 7; i++) {
-                const node = page.locator(`[data-id*="Class${i}"]`).first();
+                const node = page.getByTestId(`diagram-node-Class${i}`);
                 await expect(node).toBeVisible({ timeout: 3000 });
             }
 
             // Verify nodes don't overlap (check a sample)
-            const class1Box = await page.locator('[data-id*="Class1"]').first().boundingBox();
-            const class2Box = await page.locator('[data-id*="Class2"]').first().boundingBox();
+            const class1Box = await page.getByTestId('diagram-node-Class1').boundingBox();
+            const class2Box = await page.getByTestId('diagram-node-Class2').boundingBox();
 
             if (class1Box && class2Box) {
                 // Classes should not be at the exact same position
@@ -985,7 +985,7 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Step 6: Navigate via diagram (US2)
-            const interfaceNode = page.locator('[data-id="Interface1.ts::Interface1"]');
+            const interfaceNode = page.getByTestId('diagram-node-Interface1');
             await interfaceNode.click();
             await page.waitForTimeout(200);
 
@@ -1019,7 +1019,7 @@ export class Class2 extends Class1 implements Interface1 {
             await waitForDiagramUpdate(page);
 
             // Verify new members appear
-            const class2Node = page.locator('[data-id="Class2.ts::Class2"]');
+            const class2Node = page.getByTestId('diagram-node-Class2');
             await expect(class2Node).toContainText('newProperty');
             await expect(class2Node).toContainText('newMethod');
         });
@@ -1042,7 +1042,7 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Verify diagram shows valid state
-            let diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
+            let diagramNode = page.getByTestId('diagram-node-Class1');
             await expect(diagramNode).toBeVisible();
             await expect(diagramNode).toContainText('value');
 
@@ -1064,7 +1064,7 @@ export class Class2 extends Class1 implements Interface1 {
 }`);
 
             // Diagram should update with corrected code
-            diagramNode = page.locator('[data-id="Class1.ts::Class1"]');
+            diagramNode = page.getByTestId('diagram-node-Class1');
             await expect(diagramNode).toContainText('fixed');
         });
     });

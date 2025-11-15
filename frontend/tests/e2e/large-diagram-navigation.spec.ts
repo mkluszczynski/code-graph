@@ -90,7 +90,7 @@ test.describe('Large Diagram Navigation (User Story 7)', () => {
         }
 
         // Step 3: Verify all 10 nodes are displayed in the diagram
-        const diagramNodes = page.locator('[data-id^="Class"]');
+        const diagramNodes = page.locator('[data-testid^="diagram-node-Class"]');
         await expect(diagramNodes).toHaveCount(10, { timeout: 2000 });
 
         // Step 4: Test zoom functionality
@@ -158,14 +158,14 @@ test.describe('Large Diagram Navigation (User Story 7)', () => {
 
         // All nodes should be visible after fit view
         for (let i = 1; i <= 10; i++) {
-            const node = page.locator(`[data-id="Class${i}.ts#Class${i}"]`);
+            const node = page.getByTestId(`diagram-node-Class${i}`);
             await expect(node).toBeVisible({ timeout: 1000 });
         }
 
         // Step 8: Verify hierarchical layout (nodes should be arranged top to bottom)
         // Class1 should be at the top, Class10 at the bottom
-        const class1Node = page.locator('[data-id="Class1.ts#Class1"]');
-        const class10Node = page.locator('[data-id="Class10.ts#Class10"]');
+        const class1Node = page.getByTestId('diagram-node-Class1');
+        const class10Node = page.getByTestId('diagram-node-Class10');
 
         const class1Box = await class1Node.boundingBox();
         const class10Box = await class10Node.boundingBox();
@@ -186,7 +186,7 @@ test.describe('Large Diagram Navigation (User Story 7)', () => {
         await page.waitForTimeout(1000);
 
         // Click on Class3 node in the diagram
-        const class3Node = page.locator('[data-id="Class3.ts#Class3"]');
+        const class3Node = page.getByTestId('diagram-node-Class3');
         await class3Node.click();
 
         // Verify the file tree highlights Class3.ts
@@ -206,8 +206,8 @@ test.describe('Large Diagram Navigation (User Story 7)', () => {
         // Get initial positions of first 3 nodes
         await page.waitForTimeout(1000);
 
-        const class1Initial = await page.locator('[data-id="Class1.ts#Class1"]').boundingBox();
-        const class2Initial = await page.locator('[data-id="Class2.ts#Class2"]').boundingBox();
+        const class1Initial = await page.getByTestId('diagram-node-Class1').boundingBox();
+        const class2Initial = await page.getByTestId('diagram-node-Class2').boundingBox();
 
         // Click on different files in the tree
         await page.getByText('Class4.ts').click();
@@ -220,8 +220,8 @@ test.describe('Large Diagram Navigation (User Story 7)', () => {
         await page.waitForTimeout(300);
 
         // Verify node positions haven't changed significantly (layout stability)
-        const class1After = await page.locator('[data-id="Class1.ts#Class1"]').boundingBox();
-        const class2After = await page.locator('[data-id="Class2.ts#Class2"]').boundingBox();
+        const class1After = await page.getByTestId('diagram-node-Class1').boundingBox();
+        const class2After = await page.getByTestId('diagram-node-Class2').boundingBox();
 
         if (class1Initial && class1After && class2Initial && class2After) {
             // Allow for small floating point differences

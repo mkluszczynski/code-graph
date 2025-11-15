@@ -78,29 +78,23 @@ describe("Integration Test: File Tree Navigation", () => {
     const tree = fileTreeManager.buildTree(mockFiles);
     render(<FileTreeView nodes={tree} />);
 
-    // Initially, nested files should not be visible
-    expect(screen.queryByText("Person.ts")).not.toBeInTheDocument();
+    // Initially, Person.ts inside models folder should not be visible
+    expect(screen.queryByTestId("file-Person.ts")).toBeNull();
 
-    // Click on src folder to expand
-    const srcFolder = screen.getByText("src");
-    await user.click(srcFolder);
-
-    // Now we should see direct children
+    // src folder should be auto-expanded, so App.tsx and models folder should be visible
     await waitFor(() => {
-      expect(screen.getByText("App.tsx")).toBeInTheDocument();
+      expect(screen.getByTestId("file-App.tsx")).toBeInTheDocument();
+      expect(screen.getByTestId("folder-models")).toBeInTheDocument();
     });
 
     // Click on models folder to expand
-    await waitFor(() => {
-      expect(screen.getByText("models")).toBeInTheDocument();
-    });
-    const modelsFolder = screen.getByText("models");
+    const modelsFolder = screen.getByTestId("folder-models");
     await user.click(modelsFolder);
 
     // Now we should see Person.ts and User.ts
     await waitFor(() => {
-      expect(screen.getByText("Person.ts")).toBeInTheDocument();
-      expect(screen.getByText("User.ts")).toBeInTheDocument();
+      expect(screen.getByTestId("file-Person.ts")).toBeInTheDocument();
+      expect(screen.getByTestId("file-User.ts")).toBeInTheDocument();
     });
   });
 
@@ -109,17 +103,13 @@ describe("Integration Test: File Tree Navigation", () => {
     const tree = fileTreeManager.buildTree(mockFiles);
     render(<FileTreeView nodes={tree} />);
 
-    // Expand src folder
-    const srcFolder = screen.getByText("src");
-    await user.click(srcFolder);
-
-    // Wait for App.tsx to appear
+    // src folder should be auto-expanded, wait for App.tsx
     await waitFor(() => {
-      expect(screen.getByText("App.tsx")).toBeInTheDocument();
+      expect(screen.getByTestId("file-App.tsx")).toBeInTheDocument();
     });
 
     // Click on App.tsx
-    const appFile = screen.getByText("App.tsx");
+    const appFile = screen.getByTestId("file-App.tsx");
     await user.click(appFile);
 
     // Verify activeFileId is updated in store
@@ -132,23 +122,18 @@ describe("Integration Test: File Tree Navigation", () => {
     const tree = fileTreeManager.buildTree(mockFiles);
     render(<FileTreeView nodes={tree} />);
 
-    // Expand src folder
-    const srcFolder = screen.getByText("src");
-    await user.click(srcFolder);
-
-    // Wait for App.tsx to appear
+    // src folder should be auto-expanded, wait for App.tsx
     await waitFor(() => {
-      expect(screen.getByText("App.tsx")).toBeInTheDocument();
+      expect(screen.getByTestId("file-App.tsx")).toBeInTheDocument();
     });
 
     // Click on App.tsx
-    const appFile = screen.getByText("App.tsx");
-    const appButton = appFile.closest("button");
+    const appFile = screen.getByTestId("file-App.tsx");
     await user.click(appFile);
 
     // Verify the button has the active class
     await waitFor(() => {
-      expect(appButton).toHaveClass("bg-accent");
+      expect(appFile).toHaveClass("selected");
     });
   });
 
@@ -157,32 +142,31 @@ describe("Integration Test: File Tree Navigation", () => {
     const tree = fileTreeManager.buildTree(mockFiles);
     render(<FileTreeView nodes={tree} />);
 
-    // Expand src and models folders
-    await user.click(screen.getByText("src"));
+    // Expand models folder (src should be auto-expanded)
     await waitFor(() => {
-      expect(screen.getByText("models")).toBeInTheDocument();
+      expect(screen.getByTestId("folder-models")).toBeInTheDocument();
     });
-    await user.click(screen.getByText("models"));
+    await user.click(screen.getByTestId("folder-models"));
 
     // Wait for files to appear
     await waitFor(() => {
-      expect(screen.getByText("Person.ts")).toBeInTheDocument();
-      expect(screen.getByText("User.ts")).toBeInTheDocument();
+      expect(screen.getByTestId("file-Person.ts")).toBeInTheDocument();
+      expect(screen.getByTestId("file-User.ts")).toBeInTheDocument();
     });
 
     // Click on Person.ts
-    await user.click(screen.getByText("Person.ts"));
+    await user.click(screen.getByTestId("file-Person.ts"));
     expect(useStore.getState().activeFileId).toBe("file-1");
 
     // Click on User.ts
-    await user.click(screen.getByText("User.ts"));
+    await user.click(screen.getByTestId("file-User.ts"));
     expect(useStore.getState().activeFileId).toBe("file-2");
 
     // Only User.ts should be highlighted now
-    const personButton = screen.getByText("Person.ts").closest("button");
-    const userButton = screen.getByText("User.ts").closest("button");
-    expect(personButton).not.toHaveClass("font-medium");
-    expect(userButton).toHaveClass("font-medium");
+    const personButton = screen.getByTestId("file-Person.ts");
+    const userButton = screen.getByTestId("file-User.ts");
+    expect(personButton).not.toHaveClass("selected");
+    expect(userButton).toHaveClass("selected");
   });
 
   it("should call onFileSelect callback when file is clicked", async () => {
@@ -191,14 +175,13 @@ describe("Integration Test: File Tree Navigation", () => {
     const tree = fileTreeManager.buildTree(mockFiles);
     render(<FileTreeView nodes={tree} onFileSelect={onFileSelect} />);
 
-    // Expand src folder
-    await user.click(screen.getByText("src"));
+    // Wait for src folder to auto-expand and App.tsx to appear
     await waitFor(() => {
-      expect(screen.getByText("App.tsx")).toBeInTheDocument();
+      expect(screen.getByTestId("file-App.tsx")).toBeInTheDocument();
     });
 
     // Click on App.tsx
-    await user.click(screen.getByText("App.tsx"));
+    await user.click(screen.getByTestId("file-App.tsx"));
 
     // Verify callback was called with correct file ID
     expect(onFileSelect).toHaveBeenCalledWith("file-3");
@@ -209,22 +192,18 @@ describe("Integration Test: File Tree Navigation", () => {
     const tree = fileTreeManager.buildTree(mockFiles);
     render(<FileTreeView nodes={tree} />);
 
-    // Expand src folder
-    await user.click(screen.getByText("src"));
-
-    // Should see both direct files and folders
+    // src folder should be auto-expanded, should see both direct files and folders
     await waitFor(() => {
-      expect(screen.getByText("App.tsx")).toBeInTheDocument();
-      expect(screen.getByText("models")).toBeInTheDocument();
-      expect(screen.getByText("services")).toBeInTheDocument();
+      expect(screen.getByTestId("file-App.tsx")).toBeInTheDocument();
+      expect(screen.getByTestId("folder-models")).toBeInTheDocument();
+      expect(screen.getByTestId("folder-services")).toBeInTheDocument();
     });
 
     // Expand services folder
-    await user.click(screen.getByText("services"));
+    await user.click(screen.getByTestId("folder-services"));
 
-    // Should see UserService.ts
     await waitFor(() => {
-      expect(screen.getByText("UserService.ts")).toBeInTheDocument();
+      expect(screen.getByTestId("file-UserService.ts")).toBeInTheDocument();
     });
   });
 });

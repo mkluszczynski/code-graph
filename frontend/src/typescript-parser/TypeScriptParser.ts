@@ -17,11 +17,15 @@ import { performanceMonitor } from '../shared/utils/performance';
  * Parses TypeScript source code and extracts class and interface definitions.
  *
  * @param sourceCode - TypeScript source code to parse
- * @param fileName - Name of the file (for error reporting and ID generation)
+ * @param fileName - Name of the file (for TypeScript compiler error reporting)
+ * @param fileId - Unique file identifier (for entity references and editor navigation)
  * @returns ParseResult containing classes, interfaces, and any errors
  */
-export function parse(sourceCode: string, fileName: string): ParseResult {
+export function parse(sourceCode: string, fileName: string, fileId?: string): ParseResult {
     performanceMonitor.startTimer('TypeScript Parsing');
+
+    // Use fileId for entity fileId property if provided, otherwise fall back to fileName
+    const entityFileId = fileId || fileName;
 
     const result: ParseResult = {
         classes: [],
@@ -39,6 +43,7 @@ export function parse(sourceCode: string, fileName: string): ParseResult {
 
     try {
         // Create a source file from the source code
+        // Use fileName for TypeScript compiler (for error reporting)
         const sourceFile = ts.createSourceFile(
             fileName,
             sourceCode,
@@ -70,7 +75,8 @@ export function parse(sourceCode: string, fileName: string): ParseResult {
         function visit(node: ts.Node) {
             if (ts.isClassDeclaration(node)) {
                 try {
-                    const classInfo = extractClassInfo(node, fileName);
+                    // Pass fileName for ID generation and entityFileId for fileId property
+                    const classInfo = extractClassInfo(node, fileName, entityFileId);
                     result.classes.push(classInfo);
                 } catch (error) {
                     // Log error but continue parsing other classes
@@ -78,7 +84,8 @@ export function parse(sourceCode: string, fileName: string): ParseResult {
                 }
             } else if (ts.isInterfaceDeclaration(node)) {
                 try {
-                    const interfaceInfo = extractInterfaceInfo(node, fileName);
+                    // Pass fileName for ID generation and entityFileId for fileId property
+                    const interfaceInfo = extractInterfaceInfo(node, fileName, entityFileId);
                     result.interfaces.push(interfaceInfo);
                 } catch (error) {
                     // Log error but continue parsing other interfaces

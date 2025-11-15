@@ -15,18 +15,23 @@ import type {
  * Extracts interface information from a TypeScript AST interface declaration node.
  *
  * @param node - TypeScript AST interface declaration node
- * @param fileId - File identifier
+ * @param fileName - File name (for ID generation, e.g., "Test.ts")
+ * @param fileId - File identifier (for fileId property, defaults to fileName if not provided)
  * @returns InterfaceDefinition object
  */
 export function extractInterfaceInfo(
     node: ts.InterfaceDeclaration,
-    fileId: string
+    fileName: string,
+    fileId?: string
 ): InterfaceDefinition {
     // Extract interface name
     const interfaceName = node.name.text;
 
-    // Generate unique ID
-    const id = `${fileId}::${interfaceName}`;
+    // Generate unique ID using fileName for consistent format
+    const id = `${fileName}::${interfaceName}`;
+
+    // Use provided fileId or fall back to fileName for backward compatibility
+    const entityFileId = fileId || fileName;
 
     // Check if interface is exported
     const isExported = node.modifiers?.some(
@@ -78,7 +83,7 @@ export function extractInterfaceInfo(
     return {
         id,
         name: interfaceName,
-        fileId,
+        fileId: entityFileId,
         isExported,
         properties,
         methods,

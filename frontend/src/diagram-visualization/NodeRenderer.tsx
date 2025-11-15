@@ -28,6 +28,7 @@ export interface DiagramNodeProps {
 export const DiagramNode: React.FC<DiagramNodeProps> = ({ data, selected }) => {
     return (
         <div
+            data-testid={`diagram-node-${data.name}`}
             className={cn(
                 "bg-background border-2 rounded-md shadow-md min-w-[180px] max-w-[300px]",
                 "transition-all duration-200",

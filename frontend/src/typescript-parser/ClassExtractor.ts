@@ -12,18 +12,23 @@ import { extractMethods } from './MethodExtractor';
  * Extracts class information from a TypeScript AST class declaration node.
  *
  * @param node - TypeScript AST class declaration node
- * @param fileId - File identifier
+ * @param fileName - File name (for ID generation, e.g., "Test.ts")
+ * @param fileId - File identifier (for fileId property, defaults to fileName if not provided)
  * @returns ClassDefinition object
  */
 export function extractClassInfo(
     node: ts.ClassDeclaration,
-    fileId: string
+    fileName: string,
+    fileId?: string
 ): ClassDefinition {
     // Extract class name
     const className = node.name?.text || 'AnonymousClass';
 
-    // Generate unique ID
-    const id = `${fileId}::${className}`;
+    // Generate unique ID using fileName for consistent format
+    const id = `${fileName}::${className}`;
+
+    // Use provided fileId or fall back to fileName for backward compatibility
+    const entityFileId = fileId || fileName;
 
     // Check if class is abstract
     const isAbstract = node.modifiers?.some(
@@ -82,7 +87,7 @@ export function extractClassInfo(
     return {
         id,
         name: className,
-        fileId,
+        fileId: entityFileId,
         isAbstract,
         isExported,
         properties,

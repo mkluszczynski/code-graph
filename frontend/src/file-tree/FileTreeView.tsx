@@ -4,7 +4,7 @@
  * Recursive file tree component for displaying project files and folders
  */
 
-import { ChevronDown, ChevronRight, File, Folder, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, File, Folder, Trash2, Edit3, Copy } from "lucide-react";
 import React from "react";
 import { useStore } from "../shared/store";
 import { cn } from "../shared/utils";
@@ -12,6 +12,7 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
@@ -37,6 +38,7 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
   const activeFileId = useStore((state) => state.activeFileId);
   const setActiveFile = useStore((state) => state.setActiveFile);
   const deleteFile = useStore((state) => state.deleteFile);
+  const renameFile = useStore((state) => state.renameFile);
   const getFileById = useStore((state) => state.getFileById);
 
   const [expandedFolders, setExpandedFolders] = React.useState<Set<string>>(
@@ -46,6 +48,12 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
   // Delete confirmation dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [fileToDelete, setFileToDelete] = React.useState<{ id: string; name: string } | null>(null);
+
+  // Rename state
+  const [renamingFileId, setRenamingFileId] = React.useState<string | null>(null);
+  const [renameValue, setRenameValue] = React.useState("");
+  const [renameError, setRenameError] = React.useState<string | null>(null);
+  const renameInputRef = React.useRef<HTMLInputElement>(null);
 
   // Auto-expand src folder when it has children (for better UX)
   React.useEffect(() => {
@@ -104,6 +112,55 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
     setFileToDelete(null);
   };
 
+  const handleRenameStart = (fileId: string) => {
+    const file = getFileById(fileId);
+    if (file) {
+      setRenamingFileId(fileId);
+      setRenameValue(file.name);
+      setRenameError(null);
+      // Focus input after render
+      setTimeout(() => {
+        renameInputRef.current?.focus();
+        renameInputRef.current?.select();
+      }, 0);
+    }
+  };
+
+  const handleRenameCommit = async () => {
+    if (!renamingFileId || !renameValue.trim()) {
+      setRenameError("Filename cannot be empty");
+      return;
+    }
+
+    try {
+      await renameFile(renamingFileId, renameValue.trim());
+      setRenamingFileId(null);
+      setRenameValue("");
+      setRenameError(null);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to rename file";
+      setRenameError(errorMessage);
+      // Keep input focused so user can fix the error
+      renameInputRef.current?.focus();
+    }
+  };
+
+  const handleRenameCancel = () => {
+    setRenamingFileId(null);
+    setRenameValue("");
+    setRenameError(null);
+  };
+
+  const handleRenameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleRenameCommit();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      handleRenameCancel();
+    }
+  };
+
   return (
     <div className="w-full">
       {/* Delete confirmation dialog */}
@@ -149,8 +206,7 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
           ) : (
             <ContextMenu>
               <ContextMenuTrigger asChild>
-                <button
-                  onClick={() => handleFileClick(node.id)}
+                <div
                   className={cn(
                     "file-tree-item flex items-center gap-1 w-full px-2 py-1 text-sm rounded-sm transition-colors",
                     "cursor-pointer select-none",
@@ -160,12 +216,45 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
                   )}
                   style={{ paddingLeft: `${level * 12 + 24}px` }}
                   data-testid={`file-${node.name}`}
+                  onClick={() => renamingFileId !== node.id && handleFileClick(node.id)}
                 >
                   <File className="h-4 w-4 shrink-0 text-gray-500" />
-                  <span className="truncate">{node.name}</span>
-                </button>
+                  {renamingFileId === node.id ? (
+                    <div className="flex-1 flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        ref={renameInputRef}
+                        type="text"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onBlur={handleRenameCommit}
+                        onKeyDown={handleRenameKeyDown}
+                        className={cn(
+                          "flex-1 px-1 py-0.5 text-sm bg-background border rounded",
+                          renameError ? "border-destructive" : "border-input"
+                        )}
+                        data-testid={`rename-input-${node.name}`}
+                      />
+                      {renameError && (
+                        <span className="text-xs text-destructive" data-testid="rename-error">
+                          {renameError}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="truncate">{node.name}</span>
+                  )}
+                </div>
               </ContextMenuTrigger>
               <ContextMenuContent>
+                <ContextMenuItem onClick={() => handleRenameStart(node.id)}>
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Rename
+                </ContextMenuItem>
+                <ContextMenuItem>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Duplicate
+                </ContextMenuItem>
+                <ContextMenuSeparator />
                 <ContextMenuItem
                   onClick={() => handleDeleteClick(node.id)}
                   className="text-destructive focus:text-destructive"

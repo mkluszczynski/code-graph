@@ -46,6 +46,7 @@ interface FileSlice {
   updateFile: (fileId: string, updates: Partial<ProjectFile>) => void;
   removeFile: (fileId: string) => void;
   deleteFile: (fileId: string) => Promise<void>;
+  renameFile: (fileId: string, newName: string) => Promise<void>;
   setActiveFile: (fileId: string | null) => void;
   getFileById: (fileId: string) => ProjectFile | undefined;
   setLoadingFiles: (isLoading: boolean) => void;
@@ -102,6 +103,54 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
       state.clearParseErrors(fileId);
     } catch (error) {
       console.error("Failed to delete file:", error);
+      throw error;
+    }
+  },
+
+  renameFile: async (fileId: string, newName: string) => {
+    // Import is lazy to avoid circular dependencies
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const { validateFileName } = await import("../../file-tree/FileOperations");
+    const projectManager = new ProjectManager();
+
+    const file = get().getFileById(fileId);
+    if (!file) {
+      throw new Error(`File with ID ${fileId} not found`);
+    }
+
+    // Validate the new filename
+    const validation = validateFileName(newName);
+    if (!validation.isValid) {
+      throw new Error(validation.error);
+    }
+
+    // Check for duplicate names (excluding current file)
+    const allFiles = get().files;
+    const directory = file.path.substring(0, file.path.lastIndexOf("/"));
+    const newPath = directory ? `${directory}/${newName}` : newName;
+
+    const duplicateFile = allFiles.find(
+      (f) => f.id !== fileId && f.path === newPath
+    );
+    if (duplicateFile) {
+      throw new Error(`A file named "${newName}" already exists`);
+    }
+
+    try {
+      // Update in IndexedDB
+      const updatedFile = await projectManager.updateFile(fileId, {
+        name: newName,
+        path: newPath,
+      });
+
+      // Update store state
+      set((state) => ({
+        files: state.files.map((f) =>
+          f.id === fileId ? updatedFile : f
+        ),
+      }));
+    } catch (error) {
+      console.error("Failed to rename file:", error);
       throw error;
     }
   },

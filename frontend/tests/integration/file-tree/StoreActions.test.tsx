@@ -10,6 +10,7 @@ import type { ProjectFile } from "../../../src/shared/types";
 
 // Mock ProjectManager
 const mockDeleteFile = vi.fn();
+const mockUpdateFile = vi.fn();
 vi.mock("../../../src/project-management/ProjectManager", () => {
     return {
         ProjectManager: class MockProjectManager {
@@ -17,6 +18,11 @@ vi.mock("../../../src/project-management/ProjectManager", () => {
                 mockDeleteFile(id);
                 // Simulate successful delete
                 return Promise.resolve();
+            }
+            async updateFile(id: string, updates: Partial<ProjectFile>) {
+                mockUpdateFile(id, updates);
+                // Simulate successful update - return merged file
+                return Promise.resolve({ id, ...updates } as ProjectFile);
             }
         },
     };
@@ -31,11 +37,13 @@ describe("Store File Operations", () => {
         store.setEditorContent("");
         store.setIsDirty(false);
         mockDeleteFile.mockClear();
+        mockUpdateFile.mockClear();
     });
 
     afterEach(() => {
         // Clean up
         mockDeleteFile.mockClear();
+        mockUpdateFile.mockClear();
     });
 
     describe("deleteFile action", () => {
@@ -173,6 +181,170 @@ describe("Store File Operations", () => {
             const state = useStore.getState();
             expect(state.files.length).toBe(1);
             expect(state.files[0].id).toBe("file-1");
+        });
+    });
+
+    describe("renameFile action", () => {
+        it("should rename a file successfully", async () => {
+            const file: ProjectFile = {
+                id: "file-1",
+                name: "OldName.ts",
+                path: "/src/OldName.ts",
+                content: "class OldName {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file]);
+
+            // Rename the file
+            await useStore.getState().renameFile("file-1", "NewName.ts");
+
+            // Verify file was renamed
+            const state = useStore.getState();
+            const renamedFile = state.files.find((f) => f.id === "file-1");
+            expect(renamedFile).toBeDefined();
+            expect(renamedFile?.name).toBe("NewName.ts");
+            expect(renamedFile?.path).toBe("/src/NewName.ts");
+        });
+
+        it("should reject empty filename", async () => {
+            const file: ProjectFile = {
+                id: "file-1",
+                name: "test.ts",
+                path: "/src/test.ts",
+                content: "class Test {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file]);
+
+            // Attempt to rename to empty string
+            await expect(useStore.getState().renameFile("file-1", "")).rejects.toThrow(
+                "Filename cannot be empty"
+            );
+
+            // Verify file name unchanged
+            const state = useStore.getState();
+            expect(state.files[0].name).toBe("test.ts");
+        });
+
+        it("should reject filename with invalid characters", async () => {
+            const file: ProjectFile = {
+                id: "file-1",
+                name: "test.ts",
+                path: "/src/test.ts",
+                content: "class Test {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file]);
+
+            // Attempt to rename with invalid characters
+            await expect(useStore.getState().renameFile("file-1", "test/invalid.ts")).rejects.toThrow(
+                "Filename cannot contain"
+            );
+
+            // Verify file name unchanged
+            const state = useStore.getState();
+            expect(state.files[0].name).toBe("test.ts");
+        });
+
+        it("should reject duplicate filename in same directory", async () => {
+            const file1: ProjectFile = {
+                id: "file-1",
+                name: "test1.ts",
+                path: "/src/test1.ts",
+                content: "class Test1 {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+            const file2: ProjectFile = {
+                id: "file-2",
+                name: "test2.ts",
+                path: "/src/test2.ts",
+                content: "class Test2 {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file1, file2]);
+
+            // Attempt to rename file1 to test2.ts (duplicate)
+            await expect(useStore.getState().renameFile("file-1", "test2.ts")).rejects.toThrow(
+                'A file named "test2.ts" already exists'
+            );
+
+            // Verify file1 name unchanged
+            const state = useStore.getState();
+            const unchangedFile = state.files.find((f) => f.id === "file-1");
+            expect(unchangedFile?.name).toBe("test1.ts");
+        });
+
+        it("should allow renaming to same name (no-op)", async () => {
+            const file: ProjectFile = {
+                id: "file-1",
+                name: "test.ts",
+                path: "/src/test.ts",
+                content: "class Test {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file]);
+
+            // Rename to same name (should succeed)
+            await expect(useStore.getState().renameFile("file-1", "test.ts")).resolves.not.toThrow();
+
+            // Verify file still exists with same name
+            const state = useStore.getState();
+            expect(state.files[0].name).toBe("test.ts");
+        });
+
+        it("should handle renaming non-existent file", async () => {
+            const file: ProjectFile = {
+                id: "file-1",
+                name: "test.ts",
+                path: "/src/test.ts",
+                content: "class Test {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file]);
+
+            // Attempt to rename non-existent file
+            await expect(useStore.getState().renameFile("non-existent", "NewName.ts")).rejects.toThrow(
+                "not found"
+            );
+
+            // Verify original file unchanged
+            const state = useStore.getState();
+            expect(state.files[0].name).toBe("test.ts");
+        });
+
+        it("should update path correctly when renaming", async () => {
+            const file: ProjectFile = {
+                id: "file-1",
+                name: "Component.tsx",
+                path: "/src/components/Component.tsx",
+                content: "export const Component = () => {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file]);
+
+            // Rename the file
+            await useStore.getState().renameFile("file-1", "MyComponent.tsx");
+
+            // Verify path was updated correctly
+            const state = useStore.getState();
+            const renamedFile = state.files.find((f) => f.id === "file-1");
+            expect(renamedFile?.name).toBe("MyComponent.tsx");
+            expect(renamedFile?.path).toBe("/src/components/MyComponent.tsx");
         });
     });
 });

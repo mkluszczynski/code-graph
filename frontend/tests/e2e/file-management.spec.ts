@@ -413,4 +413,348 @@ test.describe('File Management - Context Menu Operations', () => {
             expect(nodeStillVisible).toBe(false);
         });
     });
+
+    test.describe('User Story 2: Rename Files for Better Organization (P2)', () => {
+        test('should display Rename option in context menu when right-clicking a file', async ({ page }) => {
+            // Given a file exists in the file tree
+            await createClass(page, 'TestClass');
+            await ensureSrcFolderExpanded(page);
+
+            const fileItem = page.getByTestId('file-TestClass.ts');
+            await expect(fileItem).toBeVisible();
+
+            // When the user right-clicks on the file
+            await fileItem.click({ button: 'right' });
+            await page.waitForTimeout(200);
+
+            // Then a context menu appears with Rename option
+            const contextMenu = page.getByRole('menu');
+            await expect(contextMenu).toBeVisible();
+
+            const renameOption = page.getByRole('menuitem', { name: /rename/i });
+            await expect(renameOption).toBeVisible();
+        });
+
+        test('should show inline input field when Rename is selected', async ({ page }) => {
+            // Given a file exists in the file tree
+            await createClass(page, 'TestClass');
+            await rightClickFile(page, 'TestClass.ts');
+
+            // When the user selects "Rename" from the context menu
+            const renameOption = page.getByRole('menuitem', { name: /rename/i });
+            await renameOption.click();
+            await page.waitForTimeout(300);
+
+            // Then an inline input field appears with the current filename
+            const renameInput = page.getByTestId('rename-input-TestClass.ts');
+            await expect(renameInput).toBeVisible();
+            await expect(renameInput).toHaveValue('TestClass.ts');
+            await expect(renameInput).toBeFocused();
+        });
+
+        test('should rename file when Enter is pressed with valid name', async ({ page }) => {
+            // Given a file exists and rename input is shown
+            await createClass(page, 'OldName');
+            await rightClickFile(page, 'OldName.ts');
+
+            const renameOption = page.getByRole('menuitem', { name: /rename/i });
+            await renameOption.click();
+            await page.waitForTimeout(300);
+
+            const renameInput = page.getByTestId('rename-input-OldName.ts');
+            await expect(renameInput).toBeVisible();
+
+            // When the user types a new name and presses Enter
+            await renameInput.fill('NewName.ts');
+            await renameInput.press('Enter');
+            await waitForFileTreeUpdate(page);
+
+            // Then the file appears with the new name in the tree
+            await ensureSrcFolderExpanded(page);
+            const newFileItem = page.getByTestId('file-NewName.ts');
+            await expect(newFileItem).toBeVisible();
+
+            // And the old name is no longer visible
+            const oldFileItem = page.getByTestId('file-OldName.ts');
+            await expect(oldFileItem).not.toBeVisible();
+
+            // And the change persists after page refresh
+            await page.reload();
+            await page.waitForLoadState('networkidle');
+            await page.waitForTimeout(500);
+            await ensureSrcFolderExpanded(page);
+            await expect(page.getByTestId('file-NewName.ts')).toBeVisible();
+        });
+
+        test('should cancel rename when Escape is pressed', async ({ page }) => {
+            // Given a file exists and rename input is shown
+            await createClass(page, 'TestClass');
+            await rightClickFile(page, 'TestClass.ts');
+
+            const renameOption = page.getByRole('menuitem', { name: /rename/i });
+            await renameOption.click();
+            await page.waitForTimeout(300);
+
+            const renameInput = page.getByTestId('rename-input-TestClass.ts');
+            await expect(renameInput).toBeVisible();
+
+            // When the user types a new name and presses Escape
+            await renameInput.fill('DifferentName.ts');
+            await renameInput.press('Escape');
+            await page.waitForTimeout(300);
+
+            // Then the original filename is retained
+            await ensureSrcFolderExpanded(page);
+            const originalFileItem = page.getByTestId('file-TestClass.ts');
+            await expect(originalFileItem).toBeVisible();
+
+            // And the new name is not present
+            const newFileItem = page.getByTestId('file-DifferentName.ts');
+            await expect(newFileItem).not.toBeVisible();
+        });
+
+        test('should show error message for invalid filename', async ({ page }) => {
+            // Given a file exists and rename input is shown
+            await createClass(page, 'TestClass');
+            await rightClickFile(page, 'TestClass.ts');
+
+            const renameOption = page.getByRole('menuitem', { name: /rename/i });
+            await renameOption.click();
+            await page.waitForTimeout(300);
+
+            const renameInput = page.getByTestId('rename-input-TestClass.ts');
+            await expect(renameInput).toBeVisible();
+
+            // When the user enters an invalid filename with special characters
+            await renameInput.fill('Invalid/Name.ts');
+            await renameInput.press('Enter');
+            await page.waitForTimeout(300);
+
+            // Then an error message appears
+            const errorMessage = page.getByTestId('rename-error');
+            await expect(errorMessage).toBeVisible();
+            await expect(errorMessage).toContainText(/cannot contain/i);
+
+            // And the input remains focused for correction
+            await expect(renameInput).toBeFocused();
+
+            // And the original filename is retained
+            await renameInput.press('Escape');
+            await page.waitForTimeout(300);
+            await ensureSrcFolderExpanded(page);
+            await expect(page.getByTestId('file-TestClass.ts')).toBeVisible();
+        });
+
+        test('should show error for duplicate filename', async ({ page }) => {
+            // Given multiple files exist
+            await createClass(page, 'Class1');
+            await createClass(page, 'Class2');
+            await ensureSrcFolderExpanded(page);
+
+            // When user tries to rename Class1 to Class2 (duplicate)
+            await rightClickFile(page, 'Class1.ts');
+            const renameOption = page.getByRole('menuitem', { name: /rename/i });
+            await renameOption.click();
+            await page.waitForTimeout(300);
+
+            const renameInput = page.getByTestId('rename-input-Class1.ts');
+            await expect(renameInput).toBeVisible();
+
+            await renameInput.fill('Class2.ts');
+            await renameInput.press('Enter');
+            await page.waitForTimeout(300);
+
+            // Then an error message appears
+            const errorMessage = page.getByTestId('rename-error');
+            await expect(errorMessage).toBeVisible();
+            await expect(errorMessage).toContainText(/already exists/i);
+
+            // And both original files remain unchanged
+            await renameInput.press('Escape');
+            await page.waitForTimeout(300);
+            await ensureSrcFolderExpanded(page);
+            await expect(page.getByTestId('file-Class1.ts')).toBeVisible();
+            await expect(page.getByTestId('file-Class2.ts')).toBeVisible();
+        });
+
+        test('should update editor tab when active file is renamed', async ({ page }) => {
+            // Given a file is open in the editor
+            await createClass(page, 'OldName');
+            await ensureSrcFolderExpanded(page);
+
+            const fileItem = page.getByTestId('file-OldName.ts');
+            await fileItem.click();
+            await page.waitForTimeout(500);
+
+            // Verify editor is open with content
+            const editor = page.locator('.monaco-editor');
+            await expect(editor).toBeVisible();
+
+            // When the file is renamed
+            await rightClickFile(page, 'OldName.ts');
+            const renameOption = page.getByRole('menuitem', { name: /rename/i });
+            await renameOption.click();
+            await page.waitForTimeout(300);
+
+            const renameInput = page.getByTestId('rename-input-OldName.ts');
+            await renameInput.fill('NewName.ts');
+            await renameInput.press('Enter');
+            await waitForFileTreeUpdate(page);
+
+            // Then the editor continues showing the file with its new name
+            await expect(editor).toBeVisible();
+
+            // And the file tree shows the new name as active
+            await ensureSrcFolderExpanded(page);
+            const newFileItem = page.getByTestId('file-NewName.ts');
+            await expect(newFileItem).toBeVisible();
+            await expect(newFileItem).toHaveClass(/selected|active/);
+        });
+
+        test('should preserve file content after rename', async ({ page }) => {
+            // Given a file with specific content
+            await createClass(page, 'TestClass');
+            await ensureSrcFolderExpanded(page);
+
+            // Click to open in editor
+            const fileItem = page.getByTestId('file-TestClass.ts');
+            await fileItem.click();
+            await page.waitForTimeout(500);
+
+            // Get the content from editor
+            const editor = page.locator('.monaco-editor');
+            await expect(editor).toBeVisible();
+            const originalContent = await editor.textContent();
+
+            // When the file is renamed
+            await rightClickFile(page, 'TestClass.ts');
+            const renameOption = page.getByRole('menuitem', { name: /rename/i });
+            await renameOption.click();
+            await page.waitForTimeout(300);
+
+            const renameInput = page.getByTestId('rename-input-TestClass.ts');
+            await renameInput.fill('RenamedClass.ts');
+            await renameInput.press('Enter');
+            await waitForFileTreeUpdate(page);
+
+            // Then the file content remains the same
+            await ensureSrcFolderExpanded(page);
+            const renamedFileItem = page.getByTestId('file-RenamedClass.ts');
+            await renamedFileItem.click();
+            await page.waitForTimeout(300);
+
+            const newContent = await editor.textContent();
+            expect(newContent).toContain('class'); // Content is preserved
+            expect(newContent).toBeTruthy();
+        });
+
+        test('should complete rename operation within performance targets', async ({ page }) => {
+            // Given a file exists
+            await createClass(page, 'TestClass');
+            await ensureSrcFolderExpanded(page);
+
+            // Measure time from right-click to rename completion
+            const startTime = Date.now();
+
+            // Right-click (click 1)
+            await rightClickFile(page, 'TestClass.ts');
+
+            // Select Rename (click 2)
+            const renameOption = page.getByRole('menuitem', { name: /rename/i });
+            await renameOption.click();
+            await page.waitForTimeout(100);
+
+            // Type new name and press Enter (click 3 equivalent)
+            const renameInput = page.getByTestId('rename-input-TestClass.ts');
+            await renameInput.fill('NewName.ts');
+            await renameInput.press('Enter');
+            await waitForFileTreeUpdate(page);
+
+            const endTime = Date.now();
+            const totalTime = endTime - startTime;
+
+            // Verify file is renamed
+            const newFileItem = page.getByTestId('file-NewName.ts');
+            await expect(newFileItem).toBeVisible();
+
+            // Success Criteria SC-001: Within 3 clicks (verified by test steps)
+            // Success Criteria SC-002: Operations complete within 2 seconds
+            expect(totalTime).toBeLessThan(2000);
+        });
+
+        test('should handle rename of multiple files independently', async ({ page }) => {
+            // Given multiple files exist
+            await createClass(page, 'Class1');
+            await createClass(page, 'Class2');
+            await createClass(page, 'Class3');
+            await ensureSrcFolderExpanded(page);
+
+            // When user renames Class2
+            await rightClickFile(page, 'Class2.ts');
+            await page.getByRole('menuitem', { name: /rename/i }).click();
+            await page.waitForTimeout(300);
+
+            const renameInput = page.getByTestId('rename-input-Class2.ts');
+            await renameInput.fill('RenamedClass.ts');
+            await renameInput.press('Enter');
+            await waitForFileTreeUpdate(page);
+
+            // Then only Class2 is renamed
+            await ensureSrcFolderExpanded(page);
+            await expect(page.getByTestId('file-Class1.ts')).toBeVisible();
+            await expect(page.getByTestId('file-RenamedClass.ts')).toBeVisible();
+            await expect(page.getByTestId('file-Class3.ts')).toBeVisible();
+            await expect(page.getByTestId('file-Class2.ts')).not.toBeVisible();
+        });
+
+        test('should allow renaming file with different extension', async ({ page }) => {
+            // Given a TypeScript file exists
+            await createClass(page, 'TestClass');
+            await ensureSrcFolderExpanded(page);
+
+            // When user renames with different extension
+            await rightClickFile(page, 'TestClass.ts');
+            await page.getByRole('menuitem', { name: /rename/i }).click();
+            await page.waitForTimeout(300);
+
+            const renameInput = page.getByTestId('rename-input-TestClass.ts');
+            await renameInput.fill('TestClass.tsx');
+            await renameInput.press('Enter');
+            await waitForFileTreeUpdate(page);
+
+            // Then the file is renamed with new extension
+            await ensureSrcFolderExpanded(page);
+            await expect(page.getByTestId('file-TestClass.tsx')).toBeVisible();
+            await expect(page.getByTestId('file-TestClass.ts')).not.toBeVisible();
+        });
+
+        test('should handle empty filename gracefully', async ({ page }) => {
+            // Given a file exists and rename input is shown
+            await createClass(page, 'TestClass');
+            await rightClickFile(page, 'TestClass.ts');
+
+            const renameOption = page.getByRole('menuitem', { name: /rename/i });
+            await renameOption.click();
+            await page.waitForTimeout(300);
+
+            const renameInput = page.getByTestId('rename-input-TestClass.ts');
+            await expect(renameInput).toBeVisible();
+
+            // When the user clears the filename and presses Enter
+            await renameInput.fill('');
+            await renameInput.press('Enter');
+            await page.waitForTimeout(300);
+
+            // Then an error message appears
+            const errorMessage = page.getByTestId('rename-error');
+            await expect(errorMessage).toBeVisible();
+            await expect(errorMessage).toContainText(/cannot be empty/i);
+
+            // And the original filename is retained
+            await renameInput.press('Escape');
+            await page.waitForTimeout(300);
+            await ensureSrcFolderExpanded(page);
+            await expect(page.getByTestId('file-TestClass.ts')).toBeVisible();
+        });
+    });
 });

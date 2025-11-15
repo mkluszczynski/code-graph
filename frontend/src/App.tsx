@@ -1,166 +1,44 @@
-import { useMemo, useCallback, useEffect, useState } from "react";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "./components/ui/resizable";
-import { AddButton } from "./components/AddButton";
 import { CodeEditor } from "./code-editor/CodeEditor";
 import { DiagramRenderer } from "./diagram-visualization/DiagramRenderer";
-import { FileTreeManager } from "./file-tree/FileTreeManager";
-import { FileTreeView } from "./file-tree/FileTreeView";
+import { FileTreePanel } from "./components/FileTreePanel";
 import { useProjectManager } from "./shared/hooks/useProjectManager";
 import { useStore } from "./shared/store";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useKeyboardShortcuts } from "./shared/hooks/useKeyboardShortcuts";
 import { ThemeToggle } from "./components/ThemeToggle";
-import { PersistenceController } from "./project-management/PersistenceController";
 import { PersistenceControllerContext } from "./project-management/PersistenceControllerContext";
-import { StorageUnavailableError } from "./shared/types/errors";
 import { StorageWarningBanner } from "./components/StorageWarningBanner";
+import { usePersistence } from "./shared/hooks/usePersistence";
+import { useFileCreation } from "./shared/hooks/useFileCreation";
+import { useSaveFile } from "./shared/hooks/useSaveFile";
+import { useBeforeUnload } from "./shared/hooks/useBeforeUnload";
 
 function App() {
   const { createFile, isInitialized, projectManager } = useProjectManager();
   const files = useStore((state) => state.files);
-  const isCreatingFile = useStore((state) => state.isCreatingFile);
-  const setCreatingFile = useStore((state) => state.setCreatingFile);
-  const activeFileId = useStore((state) => state.activeFileId);
-  const updateFile = useStore((state) => state.updateFile);
-  const editorContent = useStore((state) => state.editorContent);
-  const isDirty = useStore((state) => state.isDirty);
-  const setIsDirty = useStore((state) => state.setIsDirty);
 
-  // Persistence controller state
-  const [persistenceController, setPersistenceController] =
-    useState<PersistenceController | null>(null);
-  const [storageWarning, setStorageWarning] = useState<string | null>(null);
+  // Initialize persistence controller and handle storage warnings
+  const { persistenceController, storageWarning, setStorageWarning } =
+    usePersistence(isInitialized, projectManager);
 
-  // Initialize persistence controller
-  useEffect(() => {
-    const initPersistence = async () => {
-      if (!isInitialized) return;
+  // Handle file creation (class/interface)
+  const {
+    handleCreateClass,
+    handleCreateInterface,
+    handleNewFileDialog,
+    isCreatingFile,
+  } = useFileCreation(createFile);
 
-      try {
-        const controller = new PersistenceController(projectManager);
-        await controller.initialize();
-        setPersistenceController(controller);
-        setStorageWarning(null);
-      } catch (error) {
-        if (error instanceof StorageUnavailableError) {
-          setStorageWarning(error.message);
-        } else {
-          console.error("Failed to initialize persistence:", error);
-          setStorageWarning("Storage initialization failed. Changes may not persist.");
-        }
-      }
-    };
+  // Handle file saving
+  const { handleSave } = useSaveFile();
 
-    initPersistence();
-
-    // Cleanup on unmount
-    return () => {
-      persistenceController?.cleanup();
-    };
-  }, [isInitialized, projectManager]);
-
-  // Add beforeunload listener for crash recovery debugging
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      const { isSaving, pendingSaves, lastSavedTimestamp } = useStore.getState();
-
-      // Log save status for debugging
-      console.log('[CRASH RECOVERY] Page unloading - Save status:', {
-        isSaving,
-        pendingSavesCount: pendingSaves.size,
-        lastSavedTimestamp,
-        timeSinceLastSave: lastSavedTimestamp
-          ? Date.now() - lastSavedTimestamp
-          : null,
-      });
-
-      // If there are pending saves or actively saving, warn user
-      if (isSaving || pendingSaves.size > 0) {
-        const message = 'Changes are being saved. Leaving now may lose recent edits.';
-        e.preventDefault();
-        e.returnValue = message;
-        return message;
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []);
-
-  // Build file tree from files
-  const fileTreeManager = useMemo(() => new FileTreeManager(), []);
-  const fileTree = useMemo(() => {
-    return fileTreeManager.buildTree(files);
-  }, [files, fileTreeManager]);
-
-  const handleCreateClass = useCallback(async () => {
-    if (isCreatingFile) return;
-
-    const className = prompt("Enter class name:");
-    if (!className) return;
-
-    setCreatingFile(true);
-    try {
-      await createFile(className, "class");
-    } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Failed to create class file"
-      );
-    } finally {
-      setCreatingFile(false);
-    }
-  }, [isCreatingFile, createFile, setCreatingFile]);
-
-  const handleCreateInterface = useCallback(async () => {
-    if (isCreatingFile) return;
-
-    const interfaceName = prompt("Enter interface name:");
-    if (!interfaceName) return;
-
-    setCreatingFile(true);
-    try {
-      await createFile(interfaceName, "interface");
-    } catch (error) {
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Failed to create interface file"
-      );
-    } finally {
-      setCreatingFile(false);
-    }
-  }, [isCreatingFile, createFile, setCreatingFile]);
-
-  // Show dialog for creating a new file
-  const handleNewFileDialog = useCallback(() => {
-    const choice = prompt(
-      "Choose file type:\n1. Class\n2. Interface\n\nEnter 1 or 2:"
-    );
-
-    if (choice === "1") {
-      handleCreateClass();
-    } else if (choice === "2") {
-      handleCreateInterface();
-    }
-  }, [handleCreateClass, handleCreateInterface]);
-
-  // Save current file
-  const handleSave = useCallback(() => {
-    if (!activeFileId || !isDirty) return;
-
-    updateFile(activeFileId, {
-      content: editorContent,
-      lastModified: Date.now(),
-    });
-    setIsDirty(false);
-
-    // Show save confirmation
-    console.log("File saved successfully");
-  }, [activeFileId, isDirty, editorContent, updateFile, setIsDirty]);
+  // Setup crash recovery warning
+  useBeforeUnload();
 
   // Setup keyboard shortcuts
   useKeyboardShortcuts({
@@ -201,34 +79,13 @@ function App() {
           <ResizablePanelGroup direction="horizontal">
             {/* Left panel: File Tree */}
             <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-              <aside className="h-full bg-muted border-r flex flex-col">
-                <div className="p-3 border-b bg-background flex items-center justify-between">
-                  <h2 className="text-sm font-medium">Project Files</h2>
-                  <AddButton
-                    onCreateClass={handleCreateClass}
-                    onCreateInterface={handleCreateInterface}
-                    isLoading={isCreatingFile}
-                  />
-                </div>
-                <div className="flex-1 overflow-auto p-2">
-                  {/* File tree */}
-                  {isInitialized && fileTree.length > 0 ? (
-                    <ErrorBoundary
-                      fallback={
-                        <div className="text-sm text-destructive p-2">
-                          Error loading file tree
-                        </div>
-                      }
-                    >
-                      <FileTreeView nodes={fileTree} />
-                    </ErrorBoundary>
-                  ) : (
-                    <div className="text-sm text-muted-foreground">
-                      {isInitialized ? "No files yet" : "Loading..."}
-                    </div>
-                  )}
-                </div>
-              </aside>
+              <FileTreePanel
+                files={files}
+                isInitialized={isInitialized}
+                onCreateClass={handleCreateClass}
+                onCreateInterface={handleCreateInterface}
+                isCreatingFile={isCreatingFile}
+              />
             </ResizablePanel>
 
             <ResizableHandle withHandle />

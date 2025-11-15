@@ -85,11 +85,18 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
     const { ProjectManager } = await import("../../project-management/ProjectManager");
     const projectManager = new ProjectManager();
 
-    try {
-      // Delete from IndexedDB
-      await projectManager.deleteFile(fileId);
+    // Store original state for rollback
+    const originalState = {
+      files: get().files,
+      activeFileId: get().activeFileId,
+      editorContent: get().editorContent,
+      isDirty: get().isDirty,
+      parsedEntities: new Map(get().parsedEntities),
+      parseErrors: new Map(get().parseErrors),
+    };
 
-      // Update store state
+    try {
+      // Optimistic update: Update store state first
       set((state) => ({
         files: state.files.filter((file) => file.id !== fileId),
         // Close editor tab if deleted file was active
@@ -102,9 +109,30 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
       const state = get();
       state.clearParsedEntities(fileId);
       state.clearParseErrors(fileId);
+
+      // Delete from IndexedDB
+      await projectManager.deleteFile(fileId);
     } catch (error) {
       console.error("Failed to delete file:", error);
-      throw error;
+
+      // Rollback to original state on failure
+      set({
+        files: originalState.files,
+        activeFileId: originalState.activeFileId,
+        editorContent: originalState.editorContent,
+        isDirty: originalState.isDirty,
+        parsedEntities: originalState.parsedEntities,
+        parseErrors: originalState.parseErrors,
+      });
+
+      // Provide user-friendly error message
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (errorMessage.includes("quota")) {
+        throw new Error("Storage quota exceeded. Please free up space and try again.");
+      } else if (errorMessage.includes("database")) {
+        throw new Error("Database error. Please try again or refresh the page.");
+      }
+      throw new Error(`Failed to delete file: ${errorMessage}`);
     }
   },
 
@@ -137,8 +165,11 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
       throw new Error(`A file named "${newName}" already exists`);
     }
 
+    // Store original state for rollback
+    const originalFiles = get().files;
+
     try {
-      // Update in IndexedDB
+      // Update in IndexedDB first
       const updatedFile = await projectManager.updateFile(fileId, {
         name: newName,
         path: newPath,
@@ -152,7 +183,18 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
       }));
     } catch (error) {
       console.error("Failed to rename file:", error);
-      throw error;
+
+      // Rollback to original state on failure
+      set({ files: originalFiles });
+
+      // Provide user-friendly error message
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (errorMessage.includes("quota")) {
+        throw new Error("Storage quota exceeded. Please free up space and try again.");
+      } else if (errorMessage.includes("database") || errorMessage.includes("IndexedDB")) {
+        throw new Error("Database error. Please try again or refresh the page.");
+      }
+      throw new Error(`Failed to rename file: ${errorMessage}`);
     }
   },
 
@@ -169,6 +211,9 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
         error: `File with ID ${fileId} not found`,
       };
     }
+
+    // Store original state for rollback
+    const originalFiles = get().files;
 
     try {
       // Get all existing file names to avoid conflicts
@@ -192,10 +237,10 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
         isActive: false,
       };
 
-      // Save to IndexedDB
+      // Save to IndexedDB first
       await projectManager.saveFile(newFile);
 
-      // Add to store
+      // Add to store after successful save
       get().addFile(newFile);
 
       return {
@@ -204,9 +249,26 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
       };
     } catch (error) {
       console.error("Failed to duplicate file:", error);
+
+      // Rollback to original state on failure
+      set({ files: originalFiles });
+
+      // Provide user-friendly error messages
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (errorMessage.includes("quota") || errorMessage.includes("QuotaExceededError")) {
+        return {
+          success: false,
+          error: "Storage quota exceeded. Please delete some files to free up space.",
+        };
+      } else if (errorMessage.includes("database") || errorMessage.includes("IndexedDB")) {
+        return {
+          success: false,
+          error: "Database error. Please try again or refresh the page.",
+        };
+      }
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: `Failed to duplicate file: ${errorMessage}`,
       };
     }
   },

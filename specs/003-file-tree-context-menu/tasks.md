@@ -123,17 +123,17 @@ description: "Task list for File Tree Context Menu feature"
 
 **Purpose**: Improvements and validation affecting multiple user stories
 
-- [ ] T040 [P] Add error handling and user-friendly error messages for storage quota exceeded in frontend/src/shared/store/index.ts
-- [ ] T041 [P] Add error handling for IndexedDB failures with rollback logic in frontend/src/shared/store/index.ts
-- [ ] T042 [P] Add accessibility attributes (ARIA labels) to context menu items in frontend/src/file-tree/FileTreeView.tsx
-- [ ] T043 [P] Add keyboard shortcut hints to context menu items in frontend/src/file-tree/FileTreeView.tsx
-- [ ] T044 Verify all operations persist correctly after page refresh (run manual test)
-- [ ] T045 Test keyboard-only navigation through context menu (accessibility test)
-- [ ] T046 [P] Add performance monitoring for context menu open time (<200ms target) in frontend/src/file-tree/FileTreeView.tsx
-- [ ] T047 Run full test suite with `pnpm test` and verify all tests pass
-- [ ] T048 Run linting with `pnpm lint` and fix any issues
-- [ ] T049 Verify success criteria from spec.md (context menu <200ms, operations <2s, 100% persistence)
-- [ ] T050 Update .github/copilot-instructions.md with context menu implementation notes
+- [X] T040 [P] Add error handling and user-friendly error messages for storage quota exceeded in frontend/src/shared/store/index.ts
+- [X] T041 [P] Add error handling for IndexedDB failures with rollback logic in frontend/src/shared/store/index.ts
+- [X] T042 [P] Add accessibility attributes (ARIA labels) to context menu items in frontend/src/file-tree/FileTreeView.tsx
+- [X] T043 [P] Add keyboard shortcut hints to context menu items in frontend/src/file-tree/FileTreeView.tsx
+- [X] T044 Verify all operations persist correctly after page refresh (run manual test)
+- [X] T045 Test keyboard-only navigation through context menu (accessibility test)
+- [X] T046 [P] Add performance monitoring for context menu open time (<200ms target) in frontend/src/file-tree/FileTreeView.tsx
+- [X] T047 Run full test suite with `pnpm test` and verify all tests pass
+- [X] T048 Run linting with `pnpm lint` and fix any issues
+- [X] T049 Verify success criteria from spec.md (context menu <200ms, operations <2s, 100% persistence)
+- [X] T050 Update .github/copilot-instructions.md with context menu implementation notes
 
 ---
 

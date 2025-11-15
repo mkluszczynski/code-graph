@@ -105,15 +105,15 @@ description: "Task list for File Tree Context Menu feature"
 
 ### Implementation for User Story 3
 
-- [ ] T031 [P] [US3] Add duplicateFile action to FileSlice in frontend/src/shared/store/index.ts
-- [ ] T032 [US3] Write integration tests for duplicateFile store action in frontend/tests/integration/file-tree/StoreActions.test.tsx
-- [ ] T033 [US3] Add Duplicate option to context menu in frontend/src/file-tree/FileTreeView.tsx
-- [ ] T034 [US3] Implement duplicate operation handler in frontend/src/file-tree/FileTreeView.tsx
-- [ ] T035 [US3] Connect duplicate operation to ProjectManager.saveFile() for persistence in frontend/src/shared/store/index.ts
-- [ ] T036 [US3] Add logic to select newly duplicated file in tree in frontend/src/file-tree/FileTreeView.tsx
-- [ ] T037 [US3] Write integration tests for context menu duplicate workflow in frontend/tests/integration/file-tree/ContextMenu.test.tsx
-- [ ] T038 [US3] Write E2E test for User Story 3 duplicate workflow in frontend/tests/e2e/file-management.spec.ts
-- [ ] T039 [US3] Run E2E tests with `pnpm test:e2e frontend/tests/e2e/file-management.spec.ts`
+- [X] T031 [P] [US3] Add duplicateFile action to FileSlice in frontend/src/shared/store/index.ts
+- [X] T032 [US3] Write integration tests for duplicateFile store action in frontend/tests/integration/file-tree/StoreActions.test.tsx
+- [X] T033 [US3] Add Duplicate option to context menu in frontend/src/file-tree/FileTreeView.tsx
+- [X] T034 [US3] Implement duplicate operation handler in frontend/src/file-tree/FileTreeView.tsx
+- [X] T035 [US3] Connect duplicate operation to ProjectManager.saveFile() for persistence in frontend/src/shared/store/index.ts
+- [X] T036 [US3] Add logic to select newly duplicated file in tree in frontend/src/file-tree/FileTreeView.tsx
+- [X] T037 [US3] Write integration tests for context menu duplicate workflow in frontend/tests/integration/file-tree/ContextMenu.test.tsx
+- [X] T038 [US3] Write E2E test for User Story 3 duplicate workflow in frontend/tests/e2e/file-management.spec.ts
+- [X] T039 [US3] Run E2E tests with `pnpm test:e2e frontend/tests/e2e/file-management.spec.ts`
 
 **Checkpoint**: All user stories (1, 2, 3) are independently functional - delete, rename, and duplicate all work
 

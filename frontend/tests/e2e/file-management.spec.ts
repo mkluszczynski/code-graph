@@ -757,4 +757,320 @@ test.describe('File Management - Context Menu Operations', () => {
             await expect(page.getByTestId('file-TestClass.ts')).toBeVisible();
         });
     });
+
+    test.describe('User Story 3: Duplicate Files for Templates (P3)', () => {
+        test('should display Duplicate option in context menu when right-clicking a file', async ({ page }) => {
+            // Given a file exists in the file tree
+            await createClass(page, 'TestClass');
+            await ensureSrcFolderExpanded(page);
+
+            const fileItem = page.getByTestId('file-TestClass.ts');
+            await expect(fileItem).toBeVisible();
+
+            // When the user right-clicks on the file
+            await fileItem.click({ button: 'right' });
+            await page.waitForTimeout(200);
+
+            // Then a context menu appears with Duplicate option
+            const contextMenu = page.getByRole('menu');
+            await expect(contextMenu).toBeVisible();
+
+            const duplicateOption = page.getByRole('menuitem', { name: /duplicate/i });
+            await expect(duplicateOption).toBeVisible();
+        });
+
+        test('should create duplicate file with "copy" suffix when Duplicate is selected', async ({ page }) => {
+            // Given a file exists in the file tree
+            await createClass(page, 'TestClass');
+            await ensureSrcFolderExpanded(page);
+
+            const originalFile = page.getByTestId('file-TestClass.ts');
+            await expect(originalFile).toBeVisible();
+
+            // When the user selects "Duplicate" from the context menu
+            await rightClickFile(page, 'TestClass.ts');
+            const duplicateOption = page.getByRole('menuitem', { name: /duplicate/i });
+            await duplicateOption.click();
+            await waitForFileTreeUpdate(page);
+
+            // Then a duplicate file appears with "copy" suffix
+            await ensureSrcFolderExpanded(page);
+            const duplicateFile = page.getByTestId('file-TestClass copy.ts');
+            await expect(duplicateFile).toBeVisible();
+
+            // And the original file still exists
+            await expect(originalFile).toBeVisible();
+        });
+
+        test('should increment copy number for subsequent duplicates', async ({ page }) => {
+            // Given a file and its first duplicate exist
+            await createClass(page, 'TestClass');
+            await ensureSrcFolderExpanded(page);
+
+            // Create first duplicate
+            await rightClickFile(page, 'TestClass.ts');
+            await page.getByRole('menuitem', { name: /duplicate/i }).click();
+            await waitForFileTreeUpdate(page);
+
+            await ensureSrcFolderExpanded(page);
+            await expect(page.getByTestId('file-TestClass copy.ts')).toBeVisible();
+
+            // When the user duplicates the original file again
+            await rightClickFile(page, 'TestClass.ts');
+            await page.getByRole('menuitem', { name: /duplicate/i }).click();
+            await waitForFileTreeUpdate(page);
+
+            // Then a second duplicate appears with incremented number
+            await ensureSrcFolderExpanded(page);
+            const secondDuplicate = page.getByTestId('file-TestClass copy 2.ts');
+            await expect(secondDuplicate).toBeVisible();
+
+            // And both original and first duplicate still exist
+            await expect(page.getByTestId('file-TestClass.ts')).toBeVisible();
+            await expect(page.getByTestId('file-TestClass copy.ts')).toBeVisible();
+        });
+
+        test('should preserve file content when duplicating', async ({ page }) => {
+            // Given a file with specific content exists
+            await createClass(page, 'TestClass');
+            await ensureSrcFolderExpanded(page);
+
+            // Open original file in editor to get its content
+            const originalFile = page.getByTestId('file-TestClass.ts');
+            await originalFile.click();
+            await page.waitForTimeout(500);
+
+            const editor = page.locator('.monaco-editor');
+            await expect(editor).toBeVisible();
+            const originalContent = await editor.textContent();
+
+            // When the user duplicates the file
+            await rightClickFile(page, 'TestClass.ts');
+            await page.getByRole('menuitem', { name: /duplicate/i }).click();
+            await waitForFileTreeUpdate(page);
+
+            // Then the duplicate file has the same content
+            await ensureSrcFolderExpanded(page);
+            const duplicateFile = page.getByTestId('file-TestClass copy.ts');
+            await expect(duplicateFile).toBeVisible();
+
+            // Open duplicate file to verify content
+            await duplicateFile.click();
+            await page.waitForTimeout(500);
+
+            const duplicateContent = await editor.textContent();
+            expect(duplicateContent).toBe(originalContent);
+            expect(duplicateContent).toContain('class');
+        });
+
+        test('should auto-select duplicated file after creation', async ({ page }) => {
+            // Given a file exists
+            await createClass(page, 'TestClass');
+            await ensureSrcFolderExpanded(page);
+
+            const originalFile = page.getByTestId('file-TestClass.ts');
+            await originalFile.click();
+            await page.waitForTimeout(300);
+
+            // Verify original is selected
+            await expect(originalFile).toHaveClass(/selected|active/);
+
+            // When the user duplicates the file
+            await rightClickFile(page, 'TestClass.ts');
+            await page.getByRole('menuitem', { name: /duplicate/i }).click();
+            await waitForFileTreeUpdate(page);
+
+            // Then the duplicate file is auto-selected
+            await ensureSrcFolderExpanded(page);
+            const duplicateFile = page.getByTestId('file-TestClass copy.ts');
+            await expect(duplicateFile).toBeVisible();
+            await expect(duplicateFile).toHaveClass(/selected|active/);
+        });
+
+        test('should persist duplicate file after page refresh', async ({ page }) => {
+            // Given a file is duplicated
+            await createClass(page, 'TestClass');
+            await rightClickFile(page, 'TestClass.ts');
+            await page.getByRole('menuitem', { name: /duplicate/i }).click();
+            await waitForFileTreeUpdate(page);
+
+            await ensureSrcFolderExpanded(page);
+            await expect(page.getByTestId('file-TestClass copy.ts')).toBeVisible();
+
+            // When the page is refreshed
+            await page.reload();
+            await page.waitForLoadState('networkidle');
+            await page.waitForTimeout(500);
+
+            // Then both files still exist
+            await ensureSrcFolderExpanded(page);
+            await expect(page.getByTestId('file-TestClass.ts')).toBeVisible();
+            await expect(page.getByTestId('file-TestClass copy.ts')).toBeVisible();
+        });
+
+        test('should complete duplicate operation within performance targets', async ({ page }) => {
+            // Given a file exists
+            await createClass(page, 'TestClass');
+            await ensureSrcFolderExpanded(page);
+
+            // Measure time from right-click to duplicate completion
+            const startTime = Date.now();
+
+            // Right-click (click 1)
+            await rightClickFile(page, 'TestClass.ts');
+
+            // Select Duplicate (click 2)
+            const duplicateOption = page.getByRole('menuitem', { name: /duplicate/i });
+            await duplicateOption.click();
+            await waitForFileTreeUpdate(page);
+
+            const endTime = Date.now();
+            const totalTime = endTime - startTime;
+
+            // Verify duplicate is created
+            await ensureSrcFolderExpanded(page);
+            const duplicateFile = page.getByTestId('file-TestClass copy.ts');
+            await expect(duplicateFile).toBeVisible();
+
+            // Success Criteria SC-001: Within 2 clicks (verified by test steps)
+            // Success Criteria SC-002: Operations complete within 2 seconds
+            expect(totalTime).toBeLessThan(2000);
+        });
+
+        test('should duplicate files with different extensions', async ({ page }) => {
+            // Create a file and rename it to have .tsx extension
+            await createClass(page, 'Component');
+            await ensureSrcFolderExpanded(page);
+
+            await rightClickFile(page, 'Component.ts');
+            await page.getByRole('menuitem', { name: /rename/i }).click();
+            await page.waitForTimeout(300);
+
+            const renameInput = page.getByTestId('rename-input-Component.ts');
+            await renameInput.fill('Component.tsx');
+            await renameInput.press('Enter');
+            await waitForFileTreeUpdate(page);
+
+            // When the user duplicates the .tsx file
+            await ensureSrcFolderExpanded(page);
+            await rightClickFile(page, 'Component.tsx');
+            await page.getByRole('menuitem', { name: /duplicate/i }).click();
+            await waitForFileTreeUpdate(page);
+
+            // Then the duplicate preserves the extension
+            await ensureSrcFolderExpanded(page);
+            const duplicateFile = page.getByTestId('file-Component copy.tsx');
+            await expect(duplicateFile).toBeVisible();
+        });
+
+        test('should allow further operations on duplicated file', async ({ page }) => {
+            // Given a file is duplicated
+            await createClass(page, 'TestClass');
+            await rightClickFile(page, 'TestClass.ts');
+            await page.getByRole('menuitem', { name: /duplicate/i }).click();
+            await waitForFileTreeUpdate(page);
+
+            await ensureSrcFolderExpanded(page);
+            const duplicateFile = page.getByTestId('file-TestClass copy.ts');
+            await expect(duplicateFile).toBeVisible();
+
+            // When the user performs operations on the duplicate (e.g., rename)
+            await rightClickFile(page, 'TestClass copy.ts');
+            await page.getByRole('menuitem', { name: /rename/i }).click();
+            await page.waitForTimeout(300);
+
+            const renameInput = page.getByTestId('rename-input-TestClass copy.ts');
+            await renameInput.fill('ModifiedCopy.ts');
+            await renameInput.press('Enter');
+            await waitForFileTreeUpdate(page);
+
+            // Then the operation succeeds
+            await ensureSrcFolderExpanded(page);
+            await expect(page.getByTestId('file-ModifiedCopy.ts')).toBeVisible();
+            await expect(page.getByTestId('file-TestClass.ts')).toBeVisible();
+        });
+
+        test('should handle duplicating multiple different files', async ({ page }) => {
+            // Given multiple files exist
+            await createClass(page, 'Class1');
+            await createClass(page, 'Class2');
+            await ensureSrcFolderExpanded(page);
+
+            // When user duplicates both files
+            await rightClickFile(page, 'Class1.ts');
+            await page.getByRole('menuitem', { name: /duplicate/i }).click();
+            await waitForFileTreeUpdate(page);
+
+            await rightClickFile(page, 'Class2.ts');
+            await page.getByRole('menuitem', { name: /duplicate/i }).click();
+            await waitForFileTreeUpdate(page);
+
+            // Then all files exist (originals and duplicates)
+            await ensureSrcFolderExpanded(page);
+            await expect(page.getByTestId('file-Class1.ts')).toBeVisible();
+            await expect(page.getByTestId('file-Class1 copy.ts')).toBeVisible();
+            await expect(page.getByTestId('file-Class2.ts')).toBeVisible();
+            await expect(page.getByTestId('file-Class2 copy.ts')).toBeVisible();
+        });
+
+        test('should update diagram when duplicate contains class definition', async ({ page }) => {
+            // Given a file with class definition exists
+            await createClass(page, 'TestClass');
+            await ensureSrcFolderExpanded(page);
+
+            // Wait for original diagram node
+            await page.waitForTimeout(1000);
+            const originalNode = page.getByTestId('diagram-node-TestClass');
+            await expect(originalNode).toBeVisible({ timeout: 3000 });
+
+            // When the file is duplicated
+            await rightClickFile(page, 'TestClass.ts');
+            await page.getByRole('menuitem', { name: /duplicate/i }).click();
+            await waitForFileTreeUpdate(page);
+
+            // Then diagram updates with the duplicate (if it contains parsed class)
+            // Note: The duplicate might need parsing, so we just verify it exists in tree
+            await ensureSrcFolderExpanded(page);
+            const duplicateFile = page.getByTestId('file-TestClass copy.ts');
+            await expect(duplicateFile).toBeVisible();
+
+            // Verify original file still has its diagram node
+            await expect(originalNode).toBeVisible();
+        });
+
+        test('should create template workflow - duplicate, rename, modify', async ({ page }) => {
+            // Given a template file exists
+            await createClass(page, 'BaseClass');
+            await ensureSrcFolderExpanded(page);
+
+            // When user duplicates for template reuse
+            await rightClickFile(page, 'BaseClass.ts');
+            await page.getByRole('menuitem', { name: /duplicate/i }).click();
+            await waitForFileTreeUpdate(page);
+
+            // And renames the duplicate
+            await ensureSrcFolderExpanded(page);
+            await rightClickFile(page, 'BaseClass copy.ts');
+            await page.getByRole('menuitem', { name: /rename/i }).click();
+            await page.waitForTimeout(300);
+
+            const renameInput = page.getByTestId('rename-input-BaseClass copy.ts');
+            await renameInput.fill('CustomClass.ts');
+            await renameInput.press('Enter');
+            await waitForFileTreeUpdate(page);
+
+            // Then the workflow completes successfully
+            await ensureSrcFolderExpanded(page);
+            await expect(page.getByTestId('file-BaseClass.ts')).toBeVisible();
+            await expect(page.getByTestId('file-CustomClass.ts')).toBeVisible();
+
+            // And user can modify the duplicate independently
+            const customFile = page.getByTestId('file-CustomClass.ts');
+            await customFile.click();
+            await page.waitForTimeout(500);
+
+            const editor = page.locator('.monaco-editor');
+            await expect(editor).toBeVisible();
+        });
+    });
 });

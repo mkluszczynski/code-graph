@@ -285,6 +285,29 @@ export class ProjectManager {
   }
 
   /**
+   * Saves a file to storage (creates or updates)
+   *
+   * @param file - File to save
+   * @throws StorageError if IndexedDB operation fails
+   */
+  async saveFile(file: ProjectFile): Promise<void> {
+    await this.ensureDB();
+
+    try {
+      // Validate file name
+      this.validateFileName(file.name);
+
+      // Persist to IndexedDB (put creates or updates)
+      await this.db!.put("files", file);
+    } catch (error) {
+      throw new StorageError(
+        "saveFile",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
+
+  /**
    * Deletes a file from storage
    *
    * @param id - File ID to delete

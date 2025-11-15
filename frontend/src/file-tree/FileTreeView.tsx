@@ -39,6 +39,7 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
   const setActiveFile = useStore((state) => state.setActiveFile);
   const deleteFile = useStore((state) => state.deleteFile);
   const renameFile = useStore((state) => state.renameFile);
+  const duplicateFile = useStore((state) => state.duplicateFile);
   const getFileById = useStore((state) => state.getFileById);
 
   const [expandedFolders, setExpandedFolders] = React.useState<Set<string>>(
@@ -161,6 +162,22 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
     }
   };
 
+  const handleDuplicateClick = async (fileId: string) => {
+    try {
+      const result = await duplicateFile(fileId);
+      if (result.success && result.newFileId) {
+        // Select the newly duplicated file
+        setActiveFile(result.newFileId);
+      } else if (result.error) {
+        console.error("Failed to duplicate file:", result.error);
+        // TODO: Show error toast/notification
+      }
+    } catch (error) {
+      console.error("Failed to duplicate file:", error);
+      // TODO: Show error toast/notification
+    }
+  };
+
   return (
     <div className="w-full">
       {/* Delete confirmation dialog */}
@@ -250,7 +267,7 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
                   <Edit3 className="h-4 w-4 mr-2" />
                   Rename
                 </ContextMenuItem>
-                <ContextMenuItem>
+                <ContextMenuItem onClick={() => handleDuplicateClick(node.id)}>
                   <Copy className="h-4 w-4 mr-2" />
                   Duplicate
                 </ContextMenuItem>

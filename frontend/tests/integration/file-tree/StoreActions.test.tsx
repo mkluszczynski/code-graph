@@ -11,6 +11,7 @@ import type { ProjectFile } from "../../../src/shared/types";
 // Mock ProjectManager
 const mockDeleteFile = vi.fn();
 const mockUpdateFile = vi.fn();
+const mockSaveFile = vi.fn();
 vi.mock("../../../src/project-management/ProjectManager", () => {
     return {
         ProjectManager: class MockProjectManager {
@@ -23,6 +24,11 @@ vi.mock("../../../src/project-management/ProjectManager", () => {
                 mockUpdateFile(id, updates);
                 // Simulate successful update - return merged file
                 return Promise.resolve({ id, ...updates } as ProjectFile);
+            }
+            async saveFile(file: ProjectFile) {
+                mockSaveFile(file);
+                // Simulate successful save
+                return Promise.resolve();
             }
         },
     };
@@ -38,12 +44,14 @@ describe("Store File Operations", () => {
         store.setIsDirty(false);
         mockDeleteFile.mockClear();
         mockUpdateFile.mockClear();
+        mockSaveFile.mockClear();
     });
 
     afterEach(() => {
         // Clean up
         mockDeleteFile.mockClear();
         mockUpdateFile.mockClear();
+        mockSaveFile.mockClear();
     });
 
     describe("deleteFile action", () => {
@@ -345,6 +353,200 @@ describe("Store File Operations", () => {
             const renamedFile = state.files.find((f) => f.id === "file-1");
             expect(renamedFile?.name).toBe("MyComponent.tsx");
             expect(renamedFile?.path).toBe("/src/components/MyComponent.tsx");
+        });
+    });
+
+    describe("duplicateFile action", () => {
+        it("should duplicate a file with 'copy' suffix", async () => {
+            const file: ProjectFile = {
+                id: "file-1",
+                name: "MyClass.ts",
+                path: "/src/MyClass.ts",
+                content: "class MyClass {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file]);
+
+            // Duplicate the file
+            const result = await useStore.getState().duplicateFile("file-1");
+
+            // Verify operation succeeded
+            expect(result.success).toBe(true);
+            expect(result.newFileId).toBeDefined();
+
+            // Verify duplicate was created with correct name
+            const state = useStore.getState();
+            expect(state.files.length).toBe(2);
+
+            const duplicateFile = state.files.find((f) => f.id === result.newFileId);
+            expect(duplicateFile).toBeDefined();
+            expect(duplicateFile?.name).toBe("MyClass copy.ts");
+            expect(duplicateFile?.path).toBe("/src/MyClass copy.ts");
+            expect(duplicateFile?.content).toBe("class MyClass {}");
+            expect(duplicateFile?.isActive).toBe(false);
+        });
+
+        it("should increment copy number when duplicate exists", async () => {
+            const file1: ProjectFile = {
+                id: "file-1",
+                name: "MyClass.ts",
+                path: "/src/MyClass.ts",
+                content: "class MyClass {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+            const file2: ProjectFile = {
+                id: "file-2",
+                name: "MyClass copy.ts",
+                path: "/src/MyClass copy.ts",
+                content: "class MyClass {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file1, file2]);
+
+            // Duplicate the original file (should become "MyClass copy 2.ts")
+            const result = await useStore.getState().duplicateFile("file-1");
+
+            // Verify operation succeeded
+            expect(result.success).toBe(true);
+
+            // Verify duplicate has incremented name
+            const state = useStore.getState();
+            expect(state.files.length).toBe(3);
+
+            const duplicateFile = state.files.find((f) => f.id === result.newFileId);
+            expect(duplicateFile?.name).toBe("MyClass copy 2.ts");
+            expect(duplicateFile?.path).toBe("/src/MyClass copy 2.ts");
+        });
+
+        it("should preserve file content when duplicating", async () => {
+            const originalContent = `class ComplexClass {
+  constructor(public name: string) {}
+  
+  greet() {
+    console.log(\`Hello, \${this.name}\`);
+  }
+}`;
+
+            const file: ProjectFile = {
+                id: "file-1",
+                name: "ComplexClass.ts",
+                path: "/src/ComplexClass.ts",
+                content: originalContent,
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file]);
+
+            // Duplicate the file
+            const result = await useStore.getState().duplicateFile("file-1");
+
+            // Verify content was preserved
+            const state = useStore.getState();
+            const duplicateFile = state.files.find((f) => f.id === result.newFileId);
+            expect(duplicateFile?.content).toBe(originalContent);
+        });
+
+        it("should handle duplicating file in nested directory", async () => {
+            const file: ProjectFile = {
+                id: "file-1",
+                name: "Component.tsx",
+                path: "/src/components/ui/Component.tsx",
+                content: "export const Component = () => {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file]);
+
+            // Duplicate the file
+            const result = await useStore.getState().duplicateFile("file-1");
+
+            // Verify path was constructed correctly
+            const state = useStore.getState();
+            const duplicateFile = state.files.find((f) => f.id === result.newFileId);
+            expect(duplicateFile?.name).toBe("Component copy.tsx");
+            expect(duplicateFile?.path).toBe("/src/components/ui/Component copy.tsx");
+        });
+
+        it("should handle duplicating non-existent file", async () => {
+            const file: ProjectFile = {
+                id: "file-1",
+                name: "test.ts",
+                path: "/src/test.ts",
+                content: "class Test {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file]);
+
+            // Attempt to duplicate non-existent file
+            const result = await useStore.getState().duplicateFile("non-existent");
+
+            // Verify operation failed
+            expect(result.success).toBe(false);
+            expect(result.error).toContain("not found");
+
+            // Verify no new file was created
+            const state = useStore.getState();
+            expect(state.files.length).toBe(1);
+        });
+
+        it("should create new unique ID for duplicate", async () => {
+            const file: ProjectFile = {
+                id: "file-1",
+                name: "test.ts",
+                path: "/src/test.ts",
+                content: "class Test {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file]);
+
+            // Duplicate the file
+            const result = await useStore.getState().duplicateFile("file-1");
+
+            // Verify new ID is different from original
+            expect(result.newFileId).toBeDefined();
+            expect(result.newFileId).not.toBe("file-1");
+
+            // Verify both files exist with different IDs
+            const state = useStore.getState();
+            expect(state.files.length).toBe(2);
+            expect(state.files[0].id).toBe("file-1");
+            expect(state.files[1].id).toBe(result.newFileId);
+        });
+
+        it("should not activate duplicated file", async () => {
+            const file: ProjectFile = {
+                id: "file-1",
+                name: "test.ts",
+                path: "/src/test.ts",
+                content: "class Test {}",
+                lastModified: Date.now(),
+                isActive: true,
+            };
+
+            useStore.getState().setFiles([file]);
+            useStore.getState().setActiveFile("file-1");
+
+            // Duplicate the active file
+            const result = await useStore.getState().duplicateFile("file-1");
+
+            // Verify original file is still active
+            const state = useStore.getState();
+            expect(state.activeFileId).toBe("file-1");
+
+            // Verify duplicate is not active
+            const duplicateFile = state.files.find((f) => f.id === result.newFileId);
+            expect(duplicateFile?.isActive).toBe(false);
         });
     });
 });

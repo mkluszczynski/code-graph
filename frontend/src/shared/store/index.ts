@@ -47,6 +47,7 @@ interface FileSlice {
   removeFile: (fileId: string) => void;
   deleteFile: (fileId: string) => Promise<void>;
   renameFile: (fileId: string, newName: string) => Promise<void>;
+  duplicateFile: (fileId: string) => Promise<{ success: boolean; newFileId?: string; error?: string }>;
   setActiveFile: (fileId: string | null) => void;
   getFileById: (fileId: string) => ProjectFile | undefined;
   setLoadingFiles: (isLoading: boolean) => void;
@@ -152,6 +153,61 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
     } catch (error) {
       console.error("Failed to rename file:", error);
       throw error;
+    }
+  },
+
+  duplicateFile: async (fileId: string) => {
+    // Import is lazy to avoid circular dependencies
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const { generateDuplicateName } = await import("../../file-tree/FileOperations");
+    const projectManager = new ProjectManager();
+
+    const file = get().getFileById(fileId);
+    if (!file) {
+      return {
+        success: false,
+        error: `File with ID ${fileId} not found`,
+      };
+    }
+
+    try {
+      // Get all existing file names to avoid conflicts
+      const allFiles = get().files;
+      const existingNames = allFiles.map((f) => f.name);
+
+      // Generate unique duplicate name
+      const newName = generateDuplicateName(file.name, { existingNames });
+
+      // Extract directory from path
+      const directory = file.path.substring(0, file.path.lastIndexOf("/"));
+      const newPath = directory ? `${directory}/${newName}` : newName;
+
+      // Create new file with duplicated content
+      const newFile: ProjectFile = {
+        id: crypto.randomUUID(),
+        name: newName,
+        path: newPath,
+        content: file.content,
+        lastModified: Date.now(),
+        isActive: false,
+      };
+
+      // Save to IndexedDB
+      await projectManager.saveFile(newFile);
+
+      // Add to store
+      get().addFile(newFile);
+
+      return {
+        success: true,
+        newFileId: newFile.id,
+      };
+    } catch (error) {
+      console.error("Failed to duplicate file:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
     }
   },
 

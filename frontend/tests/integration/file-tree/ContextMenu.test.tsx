@@ -22,6 +22,9 @@ vi.mock("../../../src/project-management/ProjectManager", () => {
             async updateFile(id: string, updates: any) {
                 return Promise.resolve({ id, ...updates });
             }
+            async saveFile(file: any) {
+                return Promise.resolve();
+            }
         },
     };
 });
@@ -658,6 +661,309 @@ describe("Context Menu Workflows", () => {
             const state = useStore.getState();
             const file_after = state.files.find((f) => f.id === "test-file-1");
             expect(file_after?.name).toBe("test1.ts");
+        });
+    });
+
+    describe("Duplicate workflow", () => {
+        it("should show Duplicate option in context menu", async () => {
+            const user = userEvent.setup();
+
+            const file: ProjectFile = {
+                id: "test-file",
+                name: "test.ts",
+                path: "/src/test.ts",
+                content: "class Test {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file]);
+
+            const nodes: FileTreeNode[] = [
+                {
+                    id: "src",
+                    name: "src",
+                    path: "/src",
+                    type: "folder",
+                    parentId: null,
+                    children: [
+                        {
+                            id: "test-file",
+                            name: "test.ts",
+                            path: "/src/test.ts",
+                            type: "file",
+                            parentId: "src",
+                            children: [],
+                            extension: "ts",
+                        },
+                    ],
+                },
+            ];
+
+            render(<FileTreeView nodes={nodes} />);
+
+            // Right-click to open context menu
+            const fileButton = screen.getByTestId("file-test.ts");
+            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
+
+            // Context menu should show Duplicate option
+            await waitFor(() => {
+                expect(screen.getByText("Duplicate")).toBeTruthy();
+            });
+        });
+
+        it("should duplicate file when Duplicate is clicked", async () => {
+            const user = userEvent.setup();
+
+            const file: ProjectFile = {
+                id: "test-file",
+                name: "test.ts",
+                path: "/src/test.ts",
+                content: "class Test {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file]);
+
+            const nodes: FileTreeNode[] = [
+                {
+                    id: "src",
+                    name: "src",
+                    path: "/src",
+                    type: "folder",
+                    parentId: null,
+                    children: [
+                        {
+                            id: "test-file",
+                            name: "test.ts",
+                            path: "/src/test.ts",
+                            type: "file",
+                            parentId: "src",
+                            children: [],
+                            extension: "ts",
+                        },
+                    ],
+                },
+            ];
+
+            render(<FileTreeView nodes={nodes} />);
+
+            // Right-click and select Duplicate
+            const fileButton = screen.getByTestId("file-test.ts");
+            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
+
+            await waitFor(() => {
+                expect(screen.getByText("Duplicate")).toBeTruthy();
+            });
+
+            await user.click(screen.getByText("Duplicate"));
+
+            // Duplicate file should be created in store
+            await waitFor(() => {
+                const state = useStore.getState();
+                expect(state.files.length).toBe(2);
+
+                const duplicateFile = state.files.find((f) => f.name === "test copy.ts");
+                expect(duplicateFile).toBeDefined();
+                expect(duplicateFile?.path).toBe("/src/test copy.ts");
+                expect(duplicateFile?.content).toBe("class Test {}");
+            });
+        });
+
+        it("should auto-select duplicated file", async () => {
+            const user = userEvent.setup();
+
+            const file: ProjectFile = {
+                id: "test-file",
+                name: "test.ts",
+                path: "/src/test.ts",
+                content: "class Test {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file]);
+
+            const nodes: FileTreeNode[] = [
+                {
+                    id: "src",
+                    name: "src",
+                    path: "/src",
+                    type: "folder",
+                    parentId: null,
+                    children: [
+                        {
+                            id: "test-file",
+                            name: "test.ts",
+                            path: "/src/test.ts",
+                            type: "file",
+                            parentId: "src",
+                            children: [],
+                            extension: "ts",
+                        },
+                    ],
+                },
+            ];
+
+            render(<FileTreeView nodes={nodes} />);
+
+            // Right-click and select Duplicate
+            const fileButton = screen.getByTestId("file-test.ts");
+            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
+
+            await waitFor(() => {
+                expect(screen.getByText("Duplicate")).toBeTruthy();
+            });
+
+            await user.click(screen.getByText("Duplicate"));
+
+            // Duplicate file should be auto-selected
+            await waitFor(() => {
+                const state = useStore.getState();
+                const duplicateFile = state.files.find((f) => f.name === "test copy.ts");
+                expect(duplicateFile).toBeDefined();
+                expect(state.activeFileId).toBe(duplicateFile?.id);
+            });
+        });
+
+        it("should preserve content when duplicating", async () => {
+            const user = userEvent.setup();
+
+            const originalContent = `class ComplexTest {
+  constructor(public name: string) {}
+  
+  greet() {
+    return \`Hello, \${this.name}\`;
+  }
+}`;
+
+            const file: ProjectFile = {
+                id: "test-file",
+                name: "ComplexTest.ts",
+                path: "/src/ComplexTest.ts",
+                content: originalContent,
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file]);
+
+            const nodes: FileTreeNode[] = [
+                {
+                    id: "src",
+                    name: "src",
+                    path: "/src",
+                    type: "folder",
+                    parentId: null,
+                    children: [
+                        {
+                            id: "test-file",
+                            name: "ComplexTest.ts",
+                            path: "/src/ComplexTest.ts",
+                            type: "file",
+                            parentId: "src",
+                            children: [],
+                            extension: "ts",
+                        },
+                    ],
+                },
+            ];
+
+            render(<FileTreeView nodes={nodes} />);
+
+            // Right-click and select Duplicate
+            const fileButton = screen.getByTestId("file-ComplexTest.ts");
+            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
+
+            await waitFor(() => {
+                expect(screen.getByText("Duplicate")).toBeTruthy();
+            });
+
+            await user.click(screen.getByText("Duplicate"));
+
+            // Duplicate should have same content
+            await waitFor(() => {
+                const state = useStore.getState();
+                const duplicateFile = state.files.find((f) => f.name === "ComplexTest copy.ts");
+                expect(duplicateFile?.content).toBe(originalContent);
+            });
+        });
+
+        it("should increment copy number for subsequent duplicates", async () => {
+            const user = userEvent.setup();
+
+            const file: ProjectFile = {
+                id: "test-file",
+                name: "test.ts",
+                path: "/src/test.ts",
+                content: "class Test {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            const file2: ProjectFile = {
+                id: "test-file-copy",
+                name: "test copy.ts",
+                path: "/src/test copy.ts",
+                content: "class Test {}",
+                lastModified: Date.now(),
+                isActive: false,
+            };
+
+            useStore.getState().setFiles([file, file2]);
+
+            const nodes: FileTreeNode[] = [
+                {
+                    id: "src",
+                    name: "src",
+                    path: "/src",
+                    type: "folder",
+                    parentId: null,
+                    children: [
+                        {
+                            id: "test-file",
+                            name: "test.ts",
+                            path: "/src/test.ts",
+                            type: "file",
+                            parentId: "src",
+                            children: [],
+                            extension: "ts",
+                        },
+                        {
+                            id: "test-file-copy",
+                            name: "test copy.ts",
+                            path: "/src/test copy.ts",
+                            type: "file",
+                            parentId: "src",
+                            children: [],
+                            extension: "ts",
+                        },
+                    ],
+                },
+            ];
+
+            render(<FileTreeView nodes={nodes} />);
+
+            // Right-click original file and duplicate
+            const fileButton = screen.getByTestId("file-test.ts");
+            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
+
+            await waitFor(() => {
+                expect(screen.getByText("Duplicate")).toBeTruthy();
+            });
+
+            await user.click(screen.getByText("Duplicate"));
+
+            // Should create "test copy 2.ts"
+            await waitFor(() => {
+                const state = useStore.getState();
+                expect(state.files.length).toBe(3);
+
+                const duplicateFile = state.files.find((f) => f.name === "test copy 2.ts");
+                expect(duplicateFile).toBeDefined();
+                expect(duplicateFile?.path).toBe("/src/test copy 2.ts");
+            });
         });
     });
 });

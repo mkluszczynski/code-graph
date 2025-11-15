@@ -285,6 +285,35 @@ export class ProjectManager {
   }
 
   /**
+   * Deletes a file from storage
+   *
+   * @param id - File ID to delete
+   * @throws StorageError if file doesn't exist or IndexedDB operation fails
+   */
+  async deleteFile(id: string): Promise<void> {
+    await this.ensureDB();
+
+    try {
+      // Check if file exists
+      const existingFile = await this.db!.get("files", id);
+      if (!existingFile) {
+        throw new StorageError("deleteFile", `File with ID ${id} not found`);
+      }
+
+      // Delete from IndexedDB
+      await this.db!.delete("files", id);
+    } catch (error) {
+      if (error instanceof StorageError) {
+        throw error;
+      }
+      throw new StorageError(
+        "deleteFile",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
+
+  /**
    * Ensures database is initialized
    *
    * @throws StorageError if database is not initialized

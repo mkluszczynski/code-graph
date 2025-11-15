@@ -1,0 +1,8 @@
+.eslintcache
+node_modules/
+dist/
+build/
+coverage/
+*.min.js
+*.bundle.js
+*.map

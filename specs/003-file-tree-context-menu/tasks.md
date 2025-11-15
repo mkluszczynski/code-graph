@@ -27,9 +27,9 @@ description: "Task list for File Tree Context Menu feature"
 
 **Purpose**: Install dependencies and configure UI components
 
-- [ ] T001 Install shadcn/ui context-menu component via `pnpm dlx shadcn@latest add context-menu` in frontend/
-- [ ] T002 Verify @radix-ui/react-context-menu is installed in frontend/package.json
-- [ ] T003 Create TypeScript type definitions for file operations in frontend/src/file-tree/types.ts
+- [X] T001 Install shadcn/ui context-menu component via `pnpm dlx shadcn@latest add context-menu` in frontend/
+- [X] T002 Verify @radix-ui/react-context-menu is installed in frontend/package.json
+- [X] T003 Create TypeScript type definitions for file operations in frontend/src/file-tree/types.ts
 
 ---
 
@@ -39,11 +39,11 @@ description: "Task list for File Tree Context Menu feature"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Create FileOperations.ts module with generateDuplicateName function in frontend/src/file-tree/FileOperations.ts
-- [ ] T005 [P] Create validateFileName function in frontend/src/file-tree/FileOperations.ts
-- [ ] T006 Write unit tests for generateDuplicateName in frontend/tests/integration/file-tree/FileOperations.test.tsx
-- [ ] T007 [P] Write unit tests for validateFileName in frontend/tests/integration/file-tree/FileOperations.test.tsx
-- [ ] T008 Verify unit tests pass with `pnpm test frontend/tests/integration/file-tree/FileOperations.test.tsx`
+- [X] T004 Create FileOperations.ts module with generateDuplicateName function in frontend/src/file-tree/FileOperations.ts
+- [X] T005 [P] Create validateFileName function in frontend/src/file-tree/FileOperations.ts
+- [X] T006 Write unit tests for generateDuplicateName in frontend/tests/integration/file-tree/FileOperations.test.tsx
+- [X] T007 [P] Write unit tests for validateFileName in frontend/tests/integration/file-tree/FileOperations.test.tsx
+- [X] T008 Verify unit tests pass with `pnpm test frontend/tests/integration/file-tree/FileOperations.test.tsx`
 
 **Checkpoint**: Foundation ready - file operation utilities tested and working
 
@@ -57,16 +57,16 @@ description: "Task list for File Tree Context Menu feature"
 
 ### Implementation for User Story 1
 
-- [ ] T009 [P] [US1] Add deleteFile action to FileSlice in frontend/src/shared/store/index.ts
-- [ ] T010 [P] [US1] Create DeleteConfirmDialog component in frontend/src/file-tree/DeleteConfirmDialog.tsx
-- [ ] T011 [US1] Write integration tests for deleteFile store action in frontend/tests/integration/file-tree/StoreActions.test.tsx
-- [ ] T012 [US1] Add context menu wrapper with Delete option to FileTreeView in frontend/src/file-tree/FileTreeView.tsx
-- [ ] T013 [US1] Implement delete confirmation dialog state management in frontend/src/file-tree/FileTreeView.tsx
-- [ ] T014 [US1] Connect delete operation to ProjectManager.deleteFile() for persistence in frontend/src/shared/store/index.ts
-- [ ] T015 [US1] Add logic to close editor tab when active file is deleted in frontend/src/shared/store/index.ts
-- [ ] T016 [US1] Write integration tests for context menu delete workflow in frontend/tests/integration/file-tree/ContextMenu.test.tsx
-- [ ] T017 [US1] Write E2E test for User Story 1 delete workflow in frontend/tests/e2e/file-management.spec.ts
-- [ ] T018 [US1] Run E2E tests with `pnpm test:e2e frontend/tests/e2e/file-management.spec.ts`
+- [X] T009 [P] [US1] Add deleteFile action to FileSlice in frontend/src/shared/store/index.ts
+- [X] T010 [P] [US1] Create DeleteConfirmDialog component in frontend/src/file-tree/DeleteConfirmDialog.tsx
+- [X] T011 [US1] Write integration tests for deleteFile store action in frontend/tests/integration/file-tree/StoreActions.test.tsx
+- [X] T012 [US1] Add context menu wrapper with Delete option to FileTreeView in frontend/src/file-tree/FileTreeView.tsx
+- [X] T013 [US1] Implement delete confirmation dialog state management in frontend/src/file-tree/FileTreeView.tsx
+- [X] T014 [US1] Connect delete operation to ProjectManager.deleteFile() for persistence in frontend/src/shared/store/index.ts
+- [X] T015 [US1] Add logic to close editor tab when active file is deleted in frontend/src/shared/store/index.ts
+- [X] T016 [US1] Write integration tests for context menu delete workflow in frontend/tests/integration/file-tree/ContextMenu.test.tsx
+- [X] T017 [US1] Write E2E test for User Story 1 delete workflow in frontend/tests/e2e/file-management.spec.ts
+- [X] T018 [US1] Run E2E tests with `pnpm test:e2e frontend/tests/e2e/file-management.spec.ts`
 
 **Checkpoint**: User Story 1 complete - users can delete files with confirmation
 

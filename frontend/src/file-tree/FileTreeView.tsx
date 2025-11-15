@@ -4,10 +4,17 @@
  * Recursive file tree component for displaying project files and folders
  */
 
-import { ChevronDown, ChevronRight, File, Folder } from "lucide-react";
+import { ChevronDown, ChevronRight, File, Folder, Trash2 } from "lucide-react";
 import React from "react";
 import { useStore } from "../shared/store";
 import { cn } from "../shared/utils";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import type { FileTreeNode } from "./types";
 
 interface FileTreeViewProps {
@@ -29,10 +36,16 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
 }) => {
   const activeFileId = useStore((state) => state.activeFileId);
   const setActiveFile = useStore((state) => state.setActiveFile);
+  const deleteFile = useStore((state) => state.deleteFile);
+  const getFileById = useStore((state) => state.getFileById);
 
   const [expandedFolders, setExpandedFolders] = React.useState<Set<string>>(
     new Set()
   );
+
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [fileToDelete, setFileToDelete] = React.useState<{ id: string; name: string } | null>(null);
 
   // Auto-expand src folder when it has children (for better UX)
   React.useEffect(() => {
@@ -65,8 +78,44 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
     onFileSelect?.(fileId);
   };
 
+  const handleDeleteClick = (fileId: string) => {
+    const file = getFileById(fileId);
+    if (file) {
+      setFileToDelete({ id: file.id, name: file.name });
+      setDeleteDialogOpen(true);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (fileToDelete) {
+      try {
+        await deleteFile(fileToDelete.id);
+        setDeleteDialogOpen(false);
+        setFileToDelete(null);
+      } catch (error) {
+        console.error("Failed to delete file:", error);
+        // TODO: Show error toast/notification
+      }
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setFileToDelete(null);
+  };
+
   return (
     <div className="w-full">
+      {/* Delete confirmation dialog */}
+      {fileToDelete && (
+        <DeleteConfirmDialog
+          open={deleteDialogOpen}
+          fileName={fileToDelete.name}
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
+      )}
+
       {nodes.map((node) => (
         <div key={node.id}>
           {node.type === "folder" ? (
@@ -98,21 +147,34 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
               )}
             </div>
           ) : (
-            <button
-              onClick={() => handleFileClick(node.id)}
-              className={cn(
-                "file-tree-item flex items-center gap-1 w-full px-2 py-1 text-sm rounded-sm transition-colors",
-                "cursor-pointer select-none",
-                activeFileId === node.id
-                  ? "selected bg-accent text-accent-foreground font-medium"
-                  : "hover:bg-accent/50 hover:text-accent-foreground"
-              )}
-              style={{ paddingLeft: `${level * 12 + 24}px` }}
-              data-testid={`file-${node.name}`}
-            >
-              <File className="h-4 w-4 shrink-0 text-gray-500" />
-              <span className="truncate">{node.name}</span>
-            </button>
+            <ContextMenu>
+              <ContextMenuTrigger asChild>
+                <button
+                  onClick={() => handleFileClick(node.id)}
+                  className={cn(
+                    "file-tree-item flex items-center gap-1 w-full px-2 py-1 text-sm rounded-sm transition-colors",
+                    "cursor-pointer select-none",
+                    activeFileId === node.id
+                      ? "selected bg-accent text-accent-foreground font-medium"
+                      : "hover:bg-accent/50 hover:text-accent-foreground"
+                  )}
+                  style={{ paddingLeft: `${level * 12 + 24}px` }}
+                  data-testid={`file-${node.name}`}
+                >
+                  <File className="h-4 w-4 shrink-0 text-gray-500" />
+                  <span className="truncate">{node.name}</span>
+                </button>
+              </ContextMenuTrigger>
+              <ContextMenuContent>
+                <ContextMenuItem
+                  onClick={() => handleDeleteClick(node.id)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
           )}
         </div>
       ))}

@@ -45,6 +45,7 @@ interface FileSlice {
   addFile: (file: ProjectFile) => void;
   updateFile: (fileId: string, updates: Partial<ProjectFile>) => void;
   removeFile: (fileId: string) => void;
+  deleteFile: (fileId: string) => Promise<void>;
   setActiveFile: (fileId: string | null) => void;
   getFileById: (fileId: string) => ProjectFile | undefined;
   setLoadingFiles: (isLoading: boolean) => void;
@@ -76,6 +77,34 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
       files: state.files.filter((file) => file.id !== fileId),
       activeFileId: state.activeFileId === fileId ? null : state.activeFileId,
     })),
+
+  deleteFile: async (fileId: string) => {
+    // Import is lazy to avoid circular dependencies
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const projectManager = new ProjectManager();
+
+    try {
+      // Delete from IndexedDB
+      await projectManager.deleteFile(fileId);
+
+      // Update store state
+      set((state) => ({
+        files: state.files.filter((file) => file.id !== fileId),
+        // Close editor tab if deleted file was active
+        activeFileId: state.activeFileId === fileId ? null : state.activeFileId,
+        editorContent: state.activeFileId === fileId ? "" : state.editorContent,
+        isDirty: state.activeFileId === fileId ? false : state.isDirty,
+      }));
+
+      // Clear parsed entities and errors for deleted file
+      const state = get();
+      state.clearParsedEntities(fileId);
+      state.clearParseErrors(fileId);
+    } catch (error) {
+      console.error("Failed to delete file:", error);
+      throw error;
+    }
+  },
 
   setActiveFile: (fileId: string | null) => set({ activeFileId: fileId }),
 

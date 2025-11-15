@@ -21,13 +21,14 @@ import type {
   ParseError,
   Position,
   ProjectFile,
+  StorageMetadata,
 } from "../types";
 
 // ============================================================================
 // Type Helpers
 // ============================================================================
 
-type StoreState = FileSlice & EditorSlice & DiagramSlice & ParserSlice & FileTreeSlice;
+type StoreState = FileSlice & EditorSlice & DiagramSlice & ParserSlice & FileTreeSlice & PersistenceSlice;
 type StateSliceCreator<T> = StateCreator<StoreState, [], [], T>;
 
 // ============================================================================
@@ -299,6 +300,80 @@ const createFileTreeSlice: StateSliceCreator<FileTreeSlice> = (set) => ({
 });
 
 // ============================================================================
+// Persistence Slice (Feature 002)
+// ============================================================================
+
+/**
+ * Persistence state management slice
+ * 
+ * Tracks auto-save status, pending saves, and storage metadata
+ */
+interface PersistenceSlice {
+  /** Unix timestamp of last successful save */
+  lastSavedTimestamp: number | null;
+  /** Whether a save operation is currently in progress */
+  isSaving: boolean;
+  /** Error message if last save failed */
+  saveError: string | null;
+  /** Whether auto-save is enabled (can be disabled due to errors) */
+  autoSaveEnabled: boolean;
+  /** Map of file IDs to timestamps for pending save operations */
+  pendingSaves: Map<string, number>;
+  /** Current storage quota and usage information */
+  storageMetadata: StorageMetadata | null;
+
+  /** Set saving state */
+  setSaving: (isSaving: boolean) => void;
+  /** Set or clear save error */
+  setSaveError: (error: string | null) => void;
+  /** Update last saved timestamp */
+  setLastSaved: (timestamp: number) => void;
+  /** Add a file to pending saves queue */
+  addPendingSave: (fileId: string, timestamp: number) => void;
+  /** Remove a file from pending saves queue */
+  removePendingSave: (fileId: string) => void;
+  /** Enable or disable auto-save */
+  setAutoSaveEnabled: (enabled: boolean) => void;
+  /** Update storage metadata */
+  updateStorageMetadata: (metadata: StorageMetadata) => void;
+}
+
+const createPersistenceSlice: StateSliceCreator<PersistenceSlice> = (set) => ({
+  lastSavedTimestamp: null,
+  isSaving: false,
+  saveError: null,
+  autoSaveEnabled: true,
+  pendingSaves: new Map(),
+  storageMetadata: null,
+
+  setSaving: (isSaving: boolean) => set({ isSaving }),
+
+  setSaveError: (error: string | null) => set({ saveError: error }),
+
+  setLastSaved: (timestamp: number) =>
+    set({ lastSavedTimestamp: timestamp, saveError: null }),
+
+  addPendingSave: (fileId: string, timestamp: number) =>
+    set((state) => {
+      const newPending = new Map(state.pendingSaves);
+      newPending.set(fileId, timestamp);
+      return { pendingSaves: newPending };
+    }),
+
+  removePendingSave: (fileId: string) =>
+    set((state) => {
+      const newPending = new Map(state.pendingSaves);
+      newPending.delete(fileId);
+      return { pendingSaves: newPending };
+    }),
+
+  setAutoSaveEnabled: (enabled: boolean) => set({ autoSaveEnabled: enabled }),
+
+  updateStorageMetadata: (metadata: StorageMetadata) =>
+    set({ storageMetadata: metadata }),
+});
+
+// ============================================================================
 // Combined Store
 // ============================================================================
 
@@ -310,6 +385,7 @@ export const useStore = create<StoreState>()(
       ...createDiagramSlice(...args),
       ...createParserSlice(...args),
       ...createFileTreeSlice(...args),
+      ...createPersistenceSlice(...args),
     }),
     {
       name: "uml-graph-store",

@@ -8,6 +8,7 @@ import type { EditorProps } from '@monaco-editor/react';
 import { useStore, useActiveFile } from '../shared/store';
 import { useEditorController } from './useEditorController';
 import { useTheme } from '../shared/hooks/useTheme';
+import { SaveIndicator } from '../components/SaveIndicator';
 
 // Lazy load Monaco Editor to reduce initial bundle size (T109)
 const Editor = lazy(() =>
@@ -61,18 +62,27 @@ export function CodeEditor() {
     };
 
     return (
-        <div className="h-full w-full">
-            <Suspense fallback={<LoadingEditor />}>
-                <Editor
-                    height="100%"
-                    defaultLanguage="typescript"
-                    value={editorContent}
-                    onChange={handleEditorChange}
-                    onMount={handleEditorMount}
-                    theme={monacoTheme}
-                    options={editorOptions}
-                />
-            </Suspense>
+        <div className="h-full w-full flex flex-col">
+            {/* Save status indicator */}
+            <div className="px-3 py-1 border-b bg-background/50 flex items-center justify-between min-h-[32px]">
+                <span className="text-sm text-muted-foreground">{activeFile.name}</span>
+                <SaveIndicator />
+            </div>
+
+            {/* Editor */}
+            <div className="flex-1 overflow-hidden">
+                <Suspense fallback={<LoadingEditor />}>
+                    <Editor
+                        height="100%"
+                        defaultLanguage="typescript"
+                        value={editorContent}
+                        onChange={handleEditorChange}
+                        onMount={handleEditorMount}
+                        theme={monacoTheme}
+                        options={editorOptions}
+                    />
+                </Suspense>
+            </div>
         </div>
     );
 }

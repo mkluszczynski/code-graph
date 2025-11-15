@@ -45,6 +45,9 @@ interface FileSlice {
   addFile: (file: ProjectFile) => void;
   updateFile: (fileId: string, updates: Partial<ProjectFile>) => void;
   removeFile: (fileId: string) => void;
+  deleteFile: (fileId: string) => Promise<void>;
+  renameFile: (fileId: string, newName: string) => Promise<void>;
+  duplicateFile: (fileId: string) => Promise<{ success: boolean; newFileId?: string; error?: string }>;
   setActiveFile: (fileId: string | null) => void;
   getFileById: (fileId: string) => ProjectFile | undefined;
   setLoadingFiles: (isLoading: boolean) => void;
@@ -76,6 +79,199 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
       files: state.files.filter((file) => file.id !== fileId),
       activeFileId: state.activeFileId === fileId ? null : state.activeFileId,
     })),
+
+  deleteFile: async (fileId: string) => {
+    // Import is lazy to avoid circular dependencies
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const projectManager = new ProjectManager();
+
+    // Store original state for rollback
+    const originalState = {
+      files: get().files,
+      activeFileId: get().activeFileId,
+      editorContent: get().editorContent,
+      isDirty: get().isDirty,
+      parsedEntities: new Map(get().parsedEntities),
+      parseErrors: new Map(get().parseErrors),
+    };
+
+    try {
+      // Optimistic update: Update store state first
+      set((state) => ({
+        files: state.files.filter((file) => file.id !== fileId),
+        // Close editor tab if deleted file was active
+        activeFileId: state.activeFileId === fileId ? null : state.activeFileId,
+        editorContent: state.activeFileId === fileId ? "" : state.editorContent,
+        isDirty: state.activeFileId === fileId ? false : state.isDirty,
+      }));
+
+      // Clear parsed entities and errors for deleted file
+      const state = get();
+      state.clearParsedEntities(fileId);
+      state.clearParseErrors(fileId);
+
+      // Delete from IndexedDB
+      await projectManager.deleteFile(fileId);
+    } catch (error) {
+      console.error("Failed to delete file:", error);
+
+      // Rollback to original state on failure
+      set({
+        files: originalState.files,
+        activeFileId: originalState.activeFileId,
+        editorContent: originalState.editorContent,
+        isDirty: originalState.isDirty,
+        parsedEntities: originalState.parsedEntities,
+        parseErrors: originalState.parseErrors,
+      });
+
+      // Provide user-friendly error message
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (errorMessage.includes("quota")) {
+        throw new Error("Storage quota exceeded. Please free up space and try again.");
+      } else if (errorMessage.includes("database")) {
+        throw new Error("Database error. Please try again or refresh the page.");
+      }
+      throw new Error(`Failed to delete file: ${errorMessage}`);
+    }
+  },
+
+  renameFile: async (fileId: string, newName: string) => {
+    // Import is lazy to avoid circular dependencies
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const { validateFileName } = await import("../../file-tree/FileOperations");
+    const projectManager = new ProjectManager();
+
+    const file = get().getFileById(fileId);
+    if (!file) {
+      throw new Error(`File with ID ${fileId} not found`);
+    }
+
+    // Validate the new filename
+    const validation = validateFileName(newName);
+    if (!validation.isValid) {
+      throw new Error(validation.error);
+    }
+
+    // Check for duplicate names (excluding current file)
+    const allFiles = get().files;
+    const directory = file.path.substring(0, file.path.lastIndexOf("/"));
+    const newPath = directory ? `${directory}/${newName}` : newName;
+
+    const duplicateFile = allFiles.find(
+      (f) => f.id !== fileId && f.path === newPath
+    );
+    if (duplicateFile) {
+      throw new Error(`A file named "${newName}" already exists`);
+    }
+
+    // Store original state for rollback
+    const originalFiles = get().files;
+
+    try {
+      // Update in IndexedDB first
+      const updatedFile = await projectManager.updateFile(fileId, {
+        name: newName,
+        path: newPath,
+      });
+
+      // Update store state
+      set((state) => ({
+        files: state.files.map((f) =>
+          f.id === fileId ? updatedFile : f
+        ),
+      }));
+    } catch (error) {
+      console.error("Failed to rename file:", error);
+
+      // Rollback to original state on failure
+      set({ files: originalFiles });
+
+      // Provide user-friendly error message
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (errorMessage.includes("quota")) {
+        throw new Error("Storage quota exceeded. Please free up space and try again.");
+      } else if (errorMessage.includes("database") || errorMessage.includes("IndexedDB")) {
+        throw new Error("Database error. Please try again or refresh the page.");
+      }
+      throw new Error(`Failed to rename file: ${errorMessage}`);
+    }
+  },
+
+  duplicateFile: async (fileId: string) => {
+    // Import is lazy to avoid circular dependencies
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const { generateDuplicateName } = await import("../../file-tree/FileOperations");
+    const projectManager = new ProjectManager();
+
+    const file = get().getFileById(fileId);
+    if (!file) {
+      return {
+        success: false,
+        error: `File with ID ${fileId} not found`,
+      };
+    }
+
+    // Store original state for rollback
+    const originalFiles = get().files;
+
+    try {
+      // Get all existing file names to avoid conflicts
+      const allFiles = get().files;
+      const existingNames = allFiles.map((f) => f.name);
+
+      // Generate unique duplicate name
+      const newName = generateDuplicateName(file.name, { existingNames });
+
+      // Extract directory from path
+      const directory = file.path.substring(0, file.path.lastIndexOf("/"));
+      const newPath = directory ? `${directory}/${newName}` : newName;
+
+      // Create new file with duplicated content
+      const newFile: ProjectFile = {
+        id: crypto.randomUUID(),
+        name: newName,
+        path: newPath,
+        content: file.content,
+        lastModified: Date.now(),
+        isActive: false,
+      };
+
+      // Save to IndexedDB first
+      await projectManager.saveFile(newFile);
+
+      // Add to store after successful save
+      get().addFile(newFile);
+
+      return {
+        success: true,
+        newFileId: newFile.id,
+      };
+    } catch (error) {
+      console.error("Failed to duplicate file:", error);
+
+      // Rollback to original state on failure
+      set({ files: originalFiles });
+
+      // Provide user-friendly error messages
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (errorMessage.includes("quota") || errorMessage.includes("QuotaExceededError")) {
+        return {
+          success: false,
+          error: "Storage quota exceeded. Please delete some files to free up space.",
+        };
+      } else if (errorMessage.includes("database") || errorMessage.includes("IndexedDB")) {
+        return {
+          success: false,
+          error: "Database error. Please try again or refresh the page.",
+        };
+      }
+      return {
+        success: false,
+        error: `Failed to duplicate file: ${errorMessage}`,
+      };
+    }
+  },
 
   setActiveFile: (fileId: string | null) => set({ activeFileId: fileId }),
 

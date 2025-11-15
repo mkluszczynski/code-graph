@@ -37,3 +37,38 @@ export interface FileTreeOptions {
   /** Custom sort function */
   sortFn?: (a: FileTreeNode, b: FileTreeNode) => number;
 }
+
+/**
+ * File operation types for context menu actions
+ */
+export type FileOperationType = "rename" | "duplicate" | "delete";
+
+/**
+ * Context menu action handler
+ */
+export interface FileOperationHandler {
+  /** Type of operation */
+  type: FileOperationType;
+  /** Handler function that receives the file ID */
+  handler: (fileId: string) => void | Promise<void>;
+}
+
+/**
+ * File validation result
+ */
+export interface FileValidationResult {
+  /** Whether the filename is valid */
+  isValid: boolean;
+  /** Error message if validation failed */
+  error?: string;
+}
+
+/**
+ * Options for generating duplicate file names
+ */
+export interface DuplicateNameOptions {
+  /** Existing file names in the same directory */
+  existingNames: string[];
+  /** Maximum number of attempts to find unique name */
+  maxAttempts?: number;
+}

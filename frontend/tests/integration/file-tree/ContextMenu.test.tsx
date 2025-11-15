@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { FileTreeView } from "../../../src/file-tree/FileTreeView";
 import { useStore } from "../../../src/shared/store";
@@ -13,14 +13,20 @@ import type { FileTreeNode } from "../../../src/file-tree/types";
 import type { ProjectFile } from "../../../src/shared/types";
 
 // Mock ProjectManager
-vi.mock("../../../src/project-management/ProjectManager", () => {
+vi.mock("../../../src/project-management/ProjectManager", async (importOriginal) => {
+    const { useStore } = await import("../../../src/shared/store");
     return {
         ProjectManager: class MockProjectManager {
             async deleteFile(id: string) {
                 return Promise.resolve();
             }
             async updateFile(id: string, updates: any) {
-                return Promise.resolve({ id, ...updates });
+                // Get the current file from the store to merge updates
+                const file = useStore.getState().files.find(f => f.id === id);
+                if (!file) {
+                    throw new Error(`File with ID ${id} not found`);
+                }
+                return Promise.resolve({ ...file, ...updates });
             }
             async saveFile(file: any) {
                 return Promise.resolve();
@@ -80,7 +86,7 @@ describe("Context Menu Workflows", () => {
             const fileButton = screen.getByTestId("file-test.ts");
 
             // Right-click to open context menu
-            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
+            fireEvent.contextMenu(fileButton);
 
             // Context menu should appear with Delete option
             await waitFor(() => {
@@ -127,8 +133,7 @@ describe("Context Menu Workflows", () => {
 
             // Right-click to open context menu
             const fileButton = screen.getByTestId("file-test.ts");
-            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
-
+            fireEvent.contextMenu(fileButton);
             // Click Delete option
             await waitFor(() => {
                 expect(screen.getByText("Delete")).toBeTruthy();
@@ -183,8 +188,7 @@ describe("Context Menu Workflows", () => {
 
             // Right-click and select Delete
             const fileButton = screen.getByTestId("file-test.ts");
-            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
-
+            fireEvent.contextMenu(fileButton);
             await waitFor(() => {
                 expect(screen.getByText("Delete")).toBeTruthy();
             });
@@ -245,8 +249,7 @@ describe("Context Menu Workflows", () => {
 
             // Right-click and select Delete
             const fileButton = screen.getByTestId("file-test.ts");
-            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
-
+            fireEvent.contextMenu(fileButton);
             await waitFor(() => {
                 expect(screen.getByText("Delete")).toBeTruthy();
             });
@@ -307,8 +310,7 @@ describe("Context Menu Workflows", () => {
 
             // Right-click to open context menu
             const fileButton = screen.getByTestId("file-test.ts");
-            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
-
+            fireEvent.contextMenu(fileButton);
             // Context menu should show Rename option
             await waitFor(() => {
                 expect(screen.getByText("Rename")).toBeTruthy();
@@ -354,13 +356,13 @@ describe("Context Menu Workflows", () => {
 
             // Right-click and select Rename
             const fileButton = screen.getByTestId("file-test.ts");
-            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
+            fireEvent.contextMenu(fileButton);
 
             await waitFor(() => {
                 expect(screen.getByText("Rename")).toBeTruthy();
             });
 
-            await user.click(screen.getByText("Rename"));
+            fireEvent.click(screen.getByText("Rename"));
 
             // Input field should appear with current filename
             await waitFor(() => {
@@ -409,25 +411,19 @@ describe("Context Menu Workflows", () => {
 
             // Right-click and select Rename
             const fileButton = screen.getByTestId("file-test.ts");
-            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
-
+            fireEvent.contextMenu(fileButton);
             await waitFor(() => {
                 expect(screen.getByText("Rename")).toBeTruthy();
             });
 
-            await user.click(screen.getByText("Rename"));
+            fireEvent.click(screen.getByText("Rename"));
 
             // Wait for input to appear
-            await waitFor(() => {
-                expect(screen.getByTestId("rename-input-test.ts")).toBeTruthy();
-            });
-
-            const input = screen.getByTestId("rename-input-test.ts") as HTMLInputElement;
+            const input = await screen.findByTestId("rename-input-test.ts") as HTMLInputElement;
 
             // Change the name and press Enter
-            await user.clear(input);
-            await user.type(input, "newname.ts");
-            await user.keyboard("{Enter}");
+            fireEvent.change(input, { target: { value: "newname.ts" } });
+            fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
 
             // File should be renamed in store
             await waitFor(() => {
@@ -477,13 +473,12 @@ describe("Context Menu Workflows", () => {
 
             // Right-click and select Rename
             const fileButton = screen.getByTestId("file-test.ts");
-            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
-
+            fireEvent.contextMenu(fileButton);
             await waitFor(() => {
                 expect(screen.getByText("Rename")).toBeTruthy();
             });
 
-            await user.click(screen.getByText("Rename"));
+            fireEvent.click(screen.getByText("Rename"));
 
             // Wait for input to appear
             await waitFor(() => {
@@ -542,13 +537,12 @@ describe("Context Menu Workflows", () => {
 
             // Right-click and select Rename
             const fileButton = screen.getByTestId("file-test.ts");
-            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
-
+            fireEvent.contextMenu(fileButton);
             await waitFor(() => {
                 expect(screen.getByText("Rename")).toBeTruthy();
             });
 
-            await user.click(screen.getByText("Rename"));
+            fireEvent.click(screen.getByText("Rename"));
 
             // Wait for input to appear
             await waitFor(() => {
@@ -631,13 +625,12 @@ describe("Context Menu Workflows", () => {
 
             // Right-click on test1.ts and select Rename
             const fileButton = screen.getByTestId("file-test1.ts");
-            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
-
+            fireEvent.contextMenu(fileButton);
             await waitFor(() => {
                 expect(screen.getByText("Rename")).toBeTruthy();
             });
 
-            await user.click(screen.getByText("Rename"));
+            fireEvent.click(screen.getByText("Rename"));
 
             // Wait for input to appear
             await waitFor(() => {
@@ -704,8 +697,7 @@ describe("Context Menu Workflows", () => {
 
             // Right-click to open context menu
             const fileButton = screen.getByTestId("file-test.ts");
-            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
-
+            fireEvent.contextMenu(fileButton);
             // Context menu should show Duplicate option
             await waitFor(() => {
                 expect(screen.getByText("Duplicate")).toBeTruthy();
@@ -751,8 +743,7 @@ describe("Context Menu Workflows", () => {
 
             // Right-click and select Duplicate
             const fileButton = screen.getByTestId("file-test.ts");
-            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
-
+            fireEvent.contextMenu(fileButton);
             await waitFor(() => {
                 expect(screen.getByText("Duplicate")).toBeTruthy();
             });
@@ -810,8 +801,7 @@ describe("Context Menu Workflows", () => {
 
             // Right-click and select Duplicate
             const fileButton = screen.getByTestId("file-test.ts");
-            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
-
+            fireEvent.contextMenu(fileButton);
             await waitFor(() => {
                 expect(screen.getByText("Duplicate")).toBeTruthy();
             });
@@ -874,8 +864,7 @@ describe("Context Menu Workflows", () => {
 
             // Right-click and select Duplicate
             const fileButton = screen.getByTestId("file-ComplexTest.ts");
-            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
-
+            fireEvent.contextMenu(fileButton);
             await waitFor(() => {
                 expect(screen.getByText("Duplicate")).toBeTruthy();
             });
@@ -947,8 +936,7 @@ describe("Context Menu Workflows", () => {
 
             // Right-click original file and duplicate
             const fileButton = screen.getByTestId("file-test.ts");
-            await user.pointer({ keys: "[MouseRight>]", target: fileButton });
-
+            fireEvent.contextMenu(fileButton);
             await waitFor(() => {
                 expect(screen.getByText("Duplicate")).toBeTruthy();
             });

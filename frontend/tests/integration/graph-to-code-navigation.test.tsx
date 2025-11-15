@@ -109,10 +109,10 @@ describe("Integration Test: Graph-to-Code Navigation", () => {
     const fileTreeItem = screen.getByText("Person.ts");
     expect(fileTreeItem).toBeTruthy();
 
-    // Check if the file has the selected styling
-    const fileButton = fileTreeItem.closest("button");
-    expect(fileButton?.classList.contains("bg-accent")).toBe(true);
-    expect(fileButton?.classList.contains("text-accent-foreground")).toBe(true);
+    // Check if the file has the selected styling (files are rendered as divs, not buttons)
+    const fileDiv = fileTreeItem.closest(".file-tree-item");
+    expect(fileDiv?.classList.contains("bg-accent")).toBe(true);
+    expect(fileDiv?.classList.contains("text-accent-foreground")).toBe(true);
   });
 
   it("should switch between files when activeFileId changes", () => {

@@ -181,7 +181,7 @@ export class ClassC {
             importGraph: graph,
         };
         let filteredResult = filterEntitiesByScope(allParsedEntities, scope);
-        
+
         // Separate and extract relationships
         let classes = filteredResult.entities.filter(
             (e): e is ClassDefinition => 'extendsClass' in e
@@ -190,7 +190,7 @@ export class ClassC {
             (e): e is InterfaceDefinition => 'extendsInterfaces' in e
         );
         let relationships = extractRelationships(classes, interfaces);
-        
+
         let diagram = generateDiagram(classes, interfaces, relationships);
 
         // Then: Should show only ClassA
@@ -205,7 +205,7 @@ export class ClassC {
             importGraph: graph,
         };
         filteredResult = filterEntitiesByScope(allParsedEntities, scope);
-        
+
         // Separate and extract relationships
         classes = filteredResult.entities.filter(
             (e): e is ClassDefinition => 'extendsClass' in e
@@ -214,7 +214,7 @@ export class ClassC {
             (e): e is InterfaceDefinition => 'extendsInterfaces' in e
         );
         relationships = extractRelationships(classes, interfaces);
-        
+
         diagram = generateDiagram(classes, interfaces, relationships);
 
         // Then: Should show only ClassB and ClassC (from File B), NOT ClassA
@@ -267,7 +267,7 @@ export class Manager extends Employee {
             importGraph: graph,
         };
         const filteredResult = filterEntitiesByScope(allParsedEntities, scope);
-        
+
         // Separate and extract relationships
         const classes = filteredResult.entities.filter(
             (e): e is ClassDefinition => 'extendsClass' in e
@@ -276,7 +276,7 @@ export class Manager extends Employee {
             (e): e is InterfaceDefinition => 'extendsInterfaces' in e
         );
         const relationships = extractRelationships(classes, interfaces);
-        
+
         const diagram = generateDiagram(classes, interfaces, relationships);
 
         // Then: Should show both Employee and Manager
@@ -288,11 +288,11 @@ export class Manager extends Employee {
         // And: Should show inheritance edge from Manager to Employee
         expect(diagram.edges).toHaveLength(1);
         expect(diagram.edges[0].type).toBe('inheritance');
-        
+
         // Find source and target node IDs
         const managerNode = diagram.nodes.find(n => n.data.name === 'Manager');
         const employeeNode = diagram.nodes.find(n => n.data.name === 'Employee');
-        
+
         expect(managerNode).toBeDefined();
         expect(employeeNode).toBeDefined();
         expect(diagram.edges[0].source).toBe(managerNode!.id);
@@ -348,7 +348,7 @@ export class Employee implements IPayable {
             importGraph: graph,
         };
         const filteredResult = filterEntitiesByScope(allParsedEntities, scope);
-        
+
         // Separate and extract relationships
         const classes = filteredResult.entities.filter(
             (e): e is ClassDefinition => 'extendsClass' in e
@@ -357,7 +357,7 @@ export class Employee implements IPayable {
             (e): e is InterfaceDefinition => 'extendsInterfaces' in e
         );
         const relationships = extractRelationships(classes, interfaces);
-        
+
         const diagram = generateDiagram(classes, interfaces, relationships);
 
         // Then: Should show both IPayable interface and Employee class
@@ -369,11 +369,11 @@ export class Employee implements IPayable {
         // And: Should show realization edge from Employee to IPayable
         expect(diagram.edges).toHaveLength(1);
         expect(diagram.edges[0].type).toBe('realization');
-        
+
         // Find source and target node IDs
         const employeeNode = diagram.nodes.find(n => n.data.name === 'Employee');
         const payableNode = diagram.nodes.find(n => n.data.name === 'IPayable');
-        
+
         expect(employeeNode).toBeDefined();
         expect(payableNode).toBeDefined();
         expect(diagram.edges[0].source).toBe(employeeNode!.id);

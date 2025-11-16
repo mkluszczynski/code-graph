@@ -17,6 +17,7 @@ import type {
   ClassDefinition,
   DiagramEdge,
   DiagramNode,
+  DiagramScope,
   InterfaceDefinition,
   ParseError,
   Position,
@@ -28,7 +29,7 @@ import type {
 // Type Helpers
 // ============================================================================
 
-type StoreState = FileSlice & EditorSlice & DiagramSlice & ParserSlice & FileTreeSlice & PersistenceSlice;
+type StoreState = FileSlice & EditorSlice & DiagramSlice & ParserSlice & FileTreeSlice & PersistenceSlice & ViewModeSlice;
 type StateSliceCreator<T> = StateCreator<StoreState, [], [], T>;
 
 // ============================================================================
@@ -570,6 +571,42 @@ const createPersistenceSlice: StateSliceCreator<PersistenceSlice> = (set) => ({
 });
 
 // ============================================================================
+// View Mode Slice (Feature 004)
+// ============================================================================
+
+/**
+ * View mode state management slice
+ * 
+ * Manages diagram view mode (file-scoped vs project-scoped)
+ */
+interface ViewModeSlice {
+  /** Current diagram view mode */
+  diagramViewMode: 'file' | 'project';
+
+  /** Set the diagram view mode */
+  setDiagramViewMode: (mode: 'file' | 'project') => void;
+
+  /** Get current diagram scope (computed from view mode and active file) */
+  getDiagramScope: () => DiagramScope;
+}
+
+const createViewModeSlice: StateSliceCreator<ViewModeSlice> = (set, get) => ({
+  diagramViewMode: 'file', // Default to file view per FR-026
+
+  setDiagramViewMode: (mode: 'file' | 'project') =>
+    set({ diagramViewMode: mode }),
+
+  getDiagramScope: () => {
+    const state = get();
+    return {
+      mode: state.diagramViewMode,
+      activeFileId: state.activeFileId,
+      importGraph: undefined, // Will be populated by ImportResolver
+    };
+  },
+});
+
+// ============================================================================
 // Combined Store
 // ============================================================================
 
@@ -582,6 +619,7 @@ export const useStore = create<StoreState>()(
       ...createParserSlice(...args),
       ...createFileTreeSlice(...args),
       ...createPersistenceSlice(...args),
+      ...createViewModeSlice(...args),
     }),
     {
       name: "uml-graph-store",

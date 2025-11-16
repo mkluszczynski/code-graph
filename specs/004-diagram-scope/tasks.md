@@ -25,15 +25,15 @@
 
 **Purpose**: Add new types and state management infrastructure for diagram scope feature
 
-- [ ] T001 Add DiagramScope type to frontend/src/shared/types/index.ts
-- [ ] T002 Add ImportInfo type to frontend/src/shared/types/index.ts
-- [ ] T003 [P] Add DependencyNode type to frontend/src/shared/types/index.ts
-- [ ] T004 [P] Add FilteredEntitySet type to frontend/src/shared/types/index.ts
-- [ ] T005 [P] Add EntityInclusionReason type to frontend/src/shared/types/index.ts
-- [ ] T006 Create ViewModeSlice in frontend/src/shared/store/index.ts
-- [ ] T007 Add ViewModeSlice to combined store in frontend/src/shared/store/index.ts
+- [X] T001 Add DiagramScope type to frontend/src/shared/types/index.ts
+- [X] T002 Add ImportInfo type to frontend/src/shared/types/index.ts
+- [X] T003 [P] Add DependencyNode type to frontend/src/shared/types/index.ts
+- [X] T004 [P] Add FilteredEntitySet type to frontend/src/shared/types/index.ts
+- [X] T005 [P] Add EntityInclusionReason type to frontend/src/shared/types/index.ts
+- [X] T006 Create ViewModeSlice in frontend/src/shared/store/index.ts
+- [X] T007 Add ViewModeSlice to combined store in frontend/src/shared/store/index.ts
 
-**Checkpoint**: All types defined, store slice created and integrated
+**Checkpoint**: All types defined, store slice created and integrated ✅
 
 ---
 
@@ -43,38 +43,38 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T008 Create ImportResolver.contract.test.ts in frontend/src/diagram-visualization/__tests__/
-- [ ] T009 Add contract test for parseImports() with named imports in ImportResolver.contract.test.ts
-- [ ] T010 [P] Add contract test for parseImports() with default imports in ImportResolver.contract.test.ts
-- [ ] T011 [P] Add contract test for parseImports() with namespace imports in ImportResolver.contract.test.ts
-- [ ] T012 [P] Add contract test for parseImports() with type-only imports in ImportResolver.contract.test.ts
-- [ ] T013 [P] Add contract test for resolveImportPaths() with relative paths in ImportResolver.contract.test.ts
-- [ ] T014 [P] Add contract test for resolveImportPaths() with .ts extension handling in ImportResolver.contract.test.ts
-- [ ] T015 [P] Add contract test for buildDependencyGraph() for multi-file project in ImportResolver.contract.test.ts
-- [ ] T016 [P] Add contract test for collectRelatedEntities() with circular dependencies in ImportResolver.contract.test.ts
-- [ ] T017 [P] Add contract test for performance (<100ms for 100 files) in ImportResolver.contract.test.ts
-- [ ] T018 Verify all ImportResolver contract tests FAIL (red phase)
-- [ ] T019 Create ImportResolver.ts in frontend/src/diagram-visualization/
-- [ ] T020 Implement parseImports() function in frontend/src/diagram-visualization/ImportResolver.ts
-- [ ] T021 Implement resolveImportPaths() function in frontend/src/diagram-visualization/ImportResolver.ts
-- [ ] T022 Implement buildDependencyGraph() function in frontend/src/diagram-visualization/ImportResolver.ts
-- [ ] T023 Implement collectRelatedEntities() function in frontend/src/diagram-visualization/ImportResolver.ts
-- [ ] T024 Verify all ImportResolver contract tests PASS (green phase)
-- [ ] T025 Refactor ImportResolver.ts for clean code (if needed)
-- [ ] T026 Create EntityFilter.unit.test.ts in frontend/src/diagram-visualization/__tests__/
-- [ ] T027 Add unit test for filterEntitiesByScope() in project view mode in EntityFilter.unit.test.ts
-- [ ] T028 [P] Add unit test for filterEntitiesByScope() in file view with no imports in EntityFilter.unit.test.ts
-- [ ] T029 [P] Add unit test for filterEntitiesByScope() in file view with imports and relationships in EntityFilter.unit.test.ts
-- [ ] T030 [P] Add unit test for filterEntitiesByScope() with circular dependencies in EntityFilter.unit.test.ts
-- [ ] T031 [P] Add unit test for filterEntitiesByScope() performance (<50ms for 50 entities) in EntityFilter.unit.test.ts
-- [ ] T032 Verify all EntityFilter unit tests FAIL (red phase)
-- [ ] T033 Create EntityFilter.ts in frontend/src/diagram-visualization/
-- [ ] T034 Implement filterEntitiesByScope() function in frontend/src/diagram-visualization/EntityFilter.ts
-- [ ] T035 Implement relationship detection logic (inheritance, realization, association) in EntityFilter.ts
-- [ ] T036 Verify all EntityFilter unit tests PASS (green phase)
-- [ ] T037 Refactor EntityFilter.ts for clean code (if needed)
+- [X] T008 Create ImportResolver.contract.test.ts in frontend/src/diagram-visualization/__tests__/
+- [X] T009 Add contract test for parseImports() with named imports in ImportResolver.contract.test.ts
+- [X] T010 [P] Add contract test for parseImports() with default imports in ImportResolver.contract.test.ts
+- [X] T011 [P] Add contract test for parseImports() with namespace imports in ImportResolver.contract.test.ts
+- [X] T012 [P] Add contract test for parseImports() with type-only imports in ImportResolver.contract.test.ts
+- [X] T013 [P] Add contract test for resolveImportPaths() with relative paths in ImportResolver.contract.test.ts
+- [X] T014 [P] Add contract test for resolveImportPaths() with .ts extension handling in ImportResolver.contract.test.ts
+- [X] T015 [P] Add contract test for buildDependencyGraph() for multi-file project in ImportResolver.contract.test.ts
+- [X] T016 [P] Add contract test for collectRelatedEntities() with circular dependencies in ImportResolver.contract.test.ts
+- [X] T017 [P] Add contract test for performance (<100ms for 100 files) in ImportResolver.contract.test.ts
+- [X] T018 Verify all ImportResolver contract tests FAIL (red phase)
+- [X] T019 Create ImportResolver.ts in frontend/src/diagram-visualization/
+- [X] T020 Implement parseImports() function in frontend/src/diagram-visualization/ImportResolver.ts
+- [X] T021 Implement resolveImportPaths() function in frontend/src/diagram-visualization/ImportResolver.ts
+- [X] T022 Implement buildDependencyGraph() function in frontend/src/diagram-visualization/ImportResolver.ts
+- [X] T023 Implement collectRelatedEntities() function in frontend/src/diagram-visualization/ImportResolver.ts
+- [X] T024 Verify all ImportResolver contract tests PASS (green phase)
+- [X] T025 Refactor ImportResolver.ts for clean code (if needed)
+- [X] T026 Create EntityFilter.unit.test.ts in frontend/src/diagram-visualization/__tests__/
+- [X] T027 Add unit test for filterEntitiesByScope() in project view mode in EntityFilter.unit.test.ts
+- [X] T028 [P] Add unit test for filterEntitiesByScope() in file view with no imports in EntityFilter.unit.test.ts
+- [X] T029 [P] Add unit test for filterEntitiesByScope() in file view with imports and relationships in EntityFilter.unit.test.ts
+- [X] T030 [P] Add unit test for filterEntitiesByScope() with circular dependencies in EntityFilter.unit.test.ts
+- [X] T031 [P] Add unit test for filterEntitiesByScope() performance (<50ms for 50 entities) in EntityFilter.unit.test.ts
+- [X] T032 Verify all EntityFilter unit tests FAIL (red phase)
+- [X] T033 Create EntityFilter.ts in frontend/src/diagram-visualization/
+- [X] T034 Implement filterEntitiesByScope() function in frontend/src/diagram-visualization/EntityFilter.ts
+- [X] T035 Implement relationship detection logic (inheritance, realization, association) in EntityFilter.ts
+- [X] T036 Verify all EntityFilter unit tests PASS (green phase)
+- [X] T037 Refactor EntityFilter.ts for clean code (if needed)
 
-**Checkpoint**: Foundation ready - ImportResolver and EntityFilter fully tested and working. User story implementation can now begin in parallel.
+**Checkpoint**: Foundation ready ✅ - ImportResolver and EntityFilter fully tested and working. User story implementation can now begin in parallel.
 
 ---
 

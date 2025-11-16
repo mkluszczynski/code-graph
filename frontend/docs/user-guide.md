@@ -98,6 +98,7 @@ The application is divided into three main panels:
 
 ### Right Panel: UML Diagram
 - **Interactive Diagram**: Click nodes to navigate to files
+- **View Mode Toggle**: Switch between File View and Project View
 - **Zoom Controls**: Buttons to zoom in/out or fit to view
 - **Mini-map**: Overview of large diagrams
 - **Pan**: Drag to move around the diagram
@@ -223,6 +224,35 @@ export class Order {
 
 ## Navigating the Diagram
 
+### View Modes
+
+The application offers two view modes to help you understand your code at different levels:
+
+#### File View (Default)
+- **Purpose**: Focused analysis of a single file
+- **What's Shown**: Only entities from the currently selected file, plus imported entities that have direct relationships
+- **Use Case**: Understanding a specific class and its immediate dependencies
+- **Layout**: Compact spacing for detailed viewing
+- **Shortcut**: `Ctrl+Shift+F` (Windows/Linux) or `⌘+Shift+F` (Mac)
+
+**Example**: If `Manager.ts` imports `Employee` from another file and extends it, both `Manager` and `Employee` will appear in the diagram. If `Manager.ts` also imports `Logger` but doesn't use it in relationships, `Logger` won't appear.
+
+#### Project View
+- **Purpose**: Strategic overview of the entire codebase
+- **What's Shown**: All entities from all files in the project
+- **Use Case**: Understanding overall architecture and system design
+- **Layout**: Spacious layout for large-scale visualization
+- **Shortcut**: `Ctrl+Shift+P` (Windows/Linux) or `⌘+Shift+P` (Mac)
+
+**Example**: See all classes and interfaces in your project simultaneously, with all relationships visible.
+
+#### Switching Views
+
+Use the toggle buttons at the top of the diagram panel:
+- Click **"File View"** for focused, single-file analysis
+- Click **"Project View"** for complete project overview
+- Your view preference persists as you navigate between files
+
 ### Interacting with Nodes
 
 - **Click a Node**: Opens the corresponding file in the editor
@@ -237,13 +267,23 @@ export class Order {
 - **Fit View**: Click compass icon to fit all nodes
 - **Mini-map**: Click and drag for quick navigation
 
+### Understanding Cross-File Relationships
+
+When viewing a file that imports classes or interfaces from other files:
+
+1. **Direct Relationships**: Imported entities that your class extends, implements, or uses as property types will automatically appear in File View
+2. **Transitive Dependencies**: If you import `Manager` which extends `Employee` which extends `Person`, all three will appear if there are connecting relationships
+3. **No Relationship**: Imported entities without relationships are hidden in File View to reduce clutter
+4. **Relationship Indicators**: Arrows show inheritance (solid line with hollow triangle), implementation (dashed line with hollow triangle), and associations (solid line with arrow)
+
 ### Large Diagrams
 
 For projects with many classes:
-1. Use the **mini-map** (bottom-left) for overview
-2. **Zoom out** to see full structure
-3. **Zoom in** on specific areas for detail
-4. **Pan** to navigate between sections
+1. **Use File View**: Start with File View to focus on one file at a time
+2. **Switch to Project View**: Use Project View when you need to see the big picture
+3. **Mini-map**: Use the mini-map (bottom-left) for overview navigation
+4. **Zoom Controls**: Zoom out to see full structure, zoom in for detail
+5. **Pan**: Drag to navigate between sections
 
 ---
 
@@ -318,6 +358,8 @@ ClassA ───────→ ClassB
 |----------|--------|-------------|
 | `Ctrl+N` (Windows/Linux)<br>`⌘+N` (Mac) | New File | Open file creation dialog |
 | `Ctrl+S` (Windows/Linux)<br>`⌘+S` (Mac) | Save File | Save current file changes |
+| `Ctrl+Shift+F` (Windows/Linux)<br>`⌘+Shift+F` (Mac) | File View | Switch to file-focused diagram view |
+| `Ctrl+Shift+P` (Windows/Linux)<br>`⌘+Shift+P` (Mac) | Project View | Switch to project-wide diagram view |
 
 ### Editor Shortcuts (Monaco)
 
@@ -463,17 +505,19 @@ Check browser console for performance metrics.
 ## Keyboard Reference Card
 
 ```
-┌────────────────────────────────────────────────┐
-│  TypeScript UML Visualizer - Shortcuts        │
-├────────────────────────────────────────────────┤
-│  Ctrl/⌘ + N    →  New File                    │
-│  Ctrl/⌘ + S    →  Save File                   │
-│  Ctrl + Space  →  IntelliSense (in editor)    │
-│  Ctrl + /      →  Comment Line (in editor)    │
-│  Mouse Wheel   →  Zoom Diagram                 │
-│  Click Node    →  Open File                    │
-│  Drag BG       →  Pan Diagram                  │
-└────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│  TypeScript UML Visualizer - Shortcuts         │
+├─────────────────────────────────────────────────┤
+│  Ctrl/⌘ + N        →  New File                 │
+│  Ctrl/⌘ + S        →  Save File                │
+│  Ctrl/⌘ + Shift + F→  File View                │
+│  Ctrl/⌘ + Shift + P→  Project View             │
+│  Ctrl + Space      →  IntelliSense (editor)    │
+│  Ctrl + /          →  Comment Line (editor)    │
+│  Mouse Wheel       →  Zoom Diagram             │
+│  Click Node        →  Open File                │
+│  Drag BG           →  Pan Diagram              │
+└─────────────────────────────────────────────────┘
 ```
 
 ---
@@ -494,6 +538,14 @@ Check browser console for performance metrics.
 ---
 
 ## Version History
+
+### Version 1.1.0 (November 2025)
+- **NEW**: File View and Project View toggle for different analysis perspectives
+- **NEW**: Cross-file import visualization with relationship detection
+- **NEW**: Keyboard shortcuts for view mode switching (Ctrl+Shift+F/P)
+- **IMPROVED**: Diagram scope control shows only relevant entities
+- **IMPROVED**: Auto-layout adapts to view mode (compact vs spacious)
+- **IMPROVED**: Performance optimization for multi-file projects
 
 ### Version 1.0.0 (November 2025)
 - Initial release

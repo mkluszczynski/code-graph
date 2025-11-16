@@ -405,3 +405,96 @@ export interface StorageMetadata {
   /** Whether multiple tabs are detected */
   hasMultipleTabs: boolean;
 }
+
+// ============================================================================
+// Diagram Scope Types (Feature 004)
+// ============================================================================
+
+/**
+ * Represents the viewing scope for diagram rendering (file-scoped or project-scoped)
+ */
+export interface DiagramScope {
+  /** Current view mode */
+  mode: 'file' | 'project';
+
+  /** Active file being viewed (null when no file selected) */
+  activeFileId: string | null;
+
+  /** Dependency graph for import resolution (built from all files) */
+  importGraph?: Map<string, DependencyNode>;
+}
+
+/**
+ * Information about a single import statement
+ */
+export interface ImportInfo {
+  /** Import path as written in code (e.g., './Person', '../models/User') */
+  importPath: string;
+
+  /** Resolved absolute file path (e.g., 'src/models/Person.ts') */
+  resolvedPath: string | null;
+
+  /** Resolved file ID (null if import not found in project) */
+  resolvedFileId: string | null;
+
+  /** Names imported from the module */
+  importedNames: string[];
+
+  /** Whether this is a type-only import */
+  isTypeOnly: boolean;
+
+  /** Whether this is a namespace import (import * as X) */
+  isNamespaceImport: boolean;
+
+  /** Line number in source file (for debugging) */
+  lineNumber: number;
+}
+
+/**
+ * Node in the cross-file dependency graph
+ */
+export interface DependencyNode {
+  /** File ID */
+  fileId: string;
+
+  /** File path for display/debugging */
+  filePath: string;
+
+  /** Parsed import statements from this file */
+  imports: ImportInfo[];
+
+  /** File IDs that this file imports from (resolved, non-null only) */
+  importedFileIds: Set<string>;
+
+  /** Parsed entities (classes and interfaces) from this file */
+  entities: Array<ClassDefinition | InterfaceDefinition>;
+
+  /** Whether this file has been visited during graph traversal */
+  visited?: boolean;
+}
+
+/**
+ * Reason why an entity was included in the filtered set
+ */
+export type EntityInclusionReason =
+  | { type: 'local'; fileId: string }                    // Entity defined in active file
+  | { type: 'imported'; importedBy: string; hasRelationship: boolean }  // Imported and used
+  | { type: 'project-view' }                             // Project view includes all
+  | { type: 'transitive'; depth: number; via: string };  // Imported by an imported file
+
+/**
+ * Set of entities after applying scope filtering rules
+ */
+export interface FilteredEntitySet {
+  /** Entities to display in the diagram */
+  entities: Array<ClassDefinition | InterfaceDefinition>;
+
+  /** Reason for inclusion for each entity (for debugging/testing) */
+  inclusionReasons: Map<string, EntityInclusionReason>;
+
+  /** Total entities before filtering */
+  totalEntitiesBeforeFilter: number;
+
+  /** Filter execution time in milliseconds */
+  filterTimeMs: number;
+}

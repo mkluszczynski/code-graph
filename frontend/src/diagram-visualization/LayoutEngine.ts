@@ -41,6 +41,35 @@ const DEFAULT_OPTIONS: LayoutOptions = {
 };
 
 /**
+ * Get layout configuration based on view mode
+ * 
+ * File view uses compact spacing for focused analysis of a single file.
+ * Project view uses spacious spacing for better readability when showing many entities.
+ * 
+ * @param viewMode - Current diagram view mode ('file' or 'project')
+ * @returns Layout options appropriate for the view mode
+ */
+export function getLayoutConfig(viewMode: 'file' | 'project'): LayoutOptions {
+    if (viewMode === 'project') {
+        // Spacious layout for project view (showing all entities)
+        return {
+            rankdir: 'TB',
+            nodesep: 80,   // More horizontal spacing (vs 50 in file view)
+            ranksep: 150,  // More vertical spacing (vs 100 in file view)
+            align: 'UL',
+        };
+    } else {
+        // Compact layout for file view (focused on single file)
+        return {
+            rankdir: 'TB',
+            nodesep: 50,   // Standard horizontal spacing
+            ranksep: 100,  // Standard vertical spacing
+            align: 'UL',
+        };
+    }
+}
+
+/**
  * LayoutEngine class for automatic diagram layout
  */
 export class LayoutEngine {

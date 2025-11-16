@@ -19,7 +19,7 @@ import type {
     DiagramEdge,
 } from '../shared/types';
 import { formatProperty, formatMethod } from './UMLFormatter';
-import { LayoutEngine } from './LayoutEngine';
+import { LayoutEngine, getLayoutConfig } from './LayoutEngine';
 import { performanceMonitor } from '../shared/utils/performance';
 
 /**
@@ -37,12 +37,14 @@ export interface DiagramData {
  * @param classes - Array of parsed classes
  * @param interfaces - Array of parsed interfaces
  * @param relationships - Array of relationships between entities
+ * @param viewMode - View mode for layout configuration (file or project) - defaults to 'file'
  * @returns DiagramData with nodes and edges
  */
 export function generateDiagram(
     classes: ClassDefinition[],
     interfaces: InterfaceDefinition[],
-    relationships: Relationship[]
+    relationships: Relationship[],
+    viewMode: 'file' | 'project' = 'file'
 ): DiagramData {
     performanceMonitor.startTimer('Diagram Generation');
 
@@ -77,8 +79,9 @@ export function generateDiagram(
         }
     }
 
-    // Apply layout to position nodes using LayoutEngine
-    const layoutEngine = new LayoutEngine({ rankdir: 'TB' });
+    // Apply layout to position nodes using LayoutEngine with view mode config
+    const layoutConfig = getLayoutConfig(viewMode);
+    const layoutEngine = new LayoutEngine(layoutConfig);
     const layoutedNodes = layoutEngine.applyLayout(nodes, edges);
 
     performanceMonitor.endTimer('Diagram Generation', {

@@ -11,6 +11,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-13
 - IndexedDB via idb library for file persistence (003-file-tree-context-menu)
 - TypeScript 5.9.3, Node.js 20+ LTS + React 18+, Zustand 5.0 (state), React Flow 12+ (@xyflow/react), dagre (layout), TypeScript Compiler API, idb 8.0 (IndexedDB) (004-diagram-scope)
 - IndexedDB via idb library for file persistence (client-side) (004-diagram-scope)
+- TypeScript 5.9.3, Node.js 20+ LTS + React 19+, @xyflow/react 12.9+ (React Flow), html-to-image 1.11+ (canvas export), zustand 5.0+ (state) (005-fix-diagram-export)
+- N/A (client-side operation only) (005-fix-diagram-export)
 
 - TypeScript 5.x, Node.js 20+ LTS + React 18+ (frontend framework), TypeScript Compiler API (for code parsing), pnpm (package manager), React Flow + dagre (UML diagram rendering), Monaco Editor via @monaco-editor/react (code editor component), Zustand (state management), idb (IndexedDB wrapper) (001-uml-graph-visualizer)
 
@@ -30,14 +32,9 @@ npm test && npm run lint
 TypeScript 5.x, Node.js 20+ LTS: Follow standard conventions
 
 ## Recent Changes
+- 005-fix-diagram-export: Added TypeScript 5.9.3, Node.js 20+ LTS + React 19+, @xyflow/react 12.9+ (React Flow), html-to-image 1.11+ (canvas export), zustand 5.0+ (state)
 - 004-diagram-scope: **FEATURE COMPLETE** ✅ Phase 7 (Polish) in progress - All user stories implemented, E2E tests passing, documentation updated
 - 004-diagram-scope: Phase 6 complete - E2E testing validated all 3 user stories (33/33 E2E tests passing)
-- 004-diagram-scope: Phase 5 (User Story 3) complete - Project-Wide View Toggle with ViewModeToggle UI and keyboard shortcuts
-- 004-diagram-scope: Phase 4 (User Story 2) complete - Cross-File Import Visualization with transitive imports support
-- 004-diagram-scope: Phase 3 (User Story 1) complete - Isolated File View implemented with scope filtering
-- 004-diagram-scope: Added TypeScript 5.9.3, Node.js 20+ LTS + React 18+, Zustand 5.0 (state), React Flow 12+ (@xyflow/react), dagre (layout), TypeScript Compiler API, idb 8.0 (IndexedDB)
-- 003-file-tree-context-menu: Added TypeScript 5.9.3, Node.js 20+ LTS + React 18+, Zustand 5.0 (state), idb 8.0 (IndexedDB), shadcn/ui (UI components), @radix-ui/react-context-menu (context menu primitive), Lucide React (icons)
-- 002-persist-code-changes: Added TypeScript 5.x, Node.js 20+ LTS + React 18+, Zustand (state management), idb 8.0+ (IndexedDB wrapper), Monaco Editor, TypeScript Compiler API
 
 
 <!-- MANUAL ADDITIONS START -->

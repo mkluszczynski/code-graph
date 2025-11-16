@@ -11,6 +11,7 @@ import { useStore } from "./shared/store";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useKeyboardShortcuts } from "./shared/hooks/useKeyboardShortcuts";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { ViewModeToggle } from "./components/ViewModeToggle";
 import { PersistenceControllerContext } from "./project-management/PersistenceControllerContext";
 import { StorageWarningBanner } from "./components/StorageWarningBanner";
 import { usePersistence } from "./shared/hooks/usePersistence";
@@ -115,8 +116,9 @@ function App() {
             {/* Right panel: UML Diagram */}
             <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
               <aside className="h-full bg-background border-l flex flex-col">
-                <div className="p-3 border-b">
+                <div className="p-3 border-b flex items-center justify-between">
                   <h2 className="text-sm font-medium">UML Diagram</h2>
+                  <ViewModeToggle />
                 </div>
                 <div className="flex-1 overflow-hidden">
                   <ErrorBoundary

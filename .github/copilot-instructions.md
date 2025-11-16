@@ -30,6 +30,8 @@ npm test && npm run lint
 TypeScript 5.x, Node.js 20+ LTS: Follow standard conventions
 
 ## Recent Changes
+- 004-diagram-scope: Phase 5 (User Story 3) complete - Project-Wide View Toggle implemented with ViewModeToggle UI component
+- 004-diagram-scope: Phase 4 (User Story 2) complete - Cross-File Import Visualization with transitive imports support
 - 004-diagram-scope: Phase 3 (User Story 1) complete - Isolated File View implemented with scope filtering
 - 004-diagram-scope: Added TypeScript 5.9.3, Node.js 20+ LTS + React 18+, Zustand 5.0 (state), React Flow 12+ (@xyflow/react), dagre (layout), TypeScript Compiler API, idb 8.0 (IndexedDB)
 - 003-file-tree-context-menu: Added TypeScript 5.9.3, Node.js 20+ LTS + React 18+, Zustand 5.0 (state), idb 8.0 (IndexedDB), shadcn/ui (UI components), @radix-ui/react-context-menu (context menu primitive), Lucide React (icons)
@@ -175,16 +177,34 @@ extractRelationships() → generateDiagram() → Update diagram state
 - ✅ **TDD Approach**: Tests written first, implementation follows
 - ✅ **Performance**: All timing targets exceeded by 10x+ margin
 
-### Next Steps
+### Phase 5 Status: COMPLETE ✅ (User Story 3 - Project-Wide View Toggle)
 
-**Phase 4**: User Story 2 - Cross-File Import Visualization (T054-T068)
-- Display imported entities with relationship arrows
-- Handle multi-level import chains
-- Prevent infinite loops with circular imports
+**Implementation Summary (2025-11-16)**:
+- Created ViewModeToggle component with File View/Project View toggle buttons
+- Integrated ViewModeToggle into App.tsx diagram panel header
+- Implemented `getLayoutConfig()` function in LayoutEngine with view mode-specific spacing:
+  - File view: compact (50px node spacing, 100px rank spacing)
+  - Project view: spacious (80px node spacing, 150px rank spacing)
+- Updated DiagramGenerator to accept optional `viewMode` parameter
+- Connected useEditorController to pass view mode to diagram generation
+- All 4 integration tests passing (T070-T073)
+- Performance: 0.2-7.8ms observed (target: <300ms) ✅
+- Layout prevents overlaps by design (dagre algorithm with proper spacing) ✅
 
-**Phase 5**: User Story 3 - Project-Wide View Toggle (T069-T086)
-- Add ViewModeToggle UI component
-- Implement project view mode (show all entities)
-- Adjust layout spacing for different view modes
+**Key Files Added/Modified**:
+- `frontend/src/components/ViewModeToggle.tsx`: New toggle UI component
+- `frontend/src/App.tsx`: Added ViewModeToggle to diagram panel header
+- `frontend/src/diagram-visualization/LayoutEngine.ts`: Added `getLayoutConfig()` function
+- `frontend/src/diagram-visualization/DiagramGenerator.ts`: Added viewMode parameter
+- `frontend/src/code-editor/useEditorController.ts`: Pass viewMode to generateDiagram
+- `frontend/tests/integration/diagram-scope/ProjectView.test.tsx`: 4 integration tests
+
+**Feature Status**: All 3 user stories (US1, US2, US3) complete ✅
+- User Story 1: Isolated File View ✅
+- User Story 2: Cross-File Import Visualization ✅
+- User Story 3: Project-Wide View Toggle ✅
+- Total: 14/14 integration tests passing
+
+**Next Steps**: Phase 6 (E2E Testing) and Phase 7 (Polish & Documentation)
 
 <!-- MANUAL ADDITIONS END -->

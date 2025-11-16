@@ -142,12 +142,30 @@ export function useEditorController() {
                     f.id === fileId ? { ...f, content } : f
                 );
 
-                // Create updated parsed entities with current file's entities
-                // Clone the Map and update with current file's entities
+                // Create updated parsed entities map
+                // Parse ALL files in the project to ensure dependency graph has complete data
                 const currentParsedEntities = new Map(currentState.parsedEntities);
+
+                // Parse any files that haven't been parsed yet
+                for (const file of currentFiles) {
+                    if (!currentParsedEntities.has(file.id)) {
+                        // Parse this file
+                        const fileParseResult = parse(file.content, file.name, file.id);
+                        const fileEntities: (ClassDefinition | InterfaceDefinition)[] = [
+                            ...fileParseResult.classes,
+                            ...fileParseResult.interfaces,
+                        ];
+                        currentParsedEntities.set(file.id, fileEntities);
+
+                        // Also update the store with these parsed entities
+                        setParsedEntities(file.id, fileEntities);
+                    }
+                }
+
+                // Update with current file's entities (may have changed)
                 currentParsedEntities.set(fileId, entities);
 
-                // Build dependency graph from all files (including current in-progress changes)
+                // Build dependency graph from all files (now with all entities parsed)
                 const dependencyGraph = buildDependencyGraph(currentFiles, currentParsedEntities);
 
                 // Create diagram scope
@@ -175,8 +193,8 @@ export function useEditorController() {
                 // Extract relationships from filtered entities
                 const relationships = extractRelationships(classes, interfaces);
 
-                // Generate diagram with filtered entities
-                const diagramData = generateDiagram(classes, interfaces, relationships);
+                // Generate diagram with filtered entities (pass viewMode for layout configuration)
+                const diagramData = generateDiagram(classes, interfaces, relationships, currentViewMode);
 
                 // Update diagram state
                 updateDiagram(diagramData.nodes, diagramData.edges);

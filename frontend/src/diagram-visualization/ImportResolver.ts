@@ -171,6 +171,9 @@ export function resolveImportPaths(
  * @returns Resolved absolute path
  */
 function resolvePath(baseDir: string, relativePath: string): string {
+    // Preserve leading slash for absolute paths
+    const isAbsolute = baseDir.startsWith('/');
+
     const baseParts = baseDir.split('/').filter(Boolean);
     const relativeParts = relativePath.split('/').filter(Boolean);
 
@@ -187,7 +190,8 @@ function resolvePath(baseDir: string, relativePath: string): string {
         // Skip '.' (current directory)
     }
 
-    return resolvedParts.join('/');
+    const resolved = resolvedParts.join('/');
+    return isAbsolute ? `/${resolved}` : resolved;
 }
 
 /**

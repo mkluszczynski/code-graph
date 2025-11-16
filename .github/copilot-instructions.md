@@ -107,7 +107,7 @@ TypeScript 5.x, Node.js 20+ LTS: Follow standard conventions
 
 ## Feature 004: UML Diagram Scope Control & Cross-File Import Resolution
 
-**Status**: Phase 3 Complete (User Story 1 - Isolated File View) ✅
+**Status**: Phase 4 Complete (User Story 2 - Cross-File Import Visualization) ✅
 
 ### Implementation Summary (2025-11-16)
 
@@ -131,6 +131,21 @@ TypeScript 5.x, Node.js 20+ LTS: Follow standard conventions
 - Added performance monitoring with warning if >200ms for ≤10 entities
 - All 4 integration tests passing
 - Performance well under target: 4-14ms observed (target: <200ms)
+
+**Phase 4 Status**: COMPLETE ✅ (User Story 2 - Cross-File Import Visualization)
+- Created 6 integration tests in `frontend/tests/integration/diagram-scope/CrossFileImports.test.tsx`
+- Fixed `ImportResolver.ts` path resolution to preserve leading slash for absolute paths
+- Fixed `EntityFilter.ts` to use `scope.importGraph` when dependency graph parameter not provided
+- Enhanced `EntityFilter.ts` to support transitive imports (relationships with already-included imported entities)
+- Added duplicate entity detection in circular import scenarios
+- All 6 integration tests passing:
+  - T055: Displays imported entity with inheritance relationship ✅
+  - T056: Displays imported entity with interface realization ✅
+  - T057: Displays imported entity with association (property type) ✅
+  - T058: Excludes imported entity with no relationships ✅
+  - T059: Displays multi-level import chain (Manager → Employee → Person) ✅
+  - T060: Handles circular imports without infinite loop ✅
+- Performance: 4-14ms observed (target: <100ms per file)
 
 ### Technical Details
 

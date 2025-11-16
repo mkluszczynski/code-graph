@@ -45,10 +45,12 @@ export function filterEntitiesByScope(
         filteredEntities = filterProjectView(allEntities, inclusionReasons);
     } else {
         // File view: Include entities from active file + related imports
+        // Use dependency graph from parameter or scope.importGraph
+        const graphToUse = dependencyGraph || scope.importGraph;
         filteredEntities = filterFileView(
             allEntities,
             scope,
-            dependencyGraph,
+            graphToUse,
             inclusionReasons
         );
     }
@@ -168,7 +170,16 @@ function collectImportedEntitiesWithRelationships(
 
         // Check each entity in the imported file
         for (const entity of fileEntities) {
-            // Check if this entity has a relationship with local entities
+            // Skip if already included (prevent duplicates in circular dependencies)
+            const entityNames = new Set([
+                ...localEntities.map(e => e.name),
+                ...importedEntities.map(e => e.name)
+            ]);
+            if (entityNames.has(entity.name)) {
+                continue;
+            }
+
+            // Check if this entity has a relationship with local entities OR already-included imported entities
             if (hasRelationshipWithLocalEntities(entity, localEntities, importedEntities)) {
                 importedEntities.push(entity);
                 inclusionReasons.set(entity.name, {
@@ -205,31 +216,34 @@ function collectImportedEntitiesWithRelationships(
 function hasRelationshipWithLocalEntities(
     entity: ClassDefinition | InterfaceDefinition,
     localEntities: (ClassDefinition | InterfaceDefinition)[],
-    _importedEntities: (ClassDefinition | InterfaceDefinition)[]
+    importedEntities: (ClassDefinition | InterfaceDefinition)[]
 ): boolean {
     const localEntityNames = new Set(localEntities.map((e) => e.name));
 
-    // Check if local entities reference this entity
-    for (const localEntity of localEntities) {
+    // Also check against already-included imported entities for transitive relationships
+    const allRelevantEntities = [...localEntities, ...importedEntities];
+
+    // Check if local or imported entities reference this entity
+    for (const relevantEntity of allRelevantEntities) {
         // Check inheritance
-        if ('extendsClass' in localEntity && localEntity.extendsClass === entity.name) {
+        if ('extendsClass' in relevantEntity && relevantEntity.extendsClass === entity.name) {
             return true;
         }
 
         // Check interface realization
-        if ('implementsInterfaces' in localEntity && localEntity.implementsInterfaces.includes(entity.name)) {
+        if ('implementsInterfaces' in relevantEntity && relevantEntity.implementsInterfaces.includes(entity.name)) {
             return true;
         }
 
         // Check properties for associations
-        for (const prop of localEntity.properties) {
+        for (const prop of relevantEntity.properties) {
             if (typeReferencesEntity(prop.type, entity.name)) {
                 return true;
             }
         }
 
         // Check method parameters and return types
-        for (const method of localEntity.methods) {
+        for (const method of relevantEntity.methods) {
             if (typeReferencesEntity(method.returnType, entity.name)) {
                 return true;
             }

@@ -39,8 +39,30 @@ export function useEditorController() {
      * Handles editor mount event
      */
     const handleEditorMount = useCallback(
-        (editor: editor.IStandaloneCodeEditor) => {
+        (editor: editor.IStandaloneCodeEditor, monaco: typeof import('monaco-editor')) => {
             editorRef.current = editor;
+
+            // Configure TypeScript compiler options to suppress module resolution errors
+            monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+                target: monaco.languages.typescript.ScriptTarget.Latest,
+                allowNonTsExtensions: true,
+                moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+                module: monaco.languages.typescript.ModuleKind.ESNext,
+                noEmit: true,
+                esModuleInterop: true,
+                jsx: monaco.languages.typescript.JsxEmit.React,
+                typeRoots: ['node_modules/@types'],
+                // Suppress module resolution errors for imports that we can't resolve
+                skipLibCheck: true,
+                // Don't show errors for unresolved imports
+                noResolve: true,
+            });
+
+            // Disable semantic diagnostics (type checking) to prevent module resolution errors
+            monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+                noSemanticValidation: true, // Disable semantic errors (including module resolution)
+                noSyntaxValidation: false,  // Keep syntax validation enabled
+            });
         },
         []
     );
@@ -112,11 +134,20 @@ export function useEditorController() {
 
                 // Get current store state
                 const currentState = useStore.getState();
-                const currentFiles = currentState.files;
-                const currentParsedEntities = currentState.parsedEntities;
                 const currentViewMode = currentState.diagramViewMode;
 
-                // Build dependency graph from all files
+                // Create updated files array with current in-progress content
+                // This ensures import statements are detected even before the file is saved
+                const currentFiles = currentState.files.map(f =>
+                    f.id === fileId ? { ...f, content } : f
+                );
+
+                // Create updated parsed entities with current file's entities
+                // Clone the Map and update with current file's entities
+                const currentParsedEntities = new Map(currentState.parsedEntities);
+                currentParsedEntities.set(fileId, entities);
+
+                // Build dependency graph from all files (including current in-progress changes)
                 const dependencyGraph = buildDependencyGraph(currentFiles, currentParsedEntities);
 
                 // Create diagram scope

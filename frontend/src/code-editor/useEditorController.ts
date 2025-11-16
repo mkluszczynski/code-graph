@@ -8,9 +8,13 @@ import type { editor } from 'monaco-editor';
 import { useStore, useActiveFile } from '../shared/store';
 import { parse } from '../typescript-parser/TypeScriptParser';
 import { generateDiagram } from '../diagram-visualization/DiagramGenerator';
-import type { ClassDefinition, InterfaceDefinition, Relationship } from '../shared/types';
+import type { ClassDefinition, InterfaceDefinition } from '../shared/types';
 import { EDITOR_DEBOUNCE_DELAY_MS } from '../shared/constants';
 import { usePersistenceController } from '../project-management/usePersistenceController';
+import { buildDependencyGraph } from '../diagram-visualization/ImportResolver';
+import { filterEntitiesByScope } from '../diagram-visualization/EntityFilter';
+import { extractRelationships } from '../typescript-parser/RelationshipAnalyzer';
+import { performanceMonitor } from '../shared/utils/performance';
 
 export function useEditorController() {
     const activeFile = useActiveFile();
@@ -22,8 +26,8 @@ export function useEditorController() {
     const clearParseErrors = useStore((state) => state.clearParseErrors);
     const setParsedEntities = useStore((state) => state.setParsedEntities);
     const updateDiagram = useStore((state) => state.updateDiagram);
-    const allParsedEntities = useStore((state) => state.parsedEntities);
     const autoSaveEnabled = useStore((state) => state.autoSaveEnabled);
+    const diagramViewMode = useStore((state) => state.diagramViewMode);
 
     const persistenceController = usePersistenceController();
 
@@ -81,6 +85,7 @@ export function useEditorController() {
     const parseAndUpdateDiagram = useCallback(
         (content: string, fileId: string) => {
             setIsParsing(true);
+            performanceMonitor.startTimer('Diagram Update (File View)');
 
             try {
                 // Get the filename from the active file
@@ -105,36 +110,62 @@ export function useEditorController() {
                 ];
                 setParsedEntities(fileId, entities);
 
-                // Collect all entities from all files
-                const allEntities: (ClassDefinition | InterfaceDefinition)[] = [];
-                const allRelationships: Relationship[] = [];
+                // Get current store state
+                const currentState = useStore.getState();
+                const currentFiles = currentState.files;
+                const currentParsedEntities = currentState.parsedEntities;
+                const currentViewMode = currentState.diagramViewMode;
 
-                // Add entities from current file
-                allEntities.push(...entities);
+                // Build dependency graph from all files
+                const dependencyGraph = buildDependencyGraph(currentFiles, currentParsedEntities);
 
-                // Add entities from other files
-                allParsedEntities.forEach((fileEntities, id) => {
-                    if (id !== fileId) {
-                        allEntities.push(...fileEntities);
-                    }
-                });
+                // Create diagram scope
+                const scope = {
+                    mode: currentViewMode,
+                    activeFileId: fileId,
+                    importGraph: dependencyGraph,
+                };
 
-                // Extract classes and interfaces
-                const classes = allEntities.filter(
-                    (e): e is ClassDefinition => 'properties' in e && 'methods' in e && 'extendsClass' in e
+                // Filter entities based on scope
+                const filteredResult = filterEntitiesByScope(
+                    currentParsedEntities,
+                    scope,
+                    dependencyGraph
                 );
-                const interfaces = allEntities.filter(
-                    (e): e is InterfaceDefinition => 'properties' in e && 'methods' in e && 'extendsInterfaces' in e
+
+                // Separate filtered entities into classes and interfaces
+                const classes = filteredResult.entities.filter(
+                    (e): e is ClassDefinition => 'extendsClass' in e
+                );
+                const interfaces = filteredResult.entities.filter(
+                    (e): e is InterfaceDefinition => 'extendsInterfaces' in e
                 );
 
-                // Add relationships from parse result
-                allRelationships.push(...parseResult.relationships);
+                // Extract relationships from filtered entities
+                const relationships = extractRelationships(classes, interfaces);
 
-                // Generate diagram
-                const diagramData = generateDiagram(classes, interfaces, allRelationships);
+                // Generate diagram with filtered entities
+                const diagramData = generateDiagram(classes, interfaces, relationships);
 
                 // Update diagram state
                 updateDiagram(diagramData.nodes, diagramData.edges);
+
+                // End performance monitoring
+                const updateTime = performanceMonitor.endTimer('Diagram Update (File View)', {
+                    fileId,
+                    fileName,
+                    viewMode: currentViewMode,
+                    entityCount: filteredResult.entities.length,
+                    nodeCount: diagramData.nodes.length,
+                    edgeCount: diagramData.edges.length,
+                });
+
+                // Warn if update time exceeds target (SC-003: <200ms for files with 10 entities)
+                if (filteredResult.entities.length <= 10 && updateTime > 200) {
+                    console.warn(
+                        `[Performance] Diagram update took ${updateTime.toFixed(2)}ms for ${filteredResult.entities.length} entities (target: <200ms for ≤10 entities)`
+                    );
+                }
 
                 // Note: Auto-save is disabled during typing to prevent editor issues
                 // File will be saved when switching files or manually saving
@@ -149,6 +180,7 @@ export function useEditorController() {
                         severity: 'error',
                     },
                 ]);
+                performanceMonitor.endTimer('Diagram Update (File View)', { error: true });
             } finally {
                 setIsParsing(false);
             }
@@ -159,7 +191,6 @@ export function useEditorController() {
             setParseErrors,
             clearParseErrors,
             setParsedEntities,
-            allParsedEntities,
             updateDiagram,
             updateFile,
         ]
@@ -204,6 +235,23 @@ export function useEditorController() {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeFile?.id]); // Only re-run when activeFile ID changes
+
+    /**
+     * Regenerate diagram when view mode changes
+     */
+    useEffect(() => {
+        if (activeFile) {
+            // Debounce diagram updates when view mode changes
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+
+            debounceTimerRef.current = setTimeout(() => {
+                parseAndUpdateDiagram(activeFile.content, activeFile.id);
+            }, EDITOR_DEBOUNCE_DELAY_MS);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [diagramViewMode]);
 
     /**
      * Cleanup debounce timer on unmount

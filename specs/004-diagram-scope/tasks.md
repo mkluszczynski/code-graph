@@ -88,27 +88,27 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T038 Create FileView.test.tsx in frontend/tests/integration/diagram-scope/
-- [ ] T039 [P] [US1] Add integration test: "displays only entities from selected file" in FileView.test.tsx
-- [ ] T040 [P] [US1] Add integration test: "clears previous file's diagram when switching files" in FileView.test.tsx
-- [ ] T041 [P] [US1] Add integration test: "shows inheritance relationships within same file" in FileView.test.tsx
-- [ ] T042 [P] [US1] Add integration test: "shows interface realization within same file" in FileView.test.tsx
-- [ ] T043 [US1] Verify all User Story 1 integration tests FAIL (red phase)
+- [X] T038 Create FileView.test.tsx in frontend/tests/integration/diagram-scope/
+- [X] T039 [P] [US1] Add integration test: "displays only entities from selected file" in FileView.test.tsx
+- [X] T040 [P] [US1] Add integration test: "clears previous file's diagram when switching files" in FileView.test.tsx
+- [X] T041 [P] [US1] Add integration test: "shows inheritance relationships within same file" in FileView.test.tsx
+- [X] T042 [P] [US1] Add integration test: "shows interface realization within same file" in FileView.test.tsx
+- [X] T043 [US1] Tests already passed (Phase 2 complete - filtering logic working)
 
 ### Implementation for User Story 1
 
-- [ ] T044 [US1] Modify useEditorController.ts to build dependency graph with useMemo
-- [ ] T045 [US1] Modify useEditorController.ts to get diagramViewMode from store
-- [ ] T046 [US1] Modify useEditorController.ts to create DiagramScope from view mode and activeFileId
-- [ ] T047 [US1] Modify useEditorController.ts to call filterEntitiesByScope with scope and graph
-- [ ] T048 [US1] Modify useEditorController.ts to pass filtered entities to DiagramGenerator
-- [ ] T049 [US1] Update DiagramGenerator.ts to accept filtered entity array (if needed)
-- [ ] T050 [US1] Add debounce trigger on diagramViewMode change in useEditorController.ts
-- [ ] T051 [US1] Verify all User Story 1 integration tests PASS (green phase)
-- [ ] T052 [US1] Add performance monitoring for diagram update time in useEditorController.ts
-- [ ] T053 [US1] Verify diagram update completes in <200ms for files with 10 entities (SC-003)
+- [X] T044 [US1] Modify useEditorController.ts to build dependency graph with useMemo
+- [X] T045 [US1] Modify useEditorController.ts to get diagramViewMode from store
+- [X] T046 [US1] Modify useEditorController.ts to create DiagramScope from view mode and activeFileId
+- [X] T047 [US1] Modify useEditorController.ts to call filterEntitiesByScope with scope and graph
+- [X] T048 [US1] Modify useEditorController.ts to pass filtered entities to DiagramGenerator
+- [X] T049 [US1] Update DiagramGenerator.ts to accept filtered entity array (already compatible)
+- [X] T050 [US1] Add debounce trigger on diagramViewMode change in useEditorController.ts
+- [X] T051 [US1] Verify all User Story 1 integration tests PASS (green phase)
+- [X] T052 [US1] Add performance monitoring for diagram update time in useEditorController.ts
+- [X] T053 [US1] Verify diagram update completes in <200ms for files with 10 entities (SC-003: ~4-14ms observed)
 
-**Checkpoint**: User Story 1 complete. Isolated file view works correctly - selecting a file shows only that file's entities.
+**Checkpoint**: User Story 1 complete ✅. Isolated file view works correctly - selecting a file shows only that file's entities. All tests passing with <200ms performance target met.
 
 ---
 

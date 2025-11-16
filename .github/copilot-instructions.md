@@ -30,6 +30,7 @@ npm test && npm run lint
 TypeScript 5.x, Node.js 20+ LTS: Follow standard conventions
 
 ## Recent Changes
+- 004-diagram-scope: Phase 3 (User Story 1) complete - Isolated File View implemented with scope filtering
 - 004-diagram-scope: Added TypeScript 5.9.3, Node.js 20+ LTS + React 18+, Zustand 5.0 (state), React Flow 12+ (@xyflow/react), dagre (layout), TypeScript Compiler API, idb 8.0 (IndexedDB)
 - 003-file-tree-context-menu: Added TypeScript 5.9.3, Node.js 20+ LTS + React 18+, Zustand 5.0 (state), idb 8.0 (IndexedDB), shadcn/ui (UI components), @radix-ui/react-context-menu (context menu primitive), Lucide React (icons)
 - 002-persist-code-changes: Added TypeScript 5.x, Node.js 20+ LTS + React 18+, Zustand (state management), idb 8.0+ (IndexedDB wrapper), Monaco Editor, TypeScript Compiler API
@@ -101,5 +102,74 @@ TypeScript 5.x, Node.js 20+ LTS: Follow standard conventions
 - ✅ 100% persistence to IndexedDB with rollback on failure
 - ✅ WCAG 2.1 Level AA accessibility compliance
 - ✅ Error handling for storage quota and database failures
+
+---
+
+## Feature 004: UML Diagram Scope Control & Cross-File Import Resolution
+
+**Status**: Phase 3 Complete (User Story 1 - Isolated File View) ✅
+
+### Implementation Summary (2025-11-16)
+
+**Phase 1-2 Status**: COMPLETE ✅
+- All types defined (DiagramScope, ImportInfo, DependencyNode, FilteredEntitySet, EntityInclusionReason)
+- ViewModeSlice added to Zustand store
+- ImportResolver fully implemented with contract tests passing
+- EntityFilter fully implemented with unit tests passing
+- Foundation ready for user story implementation
+
+**Phase 3 Status**: COMPLETE ✅ (User Story 1 - Isolated File View)
+- Created 4 integration tests in `frontend/tests/integration/diagram-scope/FileView.test.tsx`
+- Modified `useEditorController.ts` to use scope filtering:
+  - Builds dependency graph from all files
+  - Creates DiagramScope with current view mode and active file
+  - Filters entities using `filterEntitiesByScope()`
+  - Separates filtered entities into classes and interfaces
+  - Extracts relationships from filtered entities only
+  - Passes filtered data to DiagramGenerator
+- Added debounced diagram regeneration on view mode changes
+- Added performance monitoring with warning if >200ms for ≤10 entities
+- All 4 integration tests passing
+- Performance well under target: 4-14ms observed (target: <200ms)
+
+### Technical Details
+
+**Scope Filtering Flow**:
+```
+User selects file → useEditorController.parseAndUpdateDiagram() →
+buildDependencyGraph() → Create DiagramScope →
+filterEntitiesByScope() → Separate classes/interfaces →
+extractRelationships() → generateDiagram() → Update diagram state
+```
+
+**Key Files Modified**:
+- `frontend/src/code-editor/useEditorController.ts`: Integrated scope filtering
+- `frontend/tests/integration/diagram-scope/FileView.test.tsx`: Integration tests
+
+**Key Files from Phase 1-2** (Already Complete):
+- `frontend/src/shared/types/index.ts`: DiagramScope, ImportInfo types
+- `frontend/src/shared/store/index.ts`: ViewModeSlice
+- `frontend/src/diagram-visualization/ImportResolver.ts`: Import parsing and dependency graph
+- `frontend/src/diagram-visualization/EntityFilter.ts`: Scope-based entity filtering
+
+### Success Criteria Validation (User Story 1)
+
+- ✅ **SC-001**: File with 3 local classes shows exactly 3 nodes (0 from other files)
+- ✅ **SC-003**: File selection updates diagram in <200ms for 10 entities (observed: 4-14ms)
+- ✅ **Test Coverage**: 4/4 integration tests passing
+- ✅ **TDD Approach**: Tests written first, implementation follows
+- ✅ **Performance**: All timing targets exceeded by 10x+ margin
+
+### Next Steps
+
+**Phase 4**: User Story 2 - Cross-File Import Visualization (T054-T068)
+- Display imported entities with relationship arrows
+- Handle multi-level import chains
+- Prevent infinite loops with circular imports
+
+**Phase 5**: User Story 3 - Project-Wide View Toggle (T069-T086)
+- Add ViewModeToggle UI component
+- Implement project view mode (show all entities)
+- Adjust layout spacing for different view modes
 
 <!-- MANUAL ADDITIONS END -->

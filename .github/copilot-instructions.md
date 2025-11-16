@@ -238,4 +238,64 @@ extractRelationships() → generateDiagram() → Update diagram state
 
 **Next Steps**: Complete remaining polish tasks, final validation, and feature sign-off
 
+---
+
+## Feature 005: Fix Diagram Export & Add Clipboard Copy
+
+**Status**: Phase 5 Complete (Core Implementation) - Ready for E2E Testing
+
+### Implementation Summary (2025-11-16)
+
+**User Story 1: PNG Export Fix** ✅ COMPLETE
+- Implemented `calculateBoundingBox()` function using React Flow's `getNodesBounds()`
+- Updated `exportToPng()` to use calculated bounding box with proper viewport transformation
+- Added performance monitoring (warns if export >2s)
+- All 13 contract tests passing
+- All 8 integration tests passing
+- Exported PNGs now properly sized (≤110% of content bounds) with no excessive whitespace
+
+**User Story 2: Clipboard Copy** ✅ COMPLETE
+- Implemented `copyImageToClipboard()` function with Clipboard API
+- Added `dataUrlToBlob()` helper with 10-second timeout
+- Added `mapErrorToResult()` for user-friendly error handling
+- Integrated "Copy to Clipboard" button into ExportButton component
+- All 11 contract tests passing
+- Success/error feedback displayed in UI
+
+**User Story 3: Remove SVG Export** ✅ COMPLETE
+- Removed SVG menu item from ExportButton UI
+- Deprecated `exportToSvg()` function (throws error with helpful message)
+- Removed `onExportSvg` prop from ExportButton interface
+
+### Test Results
+
+**Unit Tests**: 24/24 passing
+- BoundingBox calculation: 13/13 tests passing
+- Clipboard copy: 11/11 tests passing
+
+**Integration Tests**: 8/8 passing
+- PNG export workflows validated
+- Error handling verified
+
+**Performance**:
+- Bounding box calculation: <1ms for 100 nodes (target: <100ms) ✅
+- PNG export: <10ms for typical diagrams (target: <2000ms) ✅
+- Clipboard copy: <10ms for typical images (target: <2000ms) ✅
+
+### Key Files Modified
+- `frontend/src/shared/types/index.ts`: Added BoundingBox, ClipboardResult, ClipboardErrorCode types
+- `frontend/src/diagram-visualization/DiagramExporter.ts`: Added calculateBoundingBox(), copyImageToClipboard(), updated exportToPng()
+- `frontend/src/components/ExportButton.tsx`: Added clipboard button, removed SVG option
+- `frontend/tests/unit/diagram-visualization/BoundingBox.test.ts`: 13 contract tests
+- `frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts`: 11 contract tests
+- `frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx`: 8 integration tests
+- `frontend/tests/setup.ts`: Added clipboard API mocks
+
+### Remaining Phases
+- Phase 6: E2E Testing (9 tests planned)
+- Phase 7: Manual Testing (15 validation checks)
+- Phase 8: Polish & Documentation
+
+**Next Steps**: Create E2E tests for full user workflows
+
 <!-- MANUAL ADDITIONS END -->

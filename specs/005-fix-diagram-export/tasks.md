@@ -25,13 +25,13 @@ This is a frontend-only web application:
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Verify @xyflow/react 12.9+ installed with getNodesBounds support
-- [ ] T002 Verify html-to-image 1.11+ installed for PNG rendering
-- [ ] T003 [P] Add BoundingBox type to frontend/src/shared/types/index.ts
-- [ ] T004 [P] Add ClipboardResult and ClipboardErrorCode types to frontend/src/shared/types/index.ts
-- [ ] T005 Update ExportOptions type in frontend/src/shared/types/index.ts (add padding, maxWidth, maxHeight)
+- [X] T001 Verify @xyflow/react 12.9+ installed with getNodesBounds support
+- [X] T002 Verify html-to-image 1.11+ installed for PNG rendering
+- [X] T003 [P] Add BoundingBox type to frontend/src/shared/types/index.ts
+- [X] T004 [P] Add ClipboardResult and ClipboardErrorCode types to frontend/src/shared/types/index.ts
+- [X] T005 Update ExportOptions type in frontend/src/shared/types/index.ts (add padding, maxWidth, maxHeight)
 
-**Checkpoint**: Type definitions complete, dependencies verified
+**Checkpoint**: Type definitions complete, dependencies verified ✅
 
 ---
 
@@ -41,12 +41,12 @@ This is a frontend-only web application:
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 Review existing DiagramExporter.ts implementation in frontend/src/diagram-visualization/DiagramExporter.ts
-- [ ] T007 Review existing ExportButton.tsx implementation in frontend/src/components/ExportButton.tsx
-- [ ] T008 Set up test mocks for navigator.clipboard in frontend/tests/setup.ts
-- [ ] T009 Set up test utilities for React Flow nodes in frontend/tests/setup.ts
+- [X] T006 Review existing DiagramExporter.ts implementation in frontend/src/diagram-visualization/DiagramExporter.ts
+- [X] T007 Review existing ExportButton.tsx implementation in frontend/src/components/ExportButton.tsx
+- [X] T008 Set up test mocks for navigator.clipboard in frontend/tests/setup.ts
+- [X] T009 Set up test utilities for React Flow nodes in frontend/tests/setup.ts
 
-**Checkpoint**: Foundation ready - user story implementation can now begin in parallel
+**Checkpoint**: Foundation ready - user story implementation can now begin in parallel ✅
 
 ---
 
@@ -60,42 +60,42 @@ This is a frontend-only web application:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Contract test TC-001: Single node with default padding in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
-- [ ] T011 [P] [US1] Contract test TC-002: Multiple nodes aligned horizontally in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
-- [ ] T012 [P] [US1] Contract test TC-003: Nodes at negative coordinates in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
-- [ ] T013 [P] [US1] Contract test TC-004: Custom padding (zero) in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
-- [ ] T014 [P] [US1] Contract test TC-005: Custom padding (large) in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
-- [ ] T015 [P] [US1] Contract test TC-006: Overlapping nodes in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
-- [ ] T016 [P] [US1] Error case EC-001: Empty nodes array in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
-- [ ] T017 [P] [US1] Error case EC-002: Invalid padding (negative) in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
-- [ ] T018 [P] [US1] Error case EC-003: Invalid padding (too large) in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
-- [ ] T019 [P] [US1] Error case EC-004: Nodes with infinite coordinates in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
-- [ ] T020 [P] [US1] Error case EC-005: Nodes with NaN coordinates in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
-- [ ] T021 [US1] Verify all 11 contract tests FAIL (expected before implementation)
+- [X] T010 [P] [US1] Contract test TC-001: Single node with default padding in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
+- [X] T011 [P] [US1] Contract test TC-002: Multiple nodes aligned horizontally in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
+- [X] T012 [P] [US1] Contract test TC-003: Nodes at negative coordinates in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
+- [X] T013 [P] [US1] Contract test TC-004: Custom padding (zero) in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
+- [X] T014 [P] [US1] Contract test TC-005: Custom padding (large) in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
+- [X] T015 [P] [US1] Contract test TC-006: Overlapping nodes in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
+- [X] T016 [P] [US1] Error case EC-001: Empty nodes array in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
+- [X] T017 [P] [US1] Error case EC-002: Invalid padding (negative) in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
+- [X] T018 [P] [US1] Error case EC-003: Invalid padding (too large) in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
+- [X] T019 [P] [US1] Error case EC-004: Nodes with infinite coordinates in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
+- [X] T020 [P] [US1] Error case EC-005: Nodes with NaN coordinates in frontend/tests/unit/diagram-visualization/BoundingBox.test.ts
+- [X] T021 [US1] Verify all 11 contract tests FAIL (expected before implementation)
 
 ### Implementation for User Story 1 (TDD - Green Phase)
 
-- [ ] T022 [US1] Implement calculateBoundingBox() function in frontend/src/diagram-visualization/DiagramExporter.ts
-- [ ] T023 [US1] Add validation functions (validateExportOptions, validateBoundingBox) in frontend/src/diagram-visualization/DiagramExporter.ts
-- [ ] T024 [US1] Run contract tests and fix implementation until all 11 tests PASS
-- [ ] T025 [US1] Update exportToPng() to use calculateBoundingBox() instead of hardcoded dimensions in frontend/src/diagram-visualization/DiagramExporter.ts
-- [ ] T026 [US1] Add proper CSS transform to html-to-image options in exportToPng() for viewport cropping
-- [ ] T027 [US1] Add performance monitoring (warn if >2s for export) in exportToPng()
+- [X] T022 [US1] Implement calculateBoundingBox() function in frontend/src/diagram-visualization/DiagramExporter.ts
+- [X] T023 [US1] Add validation functions (validateExportOptions, validateBoundingBox) in frontend/src/diagram-visualization/DiagramExporter.ts
+- [X] T024 [US1] Run contract tests and fix implementation until all 11 tests PASS
+- [X] T025 [US1] Update exportToPng() to use calculateBoundingBox() instead of hardcoded dimensions in frontend/src/diagram-visualization/DiagramExporter.ts
+- [X] T026 [US1] Add proper CSS transform to html-to-image options in exportToPng() for viewport cropping
+- [X] T027 [US1] Add performance monitoring (warn if >2s for export) in exportToPng()
 
 ### Integration Tests for User Story 1
 
-- [ ] T028 [P] [US1] Integration test: Export small diagram (2 classes) produces compact image in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
-- [ ] T029 [P] [US1] Integration test: Export medium diagram (10 classes) produces correctly-cropped image in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
-- [ ] T030 [P] [US1] Integration test: Export large diagram (50+ classes) captures complete diagram in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
-- [ ] T031 [P] [US1] Integration test: Export with custom padding options in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
-- [ ] T032 [P] [US1] Integration test: Error handling for empty diagram in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
-- [ ] T033 [US1] Verify all 5 integration tests PASS
+- [X] T028 [P] [US1] Integration test: Export small diagram (2 classes) produces compact image in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
+- [X] T029 [P] [US1] Integration test: Export medium diagram (10 classes) produces correctly-cropped image in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
+- [X] T030 [P] [US1] Integration test: Export large diagram (50+ classes) captures complete diagram in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
+- [X] T031 [P] [US1] Integration test: Export with custom padding options in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
+- [X] T032 [P] [US1] Integration test: Error handling for empty diagram in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
+- [X] T033 [US1] Verify all 5 integration tests PASS
 
 ### Refactor (TDD - Refactor Phase)
 
-- [ ] T034 [US1] Refactor calculateBoundingBox() for clarity (maintain green tests)
-- [ ] T035 [US1] Add JSDoc comments to all new functions in DiagramExporter.ts
-- [ ] T036 [US1] Verify no functions exceed 50 lines (Constitution Check)
+- [X] T034 [US1] Refactor calculateBoundingBox() for clarity (maintain green tests)
+- [X] T035 [US1] Add JSDoc comments to all new functions in DiagramExporter.ts
+- [X] T036 [US1] Verify no functions exceed 50 lines (Constitution Check)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - PNG export produces correctly-sized images with no excessive whitespace
 
@@ -111,47 +111,47 @@ This is a frontend-only web application:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T037 [P] [US2] Contract test TC-001: Valid PNG data URL in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
-- [ ] T038 [P] [US2] Contract test TC-002: Empty data URL in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
-- [ ] T039 [P] [US2] Contract test TC-003: Invalid data URL format in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
-- [ ] T040 [P] [US2] Contract test TC-004: Clipboard permission denied in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
-- [ ] T041 [P] [US2] Contract test TC-005: Clipboard API not supported in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
-- [ ] T042 [P] [US2] Contract test TC-006: Clipboard write fails (generic error) in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
-- [ ] T043 [P] [US2] Contract test TC-007: Large image (10MB) in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
-- [ ] T044 [P] [US2] Error case EC-001: Null data URL in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
-- [ ] T045 [P] [US2] Error case EC-002: Blob conversion timeout in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
-- [ ] T046 [P] [US2] Error case EC-003: SecurityError during clipboard access in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
-- [ ] T047 [US2] Verify all 10 contract tests FAIL (expected before implementation)
+- [X] T037 [P] [US2] Contract test TC-001: Valid PNG data URL in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
+- [X] T038 [P] [US2] Contract test TC-002: Empty data URL in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
+- [X] T039 [P] [US2] Contract test TC-003: Invalid data URL format in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
+- [X] T040 [P] [US2] Contract test TC-004: Clipboard permission denied in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
+- [X] T041 [P] [US2] Contract test TC-005: Clipboard API not supported in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
+- [X] T042 [P] [US2] Contract test TC-006: Clipboard write fails (generic error) in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
+- [X] T043 [P] [US2] Contract test TC-007: Large image (10MB) in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
+- [X] T044 [P] [US2] Error case EC-001: Null data URL in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
+- [X] T045 [P] [US2] Error case EC-002: Blob conversion timeout in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
+- [X] T046 [P] [US2] Error case EC-003: SecurityError during clipboard access in frontend/tests/unit/diagram-visualization/ClipboardCopy.test.ts
+- [X] T047 [US2] Verify all 10 contract tests FAIL (expected before implementation)
 
 ### Implementation for User Story 2 (TDD - Green Phase)
 
-- [ ] T048 [US2] Implement copyImageToClipboard() function in frontend/src/diagram-visualization/DiagramExporter.ts
-- [ ] T049 [US2] Add dataUrlToBlob() helper function for data URL conversion in frontend/src/diagram-visualization/DiagramExporter.ts
-- [ ] T050 [US2] Add mapErrorToResult() helper function for error mapping in frontend/src/diagram-visualization/DiagramExporter.ts
-- [ ] T051 [US2] Add 10-second timeout for blob conversion operations
-- [ ] T052 [US2] Run contract tests and fix implementation until all 10 tests PASS
+- [X] T048 [US2] Implement copyImageToClipboard() function in frontend/src/diagram-visualization/DiagramExporter.ts
+- [X] T049 [US2] Add dataUrlToBlob() helper function for data URL conversion in frontend/src/diagram-visualization/DiagramExporter.ts
+- [X] T050 [US2] Add mapErrorToResult() helper function for error mapping in frontend/src/diagram-visualization/DiagramExporter.ts
+- [X] T051 [US2] Add 10-second timeout for blob conversion operations
+- [X] T052 [US2] Run contract tests and fix implementation until all 10 tests PASS
 
 ### UI Integration for User Story 2
 
-- [ ] T053 [US2] Add "Copy to Clipboard" DropdownMenuItem to ExportButton.tsx with Clipboard icon (lucide-react)
-- [ ] T054 [US2] Create onCopyToClipboard prop and handler in ExportButton.tsx
-- [ ] T055 [US2] Add success feedback display (toast or message) in ExportButton.tsx
-- [ ] T056 [US2] Add error feedback display with actionable messages in ExportButton.tsx
-- [ ] T057 [US2] Wire up clipboard copy handler in frontend/src/App.tsx (generate image + call copyImageToClipboard)
+- [X] T053 [US2] Add "Copy to Clipboard" DropdownMenuItem to ExportButton.tsx with Clipboard icon (lucide-react)
+- [X] T054 [US2] Create onCopyToClipboard prop and handler in ExportButton.tsx
+- [X] T055 [US2] Add success feedback display (toast or message) in ExportButton.tsx
+- [X] T056 [US2] Add error feedback display with actionable messages in ExportButton.tsx
+- [X] T057 [US2] Wire up clipboard copy handler in frontend/src/App.tsx (generate image + call copyImageToClipboard)
 
 ### Integration Tests for User Story 2
 
-- [ ] T058 [P] [US2] Integration test: Clipboard button appears and is clickable in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
-- [ ] T059 [P] [US2] Integration test: Success feedback displayed after successful copy in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
-- [ ] T060 [P] [US2] Integration test: Error feedback displayed on clipboard permission denied in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
-- [ ] T061 [P] [US2] Integration test: Error feedback displayed on clipboard not supported in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
-- [ ] T062 [US2] Verify all 4 integration tests PASS
+- [X] T058 [P] [US2] Integration test: Clipboard button appears and is clickable in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
+- [X] T059 [P] [US2] Integration test: Success feedback displayed after successful copy in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
+- [X] T060 [P] [US2] Integration test: Error feedback displayed on clipboard permission denied in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
+- [X] T061 [P] [US2] Integration test: Error feedback displayed on clipboard not supported in frontend/tests/integration/diagram-visualization/DiagramExport.test.tsx
+- [X] T062 [US2] Verify all 4 integration tests PASS
 
 ### Refactor (TDD - Refactor Phase)
 
-- [ ] T063 [US2] Refactor copyImageToClipboard() for clarity (maintain green tests)
-- [ ] T064 [US2] Add JSDoc comments to all new functions
-- [ ] T065 [US2] Verify no functions exceed 50 lines (Constitution Check)
+- [X] T063 [US2] Refactor copyImageToClipboard() for clarity (maintain green tests)
+- [X] T064 [US2] Add JSDoc comments to all new functions
+- [X] T065 [US2] Verify no functions exceed 50 lines (Constitution Check)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently - PNG export works correctly AND clipboard copy allows quick sharing
 
@@ -159,20 +159,17 @@ This is a frontend-only web application:
 
 ## Phase 5: User Story 3 - Remove SVG Export Option (Priority: P3)
 
-**Goal**: Remove non-functional SVG export option to streamline the UI and prevent user confusion
+**Goal**: Remove non-functional SVG export option
 
-**Independent Test**: Open export menu and verify only PNG export and Copy to Clipboard options are visible (no SVG option)
+**Duration**: 1-2 hours
 
-### Implementation for User Story 3
-
-- [ ] T066 [P] [US3] Remove "Export as SVG" DropdownMenuItem from frontend/src/components/ExportButton.tsx
-- [ ] T067 [P] [US3] Remove onExportSvg prop from ExportButton component
-- [ ] T068 [P] [US3] Remove SVG export handler from frontend/src/App.tsx
-- [ ] T069 [US3] Deprecate exportToSvg() function in frontend/src/diagram-visualization/DiagramExporter.ts (add @deprecated JSDoc, throw error)
-- [ ] T070 [US3] Update ExportButton tests to remove SVG test cases in frontend/src/components/__tests__/ExportButton.test.tsx
-- [ ] T071 [US3] Verify all tests still PASS after SVG removal
-
-**Checkpoint**: All user stories should now be independently functional - PNG export works correctly, clipboard copy works, and SVG option is removed
+**Tasks**:
+- [X] T066 [P] [US3] Remove "Export as SVG" DropdownMenuItem from frontend/src/components/ExportButton.tsx
+- [X] T067 [P] [US3] Remove onExportSvg prop from ExportButton component
+- [X] T068 [P] [US3] Remove SVG export handler from frontend/src/App.tsx
+- [X] T069 [US3] Deprecate exportToSvg() function in frontend/src/diagram-visualization/DiagramExporter.ts (add @deprecated JSDoc, throw error)
+- [X] T070 [US3] Update ExportButton tests to remove SVG test cases in frontend/src/components/__tests__/ExportButton.test.tsx
+- [X] T071 [US3] Verify all tests still PASS after SVG removal
 
 ---
 

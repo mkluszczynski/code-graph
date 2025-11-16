@@ -39,7 +39,8 @@ import { ImplementationEdge } from "./edges/ImplementationEdge";
 import { AssociationEdge } from "./edges/AssociationEdge";
 import { computeDiagramDiff, hasSignificantChanges, mergeNodesPreservingPositions } from "./DiagramDiffer";
 import { ExportButton } from "../components/ExportButton";
-import { exportToPng, exportToSvg, getSuggestedFileName } from "./DiagramExporter";
+import { exportToPng, copyImageToClipboard, getSuggestedFileName } from "./DiagramExporter";
+import { toPng } from "html-to-image";
 
 // Define custom edge types for UML relationships
 const edgeTypes = {
@@ -228,20 +229,27 @@ const DiagramRendererInternal: React.FC<DiagramRendererProps> = ({
     }, [flowNodes]);
 
     /**
-     * Handle diagram export to SVG format
+     * Handle diagram copy to clipboard
      */
-    const handleExportSvg = useCallback(async () => {
+    const handleCopyToClipboard = useCallback(async () => {
         // Get the React Flow viewport element
         const viewportElement = document.querySelector(".react-flow__viewport") as HTMLElement;
         if (!viewportElement) {
             throw new Error("Unable to find diagram viewport");
         }
 
-        // Generate a suggested file name
-        const fileName = getSuggestedFileName();
+        // Generate image as data URL (same process as PNG export but without download)
+        const dataUrl = await toPng(viewportElement, {
+            backgroundColor: "#ffffff",
+        });
 
-        // Export the diagram
-        await exportToSvg(viewportElement, flowNodes, { fileName });
+        // Copy to clipboard
+        const result = await copyImageToClipboard(dataUrl);
+
+        // Throw error if copy failed to show error message in UI
+        if (!result.success) {
+            throw new Error(result.error);
+        }
     }, [flowNodes]);
 
     return (
@@ -342,7 +350,7 @@ const DiagramRendererInternal: React.FC<DiagramRendererProps> = ({
                 <Panel position="top-right" className="mt-4 mr-4">
                     <ExportButton
                         onExportPng={handleExportPng}
-                        onExportSvg={handleExportSvg}
+                        onCopyToClipboard={handleCopyToClipboard}
                         disabled={flowNodes.length === 0}
                     />
                 </Panel>

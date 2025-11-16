@@ -12,16 +12,16 @@ import { ExportButton } from "../../components/ExportButton";
 
 describe("ExportButton", () => {
     let onExportPng: () => Promise<void>;
-    let onExportSvg: () => Promise<void>;
+    let onCopyToClipboard: () => Promise<void>;
 
     beforeEach(() => {
         onExportPng = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
-        onExportSvg = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+        onCopyToClipboard = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
     });
 
     it("should render export button", () => {
         render(
-            <ExportButton onExportPng={onExportPng} onExportSvg={onExportSvg} />
+            <ExportButton onExportPng={onExportPng} onCopyToClipboard={onCopyToClipboard} />
         );
 
         expect(screen.getByText("Export")).toBeInTheDocument();
@@ -31,7 +31,7 @@ describe("ExportButton", () => {
         render(
             <ExportButton
                 onExportPng={onExportPng}
-                onExportSvg={onExportSvg}
+                onCopyToClipboard={onCopyToClipboard}
                 disabled={true}
             />
         );
@@ -42,21 +42,21 @@ describe("ExportButton", () => {
     it("should open dropdown menu on click", async () => {
         const user = userEvent.setup();
         render(
-            <ExportButton onExportPng={onExportPng} onExportSvg={onExportSvg} />
+            <ExportButton onExportPng={onExportPng} onCopyToClipboard={onCopyToClipboard} />
         );
 
         await user.click(screen.getByText("Export"));
 
         await waitFor(() => {
             expect(screen.getByText("Export as PNG")).toBeInTheDocument();
-            expect(screen.getByText("Export as SVG")).toBeInTheDocument();
+            expect(screen.getByText("Copy to Clipboard")).toBeInTheDocument();
         });
     });
 
     it("should call onExportPng when PNG option is selected", async () => {
         const user = userEvent.setup();
         render(
-            <ExportButton onExportPng={onExportPng} onExportSvg={onExportSvg} />
+            <ExportButton onExportPng={onExportPng} onCopyToClipboard={onCopyToClipboard} />
         );
 
         await user.click(screen.getByText("Export"));
@@ -68,18 +68,18 @@ describe("ExportButton", () => {
         });
     });
 
-    it("should call onExportSvg when SVG option is selected", async () => {
+    it("should call onCopyToClipboard when Clipboard option is selected", async () => {
         const user = userEvent.setup();
         render(
-            <ExportButton onExportPng={onExportPng} onExportSvg={onExportSvg} />
+            <ExportButton onExportPng={onExportPng} onCopyToClipboard={onCopyToClipboard} />
         );
 
         await user.click(screen.getByText("Export"));
-        await waitFor(() => screen.getByText("Export as SVG"));
-        await user.click(screen.getByText("Export as SVG"));
+        await waitFor(() => screen.getByText("Copy to Clipboard"));
+        await user.click(screen.getByText("Copy to Clipboard"));
 
         await waitFor(() => {
-            expect(onExportSvg).toHaveBeenCalledTimes(1);
+            expect(onCopyToClipboard).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -90,7 +90,7 @@ describe("ExportButton", () => {
         );
 
         render(
-            <ExportButton onExportPng={slowExport} onExportSvg={onExportSvg} />
+            <ExportButton onExportPng={slowExport} onCopyToClipboard={onCopyToClipboard} />
         );
 
         await user.click(screen.getByText("Export"));
@@ -111,7 +111,7 @@ describe("ExportButton", () => {
         render(
             <ExportButton
                 onExportPng={failingExport}
-                onExportSvg={onExportSvg}
+                onCopyToClipboard={onCopyToClipboard}
             />
         );
 
@@ -131,7 +131,7 @@ describe("ExportButton", () => {
         );
 
         render(
-            <ExportButton onExportPng={slowExport} onExportSvg={onExportSvg} />
+            <ExportButton onExportPng={slowExport} onCopyToClipboard={onCopyToClipboard} />
         );
 
         await user.click(screen.getByText("Export"));

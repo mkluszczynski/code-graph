@@ -480,12 +480,62 @@ If you encounter persistent issues:
 
 ## Advanced Features
 
-### Diagram Export (Coming Soon)
+### Diagram Export
 
-Future versions will support:
-- Export as PNG image
-- Export as SVG vector
-- Print diagram
+Export your UML diagrams to share with team members, include in documentation, or save for reference.
+
+#### Export as PNG
+
+1. Click the **"Export"** dropdown button in the top-right corner of the diagram panel
+2. Select **"Export as PNG"**
+3. The diagram will be downloaded to your default downloads folder
+4. File name format: `uml-diagram-YYYYMMDD.png` (date-stamped)
+
+**PNG Export Features**:
+- **Smart Cropping**: Images are automatically cropped to diagram content with minimal padding (30px border)
+- **High Quality**: Full resolution capture maintains diagram clarity
+- **Compact Files**: No excessive whitespace - images are sized to content
+- **Fast**: Export completes in under 2 seconds for typical diagrams (5-20 classes)
+
+**Use Cases**: Embedding in documents, presentations, web pages, Slack/Teams messages
+
+#### Copy to Clipboard
+
+For quick sharing without saving intermediate files:
+
+1. Click the **"Export"** dropdown button
+2. Select **"Copy to Clipboard"**
+3. A success message confirms the copy
+4. Paste directly into:
+   - Google Docs, Microsoft Word, PowerPoint
+   - Slack, Teams, Discord messages
+   - Email clients (Gmail, Outlook, etc.)
+   - Image editors (Photoshop, GIMP, etc.)
+
+**Clipboard Copy Features**:
+- **Instant Sharing**: No intermediate file downloads
+- **Same Quality**: Uses the same smart cropping as PNG export
+- **Fast Workflow**: Copy and paste in under 3 seconds total
+- **Cross-Platform**: Works on Windows, macOS, and Linux
+
+**Browser Requirements**: Requires modern browser with Clipboard API support (Chrome 76+, Firefox 87+, Safari 13.1+, Edge 79+)
+
+**Troubleshooting**:
+- If clipboard copy fails, you may need to grant clipboard permissions in browser settings
+- For large diagrams (50+ classes), consider using PNG export instead
+- Some older browsers may not support clipboard copy - use PNG export as fallback
+
+#### Export Tips
+
+- **View Mode Matters**: Export reflects your current view mode:
+  - **File View**: Exports only the focused file and its related imports
+  - **Project View**: Exports the entire project architecture
+- **Before Exporting**: 
+  - Use **Fit View** button to ensure all nodes are visible
+  - Adjust zoom level if needed (exported image uses current diagram state)
+- **Large Diagrams**: For projects with 50+ classes, use **Fit View** first to capture all entities
+- **Quick Sharing**: Use clipboard copy for instant sharing in chat apps or documents
+- **Archival**: Use PNG export for permanent storage or documentation
 
 ### Dark Mode (Available)
 

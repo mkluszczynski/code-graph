@@ -110,41 +110,11 @@ describe("DiagramExporter", () => {
         });
     });
 
-    describe("exportToSvg", () => {
-        it("should export diagram as SVG with default options", async () => {
-            const { toSvg } = await import("html-to-image");
-            (toSvg as ReturnType<typeof vi.fn>).mockResolvedValue("data:image/svg+xml;base64,mock");
-
-            await exportToSvg(mockElement, mockNodes);
-
-            expect(toSvg).toHaveBeenCalledWith(
-                mockElement,
-                expect.objectContaining({
-                    backgroundColor: "#ffffff",
-                })
-            );
-            expect(mockLink.download).toBe("diagram.svg");
-            expect(mockLink.click).toHaveBeenCalled();
-        });
-
-        it("should export diagram as SVG with custom file name", async () => {
-            const { toSvg } = await import("html-to-image");
-            (toSvg as ReturnType<typeof vi.fn>).mockResolvedValue("data:image/svg+xml;base64,mock");
-
-            await exportToSvg(mockElement, mockNodes, {
-                fileName: "my-custom-diagram",
-            });
-
-            expect(mockLink.download).toBe("my-custom-diagram.svg");
-        });
-
-        it("should throw error when SVG export fails", async () => {
-            const { toSvg } = await import("html-to-image");
-            (toSvg as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("Export failed"));
-
+    describe("exportToSvg (deprecated)", () => {
+        it("should throw error indicating SVG export is not available", async () => {
             await expect(
-                exportToSvg(mockElement, mockNodes)
-            ).rejects.toThrow("Failed to export diagram as SVG");
+                exportToSvg()
+            ).rejects.toThrow("SVG export is not available. Please use PNG export or clipboard copy.");
         });
     });
 

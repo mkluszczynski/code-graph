@@ -498,3 +498,43 @@ export interface FilteredEntitySet {
   /** Filter execution time in milliseconds */
   filterTimeMs: number;
 }
+
+// ============================================================================
+// Diagram Export Types (Feature 005)
+// ============================================================================
+
+/**
+ * Bounding box for diagram export operations
+ */
+export interface BoundingBox {
+  /** Left coordinate in pixels (absolute position) */
+  x: number;
+  /** Top coordinate in pixels (absolute position) */
+  y: number;
+  /** Width in pixels */
+  width: number;
+  /** Height in pixels */
+  height: number;
+}
+
+/**
+ * Error codes for clipboard operations
+ */
+export type ClipboardErrorCode =
+  | 'permission_denied'    // User denied clipboard permissions
+  | 'not_supported'        // Browser doesn't support Clipboard API
+  | 'blob_conversion_failed' // Failed to convert data URL to blob
+  | 'write_failed'         // Clipboard write operation failed
+  | 'unknown';             // Unknown error
+
+/**
+ * Result of clipboard copy operation
+ */
+export interface ClipboardResult {
+  /** Whether the operation succeeded */
+  success: boolean;
+  /** User-friendly error message (if failed) */
+  error?: string;
+  /** Machine-readable error code (if failed) */
+  errorCode?: ClipboardErrorCode;
+}

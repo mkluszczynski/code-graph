@@ -29,7 +29,7 @@ import type {
 // Type Helpers
 // ============================================================================
 
-type StoreState = FileSlice & EditorSlice & DiagramSlice & ParserSlice & FileTreeSlice & PersistenceSlice & ViewModeSlice;
+type StoreState = FileSlice & EditorSlice & DiagramSlice & ParserSlice & FileTreeSlice & PersistenceSlice & ViewModeSlice & ThemeSlice;
 type StateSliceCreator<T> = StateCreator<StoreState, [], [], T>;
 
 // ============================================================================
@@ -607,6 +607,118 @@ const createViewModeSlice: StateSliceCreator<ViewModeSlice> = (set, get) => ({
 });
 
 // ============================================================================
+// Theme Slice
+// ============================================================================
+
+export type Theme = 'light' | 'dark' | 'system';
+
+/**
+ * Get system theme preference
+ */
+function getSystemTheme(): 'light' | 'dark' {
+  if (typeof window === 'undefined') return 'light';
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
+}
+
+/**
+ * Get stored theme preference or default to system
+ */
+function getStoredTheme(): Theme {
+  if (typeof window === 'undefined') return 'system';
+
+  const stored = localStorage.getItem('uml-visualizer-theme') as Theme | null;
+  return stored || 'system';
+}
+
+/**
+ * Resolve theme to actual light/dark value
+ */
+function resolveThemeValue(theme: Theme): 'light' | 'dark' {
+  if (theme === 'system') {
+    return getSystemTheme();
+  }
+  return theme;
+}
+
+/**
+ * Apply theme to document
+ */
+function applyThemeToDocument(theme: 'light' | 'dark') {
+  const root = document.documentElement;
+
+  if (theme === 'dark') {
+    root.classList.add('dark');
+  } else {
+    root.classList.remove('dark');
+  }
+}
+
+/**
+ * Theme state management slice
+ * 
+ * Manages application theme (light/dark mode) using Tailwind CSS dark: classes
+ */
+interface ThemeSlice {
+  /** Current theme setting (light, dark, or system) */
+  theme: Theme;
+  /** Resolved theme (actual light or dark, after system preference is applied) */
+  resolvedTheme: 'light' | 'dark';
+
+  /** Set theme and persist to localStorage */
+  setTheme: (theme: Theme) => void;
+  /** Toggle between light and dark (ignoring system) */
+  toggleTheme: () => void;
+  /** Update resolved theme when system preference changes */
+  updateResolvedTheme: () => void;
+}
+
+const createThemeSlice: StateSliceCreator<ThemeSlice> = (set, get) => {
+  // Initialize theme on store creation
+  const initialTheme = getStoredTheme();
+  const initialResolved = resolveThemeValue(initialTheme);
+  applyThemeToDocument(initialResolved);
+
+  // Listen for system theme changes
+  if (typeof window !== 'undefined') {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', () => {
+      const state = get();
+      if (state.theme === 'system') {
+        state.updateResolvedTheme();
+      }
+    });
+  }
+
+  return {
+    theme: initialTheme,
+    resolvedTheme: initialResolved,
+
+    setTheme: (newTheme: Theme) => {
+      localStorage.setItem('uml-visualizer-theme', newTheme);
+      const resolved = resolveThemeValue(newTheme);
+      applyThemeToDocument(resolved);
+      set({ theme: newTheme, resolvedTheme: resolved });
+    },
+
+    toggleTheme: () => {
+      const state = get();
+      const newTheme = state.resolvedTheme === 'light' ? 'dark' : 'light';
+      state.setTheme(newTheme);
+    },
+
+    updateResolvedTheme: () => {
+      const state = get();
+      const resolved = resolveThemeValue(state.theme);
+      applyThemeToDocument(resolved);
+      set({ resolvedTheme: resolved });
+    },
+  };
+};
+
+// ============================================================================
 // Combined Store
 // ============================================================================
 
@@ -620,6 +732,7 @@ export const useStore = create<StoreState>()(
       ...createFileTreeSlice(...args),
       ...createPersistenceSlice(...args),
       ...createViewModeSlice(...args),
+      ...createThemeSlice(...args),
     }),
     {
       name: "uml-graph-store",

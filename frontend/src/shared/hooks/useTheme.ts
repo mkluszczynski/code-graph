@@ -2,110 +2,23 @@
  * useTheme - Hook for managing application theme (light/dark mode)
  * 
  * Implements dark mode support using Tailwind CSS dark: classes
+ * Theme state is managed in Zustand store for global reactivity
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useStore } from '../store';
 
-export type Theme = 'light' | 'dark' | 'system';
-
-const THEME_STORAGE_KEY = 'uml-visualizer-theme';
-
-/**
- * Get system theme preference
- */
-function getSystemTheme(): 'light' | 'dark' {
-    if (typeof window === 'undefined') return 'light';
-
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
-}
-
-/**
- * Get stored theme preference or default to system
- */
-function getStoredTheme(): Theme {
-    if (typeof window === 'undefined') return 'system';
-
-    const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
-    return stored || 'system';
-}
-
-/**
- * Resolve theme to actual light/dark value
- */
-function resolveTheme(theme: Theme): 'light' | 'dark' {
-    if (theme === 'system') {
-        return getSystemTheme();
-    }
-    return theme;
-}
-
-/**
- * Apply theme to document
- */
-function applyTheme(theme: 'light' | 'dark') {
-    const root = document.documentElement;
-
-    if (theme === 'dark') {
-        root.classList.add('dark');
-    } else {
-        root.classList.remove('dark');
-    }
-}
+export type { Theme } from '../store';
 
 /**
  * Hook for managing application theme
+ * 
+ * Uses Zustand store to ensure theme changes are reactive across all components
  */
 export function useTheme() {
-    const [theme, setThemeState] = useState<Theme>(getStoredTheme);
-    const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
-        // Initialize and apply theme immediately on first render
-        const initialTheme = getStoredTheme();
-        const resolved = resolveTheme(initialTheme);
-        applyTheme(resolved);
-        return resolved;
-    });
-
-    /**
-     * Set theme and persist to localStorage
-     */
-    const setTheme = useCallback((newTheme: Theme) => {
-        setThemeState(newTheme);
-        localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-
-        const resolved = resolveTheme(newTheme);
-        setResolvedTheme(resolved);
-        applyTheme(resolved);
-    }, []);
-
-    /**
-     * Toggle between light and dark (ignoring system)
-     */
-    const toggleTheme = useCallback(() => {
-        setTheme(resolvedTheme === 'light' ? 'dark' : 'light');
-    }, [resolvedTheme, setTheme]);
-
-    /**
-     * Listen for system theme changes (when theme is 'system')
-     */
-    useEffect(() => {
-        if (theme !== 'system') return;
-
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-        const handleChange = (e: MediaQueryListEvent) => {
-            const resolved = e.matches ? 'dark' : 'light';
-            setResolvedTheme(resolved);
-            applyTheme(resolved);
-        };
-
-        mediaQuery.addEventListener('change', handleChange);
-
-        return () => {
-            mediaQuery.removeEventListener('change', handleChange);
-        };
-    }, [theme]);
+    const theme = useStore((state) => state.theme);
+    const resolvedTheme = useStore((state) => state.resolvedTheme);
+    const setTheme = useStore((state) => state.setTheme);
+    const toggleTheme = useStore((state) => state.toggleTheme);
 
     return {
         theme,

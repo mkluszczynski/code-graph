@@ -40,7 +40,6 @@ import { AssociationEdge } from "./edges/AssociationEdge";
 import { computeDiagramDiff, hasSignificantChanges, mergeNodesPreservingPositions } from "./DiagramDiffer";
 import { ExportButton } from "../components/ExportButton";
 import { exportToPng, copyImageToClipboard, getSuggestedFileName } from "./DiagramExporter";
-import { toPng } from "html-to-image";
 
 // Define custom edge types for UML relationships
 const edgeTypes = {
@@ -70,6 +69,7 @@ const DiagramRendererInternal: React.FC<DiagramRendererProps> = ({
     const parseErrors = useStore((state) => state.parseErrors);
     const isParsing = useStore((state) => state.isParsing);
     const isGeneratingDiagram = useStore((state) => state.isGeneratingDiagram);
+    const resolvedTheme = useStore((state) => state.resolvedTheme);
 
     // React Flow instance for programmatic control (T103)
     const { fitView } = useReactFlow();
@@ -224,9 +224,9 @@ const DiagramRendererInternal: React.FC<DiagramRendererProps> = ({
         // Generate a suggested file name
         const fileName = getSuggestedFileName();
 
-        // Export the diagram
-        await exportToPng(viewportElement, flowNodes, { fileName });
-    }, [flowNodes]);
+        // Export the diagram with current theme
+        await exportToPng(viewportElement, flowNodes, { fileName, theme: resolvedTheme });
+    }, [flowNodes, resolvedTheme]);
 
     /**
      * Handle diagram copy to clipboard
@@ -238,19 +238,14 @@ const DiagramRendererInternal: React.FC<DiagramRendererProps> = ({
             throw new Error("Unable to find diagram viewport");
         }
 
-        // Generate image as data URL (same process as PNG export but without download)
-        const dataUrl = await toPng(viewportElement, {
-            backgroundColor: "#ffffff",
-        });
-
-        // Copy to clipboard
-        const result = await copyImageToClipboard(dataUrl);
+        // Copy to clipboard with current theme
+        const result = await copyImageToClipboard(viewportElement, flowNodes, { theme: resolvedTheme });
 
         // Throw error if copy failed to show error message in UI
         if (!result.success) {
             throw new Error(result.error);
         }
-    }, [flowNodes]);
+    }, [flowNodes, resolvedTheme]);
 
     return (
         <div className={className} style={{ width: "100%", height: "100%" }}>
@@ -336,7 +331,7 @@ const DiagramRendererInternal: React.FC<DiagramRendererProps> = ({
                 <Background gap={16} size={1} />
 
                 {/* Zoom and pan controls */}
-                <Controls />
+                {/* <Controls /> */}
 
                 {/* Mini-map for navigation */}
                 <MiniMap

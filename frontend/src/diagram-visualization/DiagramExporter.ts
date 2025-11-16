@@ -8,7 +8,7 @@
 import { getNodesBounds } from "@xyflow/react";
 import type { Node } from "@xyflow/react";
 import { toPng } from "html-to-image";
-import type { BoundingBox, ClipboardResult, ClipboardErrorCode } from "../shared/types";
+import type { BoundingBox, ClipboardResult } from "../shared/types";
 
 export interface ExportOptions {
     /** Background color for the exported image */
@@ -21,6 +21,8 @@ export interface ExportOptions {
     maxHeight?: number;
     /** File name for the download (without extension) */
     fileName?: string;
+    /** Current theme for computing background color (light or dark) */
+    theme?: 'light' | 'dark';
     /** @deprecated Use padding instead - will be removed in future version */
     width?: number;
     /** @deprecated Use padding instead - will be removed in future version */
@@ -34,6 +36,79 @@ const DEFAULT_OPTIONS = {
     backgroundColor: "#ffffff",
     padding: 30,
 } as const;
+
+/**
+ * Get background color based on theme
+ * Reads computed CSS variables from document root
+ * 
+ * @param theme - Current theme (light or dark)
+ * @returns Background color as hex string
+ */
+function getBackgroundColor(theme: 'light' | 'dark'): string {
+    // For light theme, use white
+    if (theme === 'light') {
+        return '#ffffff';
+    }
+
+    // For dark theme, get the background color from CSS variable
+    // The dark background is: oklch(0.145 0 0) which is approximately #252525
+    return '#252525';
+}
+
+/**
+ * Get edge stroke color based on theme
+ * 
+ * @param theme - Current theme (light or dark)
+ * @returns Edge stroke color as hex string
+ */
+function getEdgeColor(theme: 'light' | 'dark'): string {
+    // For light theme, use dark gray/black for visibility
+    if (theme === 'light') {
+        return '#0a0a0a'; // Almost black (--foreground in light mode)
+    }
+
+    // For dark theme, use light gray/white for visibility
+    return '#fafafa'; // Almost white (--foreground in dark mode)
+}
+
+/**
+ * Apply theme-specific inline styles to edges and markers for export
+ * 
+ * @param viewportElement - The React Flow viewport DOM element
+ * @param theme - Current theme (light or dark)
+ */
+function applyEdgeStylesToExport(viewportElement: HTMLElement, theme: 'light' | 'dark'): void {
+    // Skip if not a real DOM element (e.g., in tests with mocks)
+    if (!viewportElement.querySelectorAll) {
+        return;
+    }
+
+    const edgeColor = getEdgeColor(theme);
+
+    // Style all edge paths
+    const edgePaths = viewportElement.querySelectorAll('.react-flow__edge-path');
+    edgePaths.forEach((path) => {
+        (path as SVGPathElement).style.stroke = edgeColor;
+    });
+
+    // Style all marker paths (arrows)
+    const markerPaths = viewportElement.querySelectorAll('marker path');
+    markerPaths.forEach((path) => {
+        const pathElement = path as SVGPathElement;
+        pathElement.style.stroke = edgeColor;
+        // For hollow markers (inheritance, realization), set fill to background
+        if (pathElement.getAttribute('fill') !== 'none') {
+            const currentFill = pathElement.getAttribute('fill');
+            // Check if it's a hollow marker (uses background color)
+            if (currentFill?.includes('--background') || pathElement.closest('marker')?.id.includes('inheritance') || pathElement.closest('marker')?.id.includes('realization')) {
+                pathElement.style.fill = getBackgroundColor(theme);
+            } else {
+                // Solid markers (association) use edge color
+                pathElement.style.fill = edgeColor;
+            }
+        }
+    });
+}
 
 // ============================================================================
 // Bounding Box Calculation
@@ -108,27 +183,14 @@ export async function exportToPng(
     nodes: Node[],
     options: ExportOptions = {}
 ): Promise<void> {
-    const { backgroundColor = DEFAULT_OPTIONS.backgroundColor, fileName = "diagram" } = options;
+    const { fileName = "diagram" } = options;
 
     try {
         // Performance monitoring
         const startTime = performance.now();
 
-        // Calculate bounding box with padding
-        const padding = options.padding ?? DEFAULT_OPTIONS.padding;
-        const bbox = calculateBoundingBox(nodes, padding);
-
-        // Use html-to-image to convert the viewport to PNG with proper cropping
-        const dataUrl = await toPng(viewportElement, {
-            backgroundColor,
-            width: bbox.width,
-            height: bbox.height,
-            style: {
-                width: `${bbox.width}px`,
-                height: `${bbox.height}px`,
-                transform: `translate(${-bbox.x}px, ${-bbox.y}px) scale(1)`,
-            },
-        });
+        // Generate diagram as data URL
+        const dataUrl = await generateDiagramDataUrl(viewportElement, nodes, options);
 
         // Check performance
         const duration = performance.now() - startTime;
@@ -164,6 +226,46 @@ export function getSuggestedFileName(projectName?: string): string {
     const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const baseName = projectName ? `${projectName}-diagram` : "uml-diagram";
     return `${baseName}-${timestamp}`;
+}
+
+/**
+ * Generate diagram image as data URL
+ * 
+ * @param viewportElement - The React Flow viewport DOM element
+ * @param nodes - Array of nodes to include in the export
+ * @param options - Export options
+ * @returns Promise resolving to data URL
+ * @throws Error if generation fails
+ */
+export async function generateDiagramDataUrl(
+    viewportElement: HTMLElement,
+    nodes: Node[],
+    options: ExportOptions = {}
+): Promise<string> {
+    const { theme = 'light' } = options;
+
+    // Use theme-based background color if not explicitly provided
+    const backgroundColor = options.backgroundColor ?? getBackgroundColor(theme);
+
+    // Apply theme-specific inline styles to edges and markers
+    // This ensures edges are visible in the exported image
+    applyEdgeStylesToExport(viewportElement, theme);
+
+    // Calculate bounding box with padding
+    const padding = options.padding ?? DEFAULT_OPTIONS.padding;
+    const bbox = calculateBoundingBox(nodes, padding);
+
+    // Use html-to-image to convert the viewport to PNG
+    return await toPng(viewportElement, {
+        backgroundColor,
+        width: bbox.width,
+        height: bbox.height,
+        style: {
+            width: `${bbox.width}px`,
+            height: `${bbox.height}px`,
+            transform: `translate(${-bbox.x}px, ${-bbox.y}px) scale(1)`,
+        },
+    });
 }
 
 /**
@@ -226,14 +328,12 @@ function mapErrorToResult(error: unknown): ClipboardResult {
 }
 
 /**
- * Copy a diagram image to the system clipboard
+ * Internal helper: Write data URL to clipboard
  * 
- * @param dataUrl - Data URL of the image (from html-to-image)
+ * @param dataUrl - Data URL of the image
  * @returns ClipboardResult indicating success or failure with error details
  */
-export async function copyImageToClipboard(
-    dataUrl: string
-): Promise<ClipboardResult> {
+async function writeDataUrlToClipboard(dataUrl: string): Promise<ClipboardResult> {
     // Check if clipboard API is supported
     if (!navigator.clipboard || !navigator.clipboard.write) {
         return {
@@ -268,6 +368,50 @@ export async function copyImageToClipboard(
         return {
             success: true,
         };
+    } catch (error) {
+        return mapErrorToResult(error);
+    }
+}
+
+/**
+ * Copy a diagram image to the system clipboard
+ * 
+ * Supports two usage patterns:
+ * 1. Legacy: copyImageToClipboard(dataUrl: string) - for existing tests
+ * 2. New: copyImageToClipboard(viewportElement, nodes, options) - with theme support
+ * 
+ * @param viewportElementOrDataUrl - Either React Flow viewport element or data URL string
+ * @param nodes - Array of nodes (only for new signature)
+ * @param options - Export options including theme (only for new signature)
+ * @returns ClipboardResult indicating success or failure with error details
+ */
+export async function copyImageToClipboard(
+    viewportElementOrDataUrl: HTMLElement | string,
+    nodes?: Node[],
+    options: ExportOptions = {}
+): Promise<ClipboardResult> {
+    // Legacy signature: copyImageToClipboard(dataUrl)
+    // This includes null/undefined which should be handled by writeDataUrlToClipboard
+    if (typeof viewportElementOrDataUrl === 'string' || !viewportElementOrDataUrl) {
+        return writeDataUrlToClipboard(viewportElementOrDataUrl as string);
+    }
+
+    // New signature: copyImageToClipboard(viewportElement, nodes, options)
+    const viewportElement = viewportElementOrDataUrl;
+    if (!nodes) {
+        return {
+            success: false,
+            error: 'Invalid parameters: nodes array is required',
+            errorCode: 'write_failed',
+        };
+    }
+
+    try {
+        // Generate diagram as data URL with theme-based background
+        const dataUrl = await generateDiagramDataUrl(viewportElement, nodes, options);
+
+        // Use the internal helper to write to clipboard
+        return await writeDataUrlToClipboard(dataUrl);
     } catch (error) {
         return mapErrorToResult(error);
     }

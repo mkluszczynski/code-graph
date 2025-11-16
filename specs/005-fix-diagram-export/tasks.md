@@ -177,18 +177,18 @@ This is a frontend-only web application:
 
 **Purpose**: Validate full user workflows with E2E tests using Playwright
 
-- [ ] T072 [P] E2E test: User Story 1 Scenario 1 - Export diagram with 5 classes, verify image size in frontend/tests/e2e/diagram-export.spec.ts
-- [ ] T073 [P] E2E test: User Story 1 Scenario 2 - Export large diagram requiring scrolling, verify complete capture in frontend/tests/e2e/diagram-export.spec.ts
-- [ ] T074 [P] E2E test: User Story 1 Scenario 3 - Export small diagram, verify compact output in frontend/tests/e2e/diagram-export.spec.ts
-- [ ] T075 [P] E2E test: User Story 2 Scenario 1 - Copy diagram to clipboard, verify proper sizing in frontend/tests/e2e/diagram-export.spec.ts
-- [ ] T076 [P] E2E test: User Story 2 Scenario 2 - Paste copied diagram into mock external app in frontend/tests/e2e/diagram-export.spec.ts
-- [ ] T077 [P] E2E test: User Story 2 Scenario 3 - Large diagram clipboard copy with feedback in frontend/tests/e2e/diagram-export.spec.ts
-- [ ] T078 [P] E2E test: User Story 3 Scenario 1 - Verify only PNG and Clipboard options visible in frontend/tests/e2e/diagram-export.spec.ts
-- [ ] T079 [P] E2E test: Empty diagram error handling in frontend/tests/e2e/diagram-export.spec.ts
-- [ ] T080 E2E test: Clipboard permission denied scenario (mocked) in frontend/tests/e2e/diagram-export.spec.ts
-- [ ] T081 Verify all 9 E2E tests PASS
+- [X] T072 [P] E2E test: User Story 1 Scenario 1 - Export diagram with 5 classes, verify image size in frontend/tests/e2e/diagram-export.spec.ts
+- [X] T073 [P] E2E test: User Story 1 Scenario 2 - Export large diagram requiring scrolling, verify complete capture in frontend/tests/e2e/diagram-export.spec.ts
+- [X] T074 [P] E2E test: User Story 1 Scenario 3 - Export small diagram, verify compact output in frontend/tests/e2e/diagram-export.spec.ts
+- [X] T075 [P] E2E test: User Story 2 Scenario 1 - Copy diagram to clipboard, verify proper sizing in frontend/tests/e2e/diagram-export.spec.ts
+- [X] T076 [P] E2E test: User Story 2 Scenario 2 - Paste copied diagram into mock external app in frontend/tests/e2e/diagram-export.spec.ts
+- [X] T077 [P] E2E test: User Story 2 Scenario 3 - Large diagram clipboard copy with feedback in frontend/tests/e2e/diagram-export.spec.ts
+- [X] T078 [P] E2E test: User Story 3 Scenario 1 - Verify only PNG and Clipboard options visible in frontend/tests/e2e/diagram-export.spec.ts
+- [X] T079 [P] E2E test: Empty diagram error handling in frontend/tests/e2e/diagram-export.spec.ts
+- [X] T080 E2E test: Clipboard permission denied scenario (mocked) in frontend/tests/e2e/diagram-export.spec.ts
+- [X] T081 Verify all 9 E2E tests PASS
 
-**Checkpoint**: All acceptance scenarios from spec.md validated through automated E2E tests
+**Checkpoint**: All acceptance scenarios from spec.md validated through automated E2E tests ✅
 
 ---
 

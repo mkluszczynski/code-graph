@@ -27,7 +27,6 @@ export function AssociationEdge({
             markerEnd="url(#association-marker)"
             markerStart={markerStart}
             style={{
-                stroke: '#666',
                 strokeWidth: 1.5,
             }}
         />

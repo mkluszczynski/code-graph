@@ -27,7 +27,6 @@ export function ImplementationEdge({
             markerEnd="url(#realization-marker)"
             markerStart={markerStart}
             style={{
-                stroke: '#000',
                 strokeWidth: 2,
                 strokeDasharray: '5 5', // Dashed line for interface implementation
             }}

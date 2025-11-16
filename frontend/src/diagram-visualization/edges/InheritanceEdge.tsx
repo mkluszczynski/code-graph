@@ -27,7 +27,6 @@ export function InheritanceEdge({
             markerEnd="url(#inheritance-marker)"
             markerStart={markerStart}
             style={{
-                stroke: '#000',
                 strokeWidth: 2,
             }}
         />

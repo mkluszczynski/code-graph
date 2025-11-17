@@ -12,7 +12,6 @@ import { useStore } from "../shared/store";
 import type { StorageMetadata } from "../shared/types";
 import {
     AUTO_SAVE_DEBOUNCE_MS,
-    STORAGE_WARNING_THRESHOLD,
     STORAGE_ERROR_THRESHOLD,
 } from "../shared/constants";
 import { QuotaExceededError, StorageUnavailableError } from "../shared/types/errors";

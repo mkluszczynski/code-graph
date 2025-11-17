@@ -16,7 +16,6 @@ import {
     ReactFlow,
     ReactFlowProvider,
     Background,
-    Controls,
     MiniMap,
     Panel,
     useReactFlow,

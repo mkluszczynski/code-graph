@@ -440,7 +440,7 @@ describe('ImportResolver - Contract Tests', () => {
             // Generate 100 files with imports
             for (let i = 0; i < 100; i++) {
                 const fileId = `file-${i}`;
-                const nextFileId = i < 99 ? `file-${i + 1}` : 'file-0';
+                // const nextFileId = i < 99 ? `file-${i + 1}` : 'file-0';
 
                 files.push({
                     id: fileId,

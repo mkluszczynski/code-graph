@@ -1,0 +1,27 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: mkluszczynski/code-graph:latest
+    container_name: code-graph-app
+    ports:
+      - "3080:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health" ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - code-graph-network
+    labels:
+      - "com.docker.compose.project=code-graph"
+      - "description=Code Graph - Interactive TypeScript UML Visualizer"
+
+networks:
+  code-graph-network:
+    driver: bridge

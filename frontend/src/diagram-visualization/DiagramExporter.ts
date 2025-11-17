@@ -76,14 +76,16 @@ function getEdgeColor(theme: 'light' | 'dark'): string {
  * 
  * @param viewportElement - The React Flow viewport DOM element
  * @param theme - Current theme (light or dark)
+ * @returns Cleanup function to restore original state
  */
-function applyEdgeStylesToExport(viewportElement: HTMLElement, theme: 'light' | 'dark'): void {
+function applyEdgeStylesToExport(viewportElement: HTMLElement, theme: 'light' | 'dark'): () => void {
     // Skip if not a real DOM element (e.g., in tests with mocks)
     if (!viewportElement.querySelectorAll) {
-        return;
+        return () => { /* no-op */ };
     }
 
     const edgeColor = getEdgeColor(theme);
+    const backgroundColor = getBackgroundColor(theme);
 
     // Style all edge paths
     const edgePaths = viewportElement.querySelectorAll('.react-flow__edge-path');
@@ -91,23 +93,73 @@ function applyEdgeStylesToExport(viewportElement: HTMLElement, theme: 'light' | 
         (path as SVGPathElement).style.stroke = edgeColor;
     });
 
-    // Style all marker paths (arrows)
-    const markerPaths = viewportElement.querySelectorAll('marker path');
-    markerPaths.forEach((path) => {
-        const pathElement = path as SVGPathElement;
-        pathElement.style.stroke = edgeColor;
-        // For hollow markers (inheritance, realization), set fill to background
-        if (pathElement.getAttribute('fill') !== 'none') {
-            const currentFill = pathElement.getAttribute('fill');
-            // Check if it's a hollow marker (uses background color)
-            if (currentFill?.includes('--background') || pathElement.closest('marker')?.id.includes('inheritance') || pathElement.closest('marker')?.id.includes('realization')) {
-                pathElement.style.fill = getBackgroundColor(theme);
-            } else {
-                // Solid markers (association) use edge color
-                pathElement.style.fill = edgeColor;
+    // Find an SVG element within the viewport where we can add markers
+    // The viewport contains SVG elements for edges
+    const svgElements = viewportElement.querySelectorAll('svg');
+
+    let viewportSvg: SVGSVGElement | null = null;
+
+    // Use the first SVG we find, or create one if none exist
+    if (svgElements.length > 0) {
+        viewportSvg = svgElements[0] as SVGSVGElement;
+    } else {
+        // Create an SVG element to hold the markers
+        viewportSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        viewportSvg.setAttribute('style', 'position: absolute; width: 0; height: 0;');
+        viewportElement.insertBefore(viewportSvg, viewportElement.firstChild);
+    }
+
+    // Find or create a defs element in the viewport SVG
+    let defsInViewport = viewportSvg.querySelector('defs');
+    const defsWasCreated = !defsInViewport;
+    if (!defsInViewport) {
+        defsInViewport = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        viewportSvg.insertBefore(defsInViewport, viewportSvg.firstChild);
+    }
+
+    // Find the marker definitions from the React Flow component
+    const sourceMarkers = document.querySelectorAll('.react-flow marker');
+    const clonedMarkers: Element[] = []; sourceMarkers.forEach((marker) => {
+        // Clone the marker with all its children
+        const clonedMarker = marker.cloneNode(true) as SVGMarkerElement;
+
+        // Apply theme-specific styles to the cloned marker's paths
+        const markerPaths = clonedMarker.querySelectorAll('path');
+        const markerId = clonedMarker.id || '';
+
+        markerPaths.forEach((pathElement) => {
+            // Inheritance and realization markers: hollow triangles with stroke
+            if (markerId.includes('inheritance') || markerId.includes('realization')) {
+                pathElement.style.stroke = edgeColor;
+                pathElement.style.fill = backgroundColor;
+                pathElement.style.strokeWidth = '1.5';
+                // Remove Tailwind classes that won't work in export
+                pathElement.removeAttribute('class');
             }
-        }
+            // Association marker: solid arrow
+            else if (markerId.includes('association')) {
+                pathElement.style.fill = edgeColor;
+                pathElement.style.stroke = 'none';
+                // Remove Tailwind classes that won't work in export
+                pathElement.removeAttribute('class');
+            }
+        });
+
+        defsInViewport!.appendChild(clonedMarker);
+        clonedMarkers.push(clonedMarker);
     });
+
+    // Return cleanup function to remove cloned markers
+    return () => {
+        clonedMarkers.forEach((marker) => marker.remove());
+        if (defsWasCreated && defsInViewport) {
+            defsInViewport.remove();
+        }
+        // If we created a whole SVG element, remove it
+        if (svgElements.length === 0 && viewportSvg && viewportSvg.parentNode === viewportElement) {
+            viewportSvg.remove();
+        }
+    };
 }
 
 // ============================================================================
@@ -248,24 +300,37 @@ export async function generateDiagramDataUrl(
     const backgroundColor = options.backgroundColor ?? getBackgroundColor(theme);
 
     // Apply theme-specific inline styles to edges and markers
-    // This ensures edges are visible in the exported image
-    applyEdgeStylesToExport(viewportElement, theme);
+    // This clones markers into the viewport SVG and returns a cleanup function
+    const cleanup = applyEdgeStylesToExport(viewportElement, theme);
 
-    // Calculate bounding box with padding
-    const padding = options.padding ?? DEFAULT_OPTIONS.padding;
-    const bbox = calculateBoundingBox(nodes, padding);
+    try {
+        // Calculate bounding box with padding
+        const padding = options.padding ?? DEFAULT_OPTIONS.padding;
+        const bbox = calculateBoundingBox(nodes, padding);
 
-    // Use html-to-image to convert the viewport to PNG
-    return await toPng(viewportElement, {
-        backgroundColor,
-        width: bbox.width,
-        height: bbox.height,
-        style: {
-            width: `${bbox.width}px`,
-            height: `${bbox.height}px`,
-            transform: `translate(${-bbox.x}px, ${-bbox.y}px) scale(1)`,
-        },
-    });
+        // Use html-to-image to convert the viewport to PNG
+        // The filter ensures SVG defs (markers) are included in the export
+        const dataUrl = await toPng(viewportElement, {
+            backgroundColor,
+            width: bbox.width,
+            height: bbox.height,
+            style: {
+                width: `${bbox.width}px`,
+                height: `${bbox.height}px`,
+                transform: `translate(${-bbox.x}px, ${-bbox.y}px) scale(1)`,
+            },
+            filter: (_node: Element) => {
+                // Include all nodes by default
+                // This ensures SVG defs and markers are captured
+                return true;
+            },
+        });
+
+        return dataUrl;
+    } finally {
+        // Clean up cloned markers
+        cleanup();
+    }
 }
 
 /**

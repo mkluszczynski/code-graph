@@ -338,7 +338,7 @@ const DiagramRendererInternal: React.FC<DiagramRendererProps> = ({
                     nodeStrokeWidth={3}
                     pannable
                     zoomable
-                    className="!bg-background !border-border"
+                    className="bg-background! border-border!"
                 />
 
                 {/* Export button panel */}

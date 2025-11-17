@@ -70,7 +70,7 @@ function App() {
         {/* Header */}
         <header className="h-12 flex items-center justify-between px-4 border-b">
           <h1 className="text-lg font-semibold">
-            TypeScript UML Graph Visualizer
+            CodeGraph - TypeScript UML Graph Visualizer
           </h1>
           <ThemeToggle />
         </header>

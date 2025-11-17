@@ -29,6 +29,7 @@ export function AssociationEdge({
             style={{
                 strokeWidth: 1.5,
             }}
+            className="stroke-muted-foreground!"
         />
     );
 }

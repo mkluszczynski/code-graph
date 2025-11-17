@@ -30,6 +30,7 @@ export function ImplementationEdge({
                 strokeWidth: 2,
                 strokeDasharray: '5 5', // Dashed line for interface implementation
             }}
+            className="stroke-foreground!"
         />
     );
 }

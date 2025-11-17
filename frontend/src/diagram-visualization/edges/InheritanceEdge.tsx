@@ -29,6 +29,7 @@ export function InheritanceEdge({
             style={{
                 strokeWidth: 2,
             }}
+            className="stroke-foreground!"
         />
     );
 }

@@ -284,8 +284,7 @@ const DiagramRendererInternal: React.FC<DiagramRendererProps> = ({
                         >
                             <path
                                 d="M 0 0 L 10 6 L 0 12 Z"
-                                fill="hsl(var(--background))"
-                                stroke="hsl(var(--foreground))"
+                                className="fill-background stroke-foreground"
                                 strokeWidth="1.5"
                             />
                         </marker>
@@ -302,8 +301,7 @@ const DiagramRendererInternal: React.FC<DiagramRendererProps> = ({
                         >
                             <path
                                 d="M 0 0 L 10 6 L 0 12 Z"
-                                fill="hsl(var(--background))"
-                                stroke="hsl(var(--foreground))"
+                                className="fill-background stroke-foreground"
                                 strokeWidth="1.5"
                             />
                         </marker>
@@ -320,7 +318,7 @@ const DiagramRendererInternal: React.FC<DiagramRendererProps> = ({
                         >
                             <path
                                 d="M 0 0 L 10 5 L 0 10 L 3 5 Z"
-                                fill="hsl(var(--muted-foreground))"
+                                className="fill-muted-foreground"
                             />
                         </marker>
                     </defs>

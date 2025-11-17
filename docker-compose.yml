@@ -6,7 +6,7 @@ services:
     image: mkluszczynski/code-graph:latest
     container_name: code-graph-app
     ports:
-      - "3080:80"
+      - "5173:80"
     environment:
       - NODE_ENV=production
     restart: unless-stopped

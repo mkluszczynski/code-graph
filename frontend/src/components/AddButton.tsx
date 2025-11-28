@@ -1,10 +1,10 @@
 /**
  * AddButton Component
  *
- * Provides a dropdown button for creating new TypeScript files (classes or interfaces)
+ * Provides a dropdown button for creating new files or folders
  */
 
-import { Loader2, Plus } from "lucide-react";
+import { File, Folder, Loader2, Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -14,14 +14,17 @@ import {
 } from "./ui/dropdown-menu";
 
 export interface AddButtonProps {
-  onCreateClass: () => void;
-  onCreateInterface: () => void;
+  /** Callback when "Add File" is selected */
+  onAddFile: () => void;
+  /** Callback when "Add Folder" is selected */
+  onAddFolder: () => void;
+  /** Whether an operation is in progress */
   isLoading?: boolean;
 }
 
 export function AddButton({
-  onCreateClass,
-  onCreateInterface,
+  onAddFile,
+  onAddFolder,
   isLoading = false,
 }: AddButtonProps) {
   return (
@@ -37,11 +40,13 @@ export function AddButton({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
-        <DropdownMenuItem onClick={onCreateClass} disabled={isLoading}>
-          New Class
+        <DropdownMenuItem onClick={onAddFile} disabled={isLoading}>
+          <File className="h-4 w-4 mr-2" aria-hidden="true" />
+          Add File
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={onCreateInterface} disabled={isLoading}>
-          New Interface
+        <DropdownMenuItem onClick={onAddFolder} disabled={isLoading}>
+          <Folder className="h-4 w-4 mr-2" aria-hidden="true" />
+          Add Folder
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

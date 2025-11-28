@@ -49,6 +49,7 @@ interface FileSlice {
   deleteFile: (fileId: string) => Promise<void>;
   renameFile: (fileId: string, newName: string) => Promise<void>;
   duplicateFile: (fileId: string) => Promise<{ success: boolean; newFileId?: string; error?: string }>;
+  createEmptyFile: (name: string, parentPath: string) => Promise<ProjectFile>;
   setActiveFile: (fileId: string | null) => void;
   getFileById: (fileId: string) => ProjectFile | undefined;
   setLoadingFiles: (isLoading: boolean) => void;
@@ -285,6 +286,36 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
 
   setCreatingFile: (isCreating: boolean) =>
     set({ isCreatingFile: isCreating }),
+
+  createEmptyFile: async (name: string, parentPath: string) => {
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const projectManager = new ProjectManager();
+
+    try {
+      set({ isCreatingFile: true });
+
+      // Create file via ProjectManager
+      const file = await projectManager.createEmptyFile(name, parentPath);
+
+      // Add to store
+      get().addFile(file);
+
+      // Set as active file
+      set({ activeFileId: file.id });
+
+      return file;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (errorMessage.includes("quota")) {
+        throw new Error("Storage quota exceeded. Please delete some files to free up space.");
+      } else if (errorMessage.includes("database") || errorMessage.includes("IndexedDB")) {
+        throw new Error("Database error. Please try again or refresh the page.");
+      }
+      throw new Error(`Failed to create file: ${errorMessage}`);
+    } finally {
+      set({ isCreatingFile: false });
+    }
+  },
 });
 
 // ============================================================================

@@ -169,7 +169,7 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
     [getFileById],
   ); const handleRenameCommit = React.useCallback(async () => {
     if (!renamingFileId || !renameValue.trim()) {
-      setRenameError("Filename cannot be empty");
+      setRenameError("File name cannot be empty");
       return;
     }
 

@@ -25,6 +25,7 @@ interface UMLGraphDB {
     value: ProjectFile;
     indexes: {
       "by-path": string;
+      "by-parent-path": string;
       "by-name": string;
       "by-modified": number;
     };
@@ -44,7 +45,7 @@ const INVALID_FILENAME_CHARS = /[/\\:*?"<>|]/;
 export class ProjectManager {
   private db: IDBPDatabase<UMLGraphDB> | null = null;
   private readonly dbName: string;
-  private readonly dbVersion = 1;
+  private readonly dbVersion = 2; // Bumped for new index
 
   constructor(dbName = "uml-graph-visualizer") {
     this.dbName = dbName;
@@ -60,14 +61,23 @@ export class ProjectManager {
 
     try {
       this.db = await openDB<UMLGraphDB>(this.dbName, this.dbVersion, {
-        upgrade(db) {
+        upgrade(db, oldVersion) {
+          // Create files store if it doesn't exist
           if (!db.objectStoreNames.contains("files")) {
             const fileStore = db.createObjectStore("files", { keyPath: "id" });
             fileStore.createIndex("by-path", "path", { unique: true });
+            fileStore.createIndex("by-parent-path", "parentPath", { unique: false });
             fileStore.createIndex("by-name", "name", { unique: false });
             fileStore.createIndex("by-modified", "lastModified", {
               unique: false,
             });
+          } else if (oldVersion < 2) {
+            // Migration: Add by-parent-path index for v2
+            const tx = db.transaction as unknown as { objectStore: (name: string) => IDBObjectStore };
+            const store = tx.objectStore("files");
+            if (!store.indexNames.contains("by-parent-path")) {
+              store.createIndex("by-parent-path", "parentPath", { unique: false });
+            }
           }
         },
       });
@@ -153,6 +163,7 @@ export class ProjectManager {
       id: generateId(),
       name: fileName,
       path,
+      parentPath: "/src",
       content,
       lastModified: Date.now(),
       isActive: false,
@@ -164,6 +175,55 @@ export class ProjectManager {
     } catch (error) {
       throw new StorageError(
         "createFile",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+
+    return file;
+  }
+
+  /**
+   * Creates an empty TypeScript file in the specified folder
+   *
+   * @param name - File name (with or without extension)
+   * @param parentPath - Parent folder path (e.g., "/src" or "/src/components")
+   * @returns Created file
+   * @throws FileExistsError if file already exists
+   * @throws InvalidFileNameError if file name is invalid
+   * @throws StorageError if IndexedDB operation fails
+   */
+  async createEmptyFile(name: string, parentPath: string): Promise<ProjectFile> {
+    await this.ensureDB();
+
+    // Validate file name
+    this.validateFileName(name);
+
+    // Generate file path
+    const path = parentPath === "/" ? `/${name}` : `${parentPath}/${name}`;
+
+    // Check if file already exists
+    const existing = await this.getFileByPath(path);
+    if (existing) {
+      throw new FileExistsError(name);
+    }
+
+    // Create file object with empty content
+    const file: ProjectFile = {
+      id: generateId(),
+      name,
+      path,
+      parentPath,
+      content: "",
+      lastModified: Date.now(),
+      isActive: false,
+    };
+
+    // Persist to IndexedDB
+    try {
+      await this.db!.put("files", file);
+    } catch (error) {
+      throw new StorageError(
+        "createEmptyFile",
         error instanceof Error ? error.message : String(error)
       );
     }

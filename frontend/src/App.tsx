@@ -83,8 +83,6 @@ function App() {
               <FileTreePanel
                 files={files}
                 isInitialized={isInitialized}
-                onCreateClass={handleCreateClass}
-                onCreateInterface={handleCreateInterface}
                 isCreatingFile={isCreatingFile}
               />
             </ResizablePanel>

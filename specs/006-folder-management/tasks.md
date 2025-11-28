@@ -23,11 +23,11 @@
 
 **Purpose**: Project initialization, types, and foundational utilities
 
-- [ ] T001 Add `CreateItemType` type to `frontend/src/file-tree/types.ts`
-- [ ] T002 Add `FolderOperationResult` interface to `frontend/src/file-tree/types.ts`
-- [ ] T003 Add `parentPath` field to `ProjectFile` interface in `frontend/src/shared/types/index.ts`
-- [ ] T004 [P] Create `FolderOperations.ts` file with type exports in `frontend/src/file-tree/FolderOperations.ts`
-- [ ] T005 [P] Add `by-parent-path` index to IndexedDB schema in `frontend/src/project-management/ProjectManager.ts`
+- [x] T001 Add `CreateItemType` type to `frontend/src/file-tree/types.ts`
+- [x] T002 Add `FolderOperationResult` interface to `frontend/src/file-tree/types.ts`
+- [x] T003 Add `parentPath` field to `ProjectFile` interface in `frontend/src/shared/types/index.ts`
+- [x] T004 [P] Create `FolderOperations.ts` file with type exports in `frontend/src/file-tree/FolderOperations.ts`
+- [x] T005 [P] Add `by-parent-path` index to IndexedDB schema in `frontend/src/project-management/ProjectManager.ts`
 
 ---
 
@@ -37,13 +37,13 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 Implement `validateItemName()` function for files and folders in `frontend/src/file-tree/FileOperations.ts`
-- [ ] T007 [P] Implement `getFilesInFolder()` utility function in `frontend/src/file-tree/FolderOperations.ts`
-- [ ] T008 [P] Implement `validateFolderDepth()` utility function in `frontend/src/file-tree/FolderOperations.ts`
-- [ ] T009 [P] Implement `getParentPath()` utility function in `frontend/src/file-tree/FolderOperations.ts`
-- [ ] T010 [P] Implement `updatePathForRename()` utility function in `frontend/src/file-tree/FolderOperations.ts`
-- [ ] T011 [P] Implement `generateDuplicateFolderName()` utility function in `frontend/src/file-tree/FolderOperations.ts`
-- [ ] T012 Implement `normalizeFileName()` function (add .ts extension if missing) in `frontend/src/file-tree/FileOperations.ts`
+- [x] T006 Implement `validateItemName()` function for files and folders in `frontend/src/file-tree/FileOperations.ts`
+- [x] T007 [P] Implement `getFilesInFolder()` utility function in `frontend/src/file-tree/FolderOperations.ts`
+- [x] T008 [P] Implement `validateFolderDepth()` utility function in `frontend/src/file-tree/FolderOperations.ts`
+- [x] T009 [P] Implement `getParentPath()` utility function in `frontend/src/file-tree/FolderOperations.ts`
+- [x] T010 [P] Implement `updatePathForRename()` utility function in `frontend/src/file-tree/FolderOperations.ts`
+- [x] T011 [P] Implement `generateDuplicateFolderName()` utility function in `frontend/src/file-tree/FolderOperations.ts`
+- [x] T012 Implement `normalizeFileName()` function (add .ts extension if missing) in `frontend/src/file-tree/FileOperations.ts`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -59,25 +59,25 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T013 [P] [US1] Contract tests for CreateDialog file creation in `frontend/tests/unit/components/CreateDialog.test.tsx`
-- [ ] T014 [P] [US1] Unit tests for file name validation in `frontend/tests/unit/file-tree/FileOperations.test.ts`
-- [ ] T015 [P] [US1] Integration tests for file creation workflow in `frontend/tests/integration/folder-management/CreateFile.test.tsx`
+- [x] T013 [P] [US1] Contract tests for CreateDialog file creation in `frontend/tests/unit/components/CreateDialog.test.tsx`
+- [x] T014 [P] [US1] Unit tests for file name validation in `frontend/tests/unit/file-tree/FileOperations.test.ts`
+- [x] T015 [P] [US1] Integration tests for file creation workflow in `frontend/tests/integration/folder-management/CreateFile.test.tsx`
 
 ### Implementation for User Story 1
 
-- [ ] T016 [US1] Create `CreateDialog.tsx` component with file creation mode in `frontend/src/components/CreateDialog.tsx`
-- [ ] T017 [US1] Implement dialog state management (open, name, error, isSubmitting) in `frontend/src/components/CreateDialog.tsx`
-- [ ] T018 [US1] Implement inline validation (empty, invalid chars, duplicate) in `frontend/src/components/CreateDialog.tsx`
-- [ ] T019 [US1] Implement keyboard navigation (Enter to submit, Escape to cancel) in `frontend/src/components/CreateDialog.tsx`
-- [ ] T020 [US1] Add auto-focus on input when dialog opens in `frontend/src/components/CreateDialog.tsx`
-- [ ] T021 [US1] Implement `createEmptyFile()` action in Zustand FileSlice in `frontend/src/shared/store/index.ts`
-- [ ] T022 [US1] Implement `ProjectManager.createEmptyFile()` method in `frontend/src/project-management/ProjectManager.ts`
-- [ ] T023 [US1] Modify `AddButton.tsx` to change menu from "New Class/New Interface" to "Add File/Add Folder" in `frontend/src/components/AddButton.tsx`
-- [ ] T024 [US1] Update `AddButton` props interface (remove `onCreateClass`, `onCreateInterface`, add `onAddFile`, `onAddFolder`) in `frontend/src/components/AddButton.tsx`
-- [ ] T025 [US1] Integrate CreateDialog with FileTreePanel for file creation in `frontend/src/components/FileTreePanel.tsx`
-- [ ] T026 [US1] Add accessibility attributes (aria-invalid, aria-describedby, role="alert") in `frontend/src/components/CreateDialog.tsx`
+- [x] T016 [US1] Create `CreateDialog.tsx` component with file creation mode in `frontend/src/components/CreateDialog.tsx`
+- [x] T017 [US1] Implement dialog state management (open, name, error, isSubmitting) in `frontend/src/components/CreateDialog.tsx`
+- [x] T018 [US1] Implement inline validation (empty, invalid chars, duplicate) in `frontend/src/components/CreateDialog.tsx`
+- [x] T019 [US1] Implement keyboard navigation (Enter to submit, Escape to cancel) in `frontend/src/components/CreateDialog.tsx`
+- [x] T020 [US1] Add auto-focus on input when dialog opens in `frontend/src/components/CreateDialog.tsx`
+- [x] T021 [US1] Implement `createEmptyFile()` action in Zustand FileSlice in `frontend/src/shared/store/index.ts`
+- [x] T022 [US1] Implement `ProjectManager.createEmptyFile()` method in `frontend/src/project-management/ProjectManager.ts`
+- [x] T023 [US1] Modify `AddButton.tsx` to change menu from "New Class/New Interface" to "Add File/Add Folder" in `frontend/src/components/AddButton.tsx`
+- [x] T024 [US1] Update `AddButton` props interface (remove `onCreateClass`, `onCreateInterface`, add `onAddFile`, `onAddFolder`) in `frontend/src/components/AddButton.tsx`
+- [x] T025 [US1] Integrate CreateDialog with FileTreePanel for file creation in `frontend/src/components/FileTreePanel.tsx`
+- [x] T026 [US1] Add accessibility attributes (aria-invalid, aria-describedby, role="alert") in `frontend/src/components/CreateDialog.tsx`
 
-**Checkpoint**: User Story 1 complete - Users can create empty files via dialog
+**Checkpoint**: User Story 1 complete - Users can create empty files via dialog ✅
 
 ---
 

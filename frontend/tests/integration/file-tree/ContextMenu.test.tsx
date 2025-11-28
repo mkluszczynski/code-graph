@@ -559,7 +559,7 @@ describe("Context Menu Workflows", () => {
             // Error message should appear
             await waitFor(() => {
                 expect(screen.getByTestId("rename-error")).toBeTruthy();
-                expect(screen.getByText(/Filename cannot contain/i)).toBeTruthy();
+                expect(screen.getByText(/File name cannot contain/i)).toBeTruthy();
             });
 
             // File name should remain unchanged

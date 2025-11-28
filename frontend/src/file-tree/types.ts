@@ -5,6 +5,11 @@
  */
 
 /**
+ * Type of item to create (file or folder)
+ */
+export type CreateItemType = "file" | "folder";
+
+/**
  * Represents a node in the hierarchical file tree
  */
 export interface FileTreeNode {
@@ -71,4 +76,18 @@ export interface DuplicateNameOptions {
   existingNames: string[];
   /** Maximum number of attempts to find unique name */
   maxAttempts?: number;
+}
+
+/**
+ * Result of a folder operation (create, delete, rename, duplicate)
+ */
+export interface FolderOperationResult {
+  /** Whether operation succeeded */
+  success: boolean;
+  /** Number of files affected (created, deleted, or updated) */
+  affectedCount: number;
+  /** New folder path (for rename/duplicate operations) */
+  newPath?: string;
+  /** Error message if operation failed */
+  error?: string;
 }

@@ -26,6 +26,8 @@ export interface ProjectFile {
   name: string;
   /** Virtual file path (e.g., "/src/MyClass.ts") */
   path: string;
+  /** Parent folder path (e.g., "/src") - for folder queries */
+  parentPath: string;
   /** TypeScript source code */
   content: string;
   /** Timestamp (milliseconds since epoch) */

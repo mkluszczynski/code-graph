@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Git
+.git/
+.gitignore
+
+# Docker files (don't need to copy these into container)
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+
+# Test files
+coverage/
+test-results/
+playwright-report/
+*.test.ts
+*.test.tsx
+*.spec.ts
+
+# Development files
+.env*
+*.log
+*.log.*
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp
+*.swo

@@ -89,20 +89,20 @@
 
 ### Tests for User Story 2 (TDD) ⚠️
 
-- [ ] T027 [P] [US2] Unit tests for folder utility functions in `frontend/tests/unit/file-tree/FolderOperations.test.ts`
-- [ ] T028 [P] [US2] Integration tests for folder creation workflow in `frontend/tests/integration/folder-management/CreateFolder.test.tsx`
-- [ ] T029 [P] [US2] Integration tests for folder deletion workflow in `frontend/tests/integration/folder-management/DeleteFolder.test.tsx`
+- [x] T027 [P] [US2] Unit tests for folder utility functions in `frontend/tests/unit/file-tree/FolderOperations.test.ts`
+- [x] T028 [P] [US2] Integration tests for folder creation workflow in `frontend/tests/integration/folder-management/CreateFolder.test.tsx`
+- [x] T029 [P] [US2] Integration tests for folder deletion workflow in `frontend/tests/integration/folder-management/DeleteFolder.test.tsx`
 
 ### Implementation for User Story 2
 
-- [ ] T030 [US2] Add folder creation mode to CreateDialog component in `frontend/src/components/CreateDialog.tsx`
-- [ ] T031 [US2] Implement `createFolder()` action in Zustand FileSlice in `frontend/src/shared/store/index.ts`
-- [ ] T032 [US2] Implement `deleteFolder()` action with optimistic update and rollback in `frontend/src/shared/store/index.ts`
-- [ ] T033 [US2] Implement `ProjectManager.deleteFolderContents()` method with single transaction in `frontend/src/project-management/ProjectManager.ts`
-- [ ] T034 [US2] Add folder context menu with "Delete" option to `FileTreeView.tsx` in `frontend/src/file-tree/FileTreeView.tsx`
-- [ ] T035 [US2] Create folder-specific `DeleteConfirmDialog` variant showing content count in `frontend/src/file-tree/DeleteConfirmDialog.tsx`
-- [ ] T036 [US2] Handle active file deletion (close editor, clear diagram) in `frontend/src/shared/store/index.ts`
-- [ ] T037 [US2] Integrate CreateDialog with FileTreePanel for folder creation in `frontend/src/components/FileTreePanel.tsx`
+- [x] T030 [US2] Add folder creation mode to CreateDialog component in `frontend/src/components/CreateDialog.tsx`
+- [x] T031 [US2] Implement `createFolder()` action in Zustand FileSlice in `frontend/src/shared/store/index.ts`
+- [x] T032 [US2] Implement `deleteFolder()` action with optimistic update and rollback in `frontend/src/shared/store/index.ts`
+- [x] T033 [US2] Implement `ProjectManager.deleteFolderContents()` method with single transaction in `frontend/src/project-management/ProjectManager.ts`
+- [x] T034 [US2] Add folder context menu with "Delete" option to `FileTreeView.tsx` in `frontend/src/file-tree/FileTreeView.tsx`
+- [x] T035 [US2] Create folder-specific `DeleteConfirmDialog` variant showing content count in `frontend/src/file-tree/DeleteConfirmDialog.tsx`
+- [x] T036 [US2] Handle active file deletion (close editor, clear diagram) in `frontend/src/shared/store/index.ts`
+- [x] T037 [US2] Integrate CreateDialog with FileTreePanel for folder creation in `frontend/src/components/FileTreePanel.tsx`
 
 **Checkpoint**: User Stories 1 AND 2 complete - Users can create files/folders and delete folders
 

@@ -397,6 +397,48 @@ export class ProjectManager {
   }
 
   /**
+   * Delete all files within a folder (recursive)
+   * Uses single transaction for atomicity
+   *
+   * @param folderPath - Path of folder to delete (e.g., "/src/models")
+   * @returns Number of files deleted
+   * @throws StorageError if IndexedDB operation fails
+   */
+  async deleteFolderContents(folderPath: string): Promise<number> {
+    await this.ensureDB();
+
+    try {
+      // Normalize folder path to ensure consistent matching
+      const normalizedPath = folderPath.endsWith("/")
+        ? folderPath
+        : `${folderPath}/`;
+
+      // Get all files in the folder
+      const allFiles = await this.db!.getAll("files");
+      const filesToDelete = allFiles.filter((file) =>
+        file.path.startsWith(normalizedPath)
+      );
+
+      // Delete all files in a single transaction
+      const tx = this.db!.transaction("files", "readwrite");
+      const store = tx.objectStore("files");
+
+      for (const file of filesToDelete) {
+        await store.delete(file.id);
+      }
+
+      await tx.done;
+
+      return filesToDelete.length;
+    } catch (error) {
+      throw new StorageError(
+        "deleteFolderContents",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
+
+  /**
    * Ensures database is initialized
    *
    * @throws StorageError if database is not initialized

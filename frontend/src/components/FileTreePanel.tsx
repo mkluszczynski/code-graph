@@ -23,7 +23,7 @@ export function FileTreePanel({
     const [createType, setCreateType] = useState<CreateItemType>("file");
 
     const createEmptyFile = useStore((s) => s.createEmptyFile);
-    
+
     const fileTreeManager = useMemo(() => new FileTreeManager(), []);
     const fileTree = useMemo(() => {
         return fileTreeManager.buildTree(files);
@@ -47,16 +47,16 @@ export function FileTreePanel({
         setDialogOpen(true);
     }, []);
 
+    const createFolder = useStore((s) => s.createFolder);
+
     const handleSubmit = useCallback(async (name: string) => {
         if (createType === "file") {
             await createEmptyFile(name, "/src");
         } else {
-            // Folder creation will be implemented in Phase 4 (User Story 2)
-            // For now, folders are virtual and don't need explicit creation
-            console.log(`Folder creation: ${name} - will be implemented in User Story 2`);
+            await createFolder(name, "/src");
         }
         setDialogOpen(false);
-    }, [createType, createEmptyFile]);
+    }, [createType, createEmptyFile, createFolder]);
 
     const handleCancel = useCallback(() => {
         setDialogOpen(false);

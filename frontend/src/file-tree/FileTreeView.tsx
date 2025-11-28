@@ -62,9 +62,11 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
   const activeFileId = useStore((state) => state.activeFileId);
   const setActiveFile = useStore((state) => state.setActiveFile);
   const deleteFile = useStore((state) => state.deleteFile);
+  const deleteFolder = useStore((state) => state.deleteFolder);
   const renameFile = useStore((state) => state.renameFile);
   const duplicateFile = useStore((state) => state.duplicateFile);
   const getFileById = useStore((state) => state.getFileById);
+  const files = useStore((state) => state.files);
 
   const [expandedFolders, setExpandedFolders] = React.useState<Set<string>>(
     new Set()
@@ -73,6 +75,7 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
   // Delete confirmation dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [fileToDelete, setFileToDelete] = React.useState<{ id: string; name: string } | null>(null);
+  const [folderToDelete, setFolderToDelete] = React.useState<{ path: string; name: string; fileCount: number } | null>(null);
 
   // Rename state - use props if provided (nested), otherwise create local state (root)
   const [renamingFileIdLocal, setRenamingFileIdLocal] = React.useState<string | null>(null);
@@ -147,7 +150,39 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
   const handleDeleteCancel = React.useCallback(() => {
     setDeleteDialogOpen(false);
     setFileToDelete(null);
+    setFolderToDelete(null);
   }, []);
+
+  const handleFolderDeleteClick = React.useCallback((folderPath: string, folderName: string) => {
+    // Count files in folder
+    const { getFilesInFolder } = require("./FolderOperations");
+    const folderFiles = getFilesInFolder(files, folderPath);
+
+    setFolderToDelete({
+      path: folderPath,
+      name: folderName,
+      fileCount: folderFiles.length
+    });
+    setDeleteDialogOpen(true);
+  }, [files]);
+
+  const handleFolderDeleteConfirm = React.useCallback(async () => {
+    if (folderToDelete) {
+      try {
+        const result = await deleteFolder(folderToDelete.path);
+        if (result.success) {
+          setDeleteDialogOpen(false);
+          setFolderToDelete(null);
+        } else {
+          console.error("Failed to delete folder:", result.error);
+          // TODO: Show error toast/notification
+        }
+      } catch (error) {
+        console.error("Failed to delete folder:", error);
+        // TODO: Show error toast/notification
+      }
+    }
+  }, [folderToDelete, deleteFolder]);
 
   const handleRenameStart = useCallback(
     (fileId: string) => {
@@ -261,28 +296,52 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
           onCancel={handleDeleteCancel}
         />
       )}
+      {folderToDelete && (
+        <DeleteConfirmDialog
+          open={deleteDialogOpen}
+          fileName={folderToDelete.name}
+          fileCount={folderToDelete.fileCount}
+          onConfirm={handleFolderDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
+      )}
 
       {nodes.map((node) => (
         <div key={node.id}>
           {node.type === "folder" ? (
             <div>
-              <button
-                onClick={() => toggleFolder(node.id)}
-                className={cn(
-                  "flex items-center gap-1 w-full px-2 py-1 text-sm hover:bg-accent hover:text-accent-foreground rounded-sm transition-colors",
-                  "cursor-pointer select-none"
-                )}
-                style={{ paddingLeft: `${level * 12 + 8}px` }}
-                data-testid={`folder-${node.name}`}
-              >
-                {expandedFolders.has(node.id) ? (
-                  <ChevronDown className="h-4 w-4 shrink-0" data-lucide="chevron-down" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 shrink-0" data-lucide="chevron-right" />
-                )}
-                <Folder className="h-4 w-4 shrink-0 text-blue-500" />
-                <span className="truncate">{node.name}</span>
-              </button>
+              <ContextMenu>
+                <ContextMenuTrigger asChild>
+                  <button
+                    onClick={() => toggleFolder(node.id)}
+                    className={cn(
+                      "flex items-center gap-1 w-full px-2 py-1 text-sm hover:bg-accent hover:text-accent-foreground rounded-sm transition-colors",
+                      "cursor-pointer select-none"
+                    )}
+                    style={{ paddingLeft: `${level * 12 + 8}px` }}
+                    data-testid={`folder-${node.name}`}
+                  >
+                    {expandedFolders.has(node.id) ? (
+                      <ChevronDown className="h-4 w-4 shrink-0" data-lucide="chevron-down" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 shrink-0" data-lucide="chevron-right" />
+                    )}
+                    <Folder className="h-4 w-4 shrink-0 text-blue-500" />
+                    <span className="truncate">{node.name}</span>
+                  </button>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem
+                    onClick={() => handleFolderDeleteClick(node.path, node.name)}
+                    className="text-destructive focus:text-destructive"
+                    aria-label={`Delete folder ${node.name}`}
+                    data-testid="context-menu-delete-folder"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" aria-hidden="true" />
+                    <span className="flex-1">Delete</span>
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
 
               {expandedFolders.has(node.id) && node.children.length > 0 && (
                 <FileTreeView

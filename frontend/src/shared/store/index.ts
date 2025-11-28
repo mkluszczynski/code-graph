@@ -50,6 +50,8 @@ interface FileSlice {
   renameFile: (fileId: string, newName: string) => Promise<void>;
   duplicateFile: (fileId: string) => Promise<{ success: boolean; newFileId?: string; error?: string }>;
   createEmptyFile: (name: string, parentPath: string) => Promise<ProjectFile>;
+  createFolder: (name: string, parentPath: string) => Promise<void>;
+  deleteFolder: (folderPath: string) => Promise<{ success: boolean; affectedCount: number; error?: string }>;
   setActiveFile: (fileId: string | null) => void;
   getFileById: (fileId: string) => ProjectFile | undefined;
   setLoadingFiles: (isLoading: boolean) => void;
@@ -314,6 +316,102 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
       throw new Error(`Failed to create file: ${errorMessage}`);
     } finally {
       set({ isCreatingFile: false });
+    }
+  },
+
+  createFolder: async (name: string, parentPath: string) => {
+    const { validateItemName } = await import("../../file-tree/FileOperations");
+    const { validateFolderDepth } = await import("../../file-tree/FolderOperations");
+
+    // Validate folder name
+    const nameValidation = validateItemName(name, "folder");
+    if (!nameValidation.isValid) {
+      throw new Error(nameValidation.error);
+    }
+
+    // Compute full folder path
+    const folderPath = parentPath === "/" ? `/${name}` : `${parentPath}/${name}`;
+
+    // Validate folder depth
+    const depthValidation = validateFolderDepth(folderPath);
+    if (!depthValidation.isValid) {
+      throw new Error(depthValidation.error);
+    }
+
+    // Folders are virtual - no IndexedDB storage needed
+    // They appear in the file tree when files with matching parentPath exist
+  },
+
+  deleteFolder: async (folderPath: string) => {
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const { getFilesInFolder } = await import("../../file-tree/FolderOperations");
+    const projectManager = new ProjectManager();
+
+    // Store original state for rollback
+    const originalState = {
+      files: get().files,
+      activeFileId: get().activeFileId,
+      editorContent: get().editorContent,
+      isDirty: get().isDirty,
+    };
+
+    try {
+      // Get all files in folder
+      const filesToDelete = getFilesInFolder(get().files, folderPath);
+      const affectedCount = filesToDelete.length;
+
+      // Optimistic update: Remove files from store immediately
+      set((state) => ({
+        files: state.files.filter((file) => !filesToDelete.some((f) => f.id === file.id)),
+        // Close editor if active file is in deleted folder
+        activeFileId: filesToDelete.some((f) => f.id === state.activeFileId)
+          ? null
+          : state.activeFileId,
+        editorContent: filesToDelete.some((f) => f.id === state.activeFileId)
+          ? ""
+          : state.editorContent,
+        isDirty: filesToDelete.some((f) => f.id === state.activeFileId)
+          ? false
+          : state.isDirty,
+      }));
+
+      // Delete from IndexedDB
+      await projectManager.deleteFolderContents(folderPath);
+
+      return {
+        success: true,
+        affectedCount,
+      };
+    } catch (error) {
+      console.error("Failed to delete folder:", error);
+
+      // Rollback to original state on failure
+      set({
+        files: originalState.files,
+        activeFileId: originalState.activeFileId,
+        editorContent: originalState.editorContent,
+        isDirty: originalState.isDirty,
+      });
+
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (errorMessage.includes("quota")) {
+        return {
+          success: false,
+          affectedCount: 0,
+          error: "Storage quota exceeded. Please free up space and try again.",
+        };
+      } else if (errorMessage.includes("database") || errorMessage.includes("IndexedDB")) {
+        return {
+          success: false,
+          affectedCount: 0,
+          error: "Database error. Please try again or refresh the page.",
+        };
+      }
+      return {
+        success: false,
+        affectedCount: 0,
+        error: `Failed to delete folder: ${errorMessage}`,
+      };
     }
   },
 });

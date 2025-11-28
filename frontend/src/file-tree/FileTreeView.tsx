@@ -64,7 +64,9 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
   const deleteFile = useStore((state) => state.deleteFile);
   const deleteFolder = useStore((state) => state.deleteFolder);
   const renameFile = useStore((state) => state.renameFile);
+  const renameFolder = useStore((state) => state.renameFolder);
   const duplicateFile = useStore((state) => state.duplicateFile);
+  const duplicateFolder = useStore((state) => state.duplicateFolder);
   const getFileById = useStore((state) => state.getFileById);
   const files = useStore((state) => state.files);
 
@@ -82,6 +84,12 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
   const [renameValueLocal, setRenameValueLocal] = React.useState("");
   const [renameErrorLocal, setRenameErrorLocal] = React.useState<string | null>(null);
   const renameInputRefLocal = React.useRef<HTMLInputElement>(null);
+
+  // Folder rename state
+  const [renamingFolderPath, setRenamingFolderPath] = React.useState<string | null>(null);
+  const [folderRenameValue, setFolderRenameValue] = React.useState("");
+  const [folderRenameError, setFolderRenameError] = React.useState<string | null>(null);
+  const folderRenameInputRef = React.useRef<HTMLInputElement>(null);
 
   // Use prop values if provided (nested component), otherwise use local state (root component)
   const renamingFileId = renamingFileIdProp !== undefined ? renamingFileIdProp : renamingFileIdLocal;
@@ -183,6 +191,80 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
       }
     }
   }, [folderToDelete, deleteFolder]);
+
+  // Folder rename handlers
+  const handleFolderRenameStart = useCallback((folderPath: string, folderName: string) => {
+    setRenamingFolderPath(folderPath);
+    setFolderRenameValue(folderName);
+    setFolderRenameError(null);
+
+    // Focus input after state update
+    setTimeout(() => {
+      if (folderRenameInputRef.current) {
+        folderRenameInputRef.current.focus();
+        folderRenameInputRef.current.select();
+      }
+    }, 0);
+  }, []);
+
+  const handleFolderRenameCommit = React.useCallback(async () => {
+    if (!renamingFolderPath || !folderRenameValue.trim()) {
+      setFolderRenameError("Folder name cannot be empty");
+      return;
+    }
+
+    try {
+      // Get parent path and construct new full path
+      const { getParentPath } = require("./FolderOperations");
+      const parentPath = getParentPath(renamingFolderPath);
+      const newPath = parentPath === "/"
+        ? `/${folderRenameValue.trim()}`
+        : `${parentPath}/${folderRenameValue.trim()}`;
+
+      const result = await renameFolder(renamingFolderPath, newPath);
+      if (result.success) {
+        setRenamingFolderPath(null);
+        setFolderRenameValue("");
+        setFolderRenameError(null);
+      } else {
+        setFolderRenameError(result.error || "Failed to rename folder");
+        folderRenameInputRef.current?.focus();
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to rename folder";
+      setFolderRenameError(errorMessage);
+      folderRenameInputRef.current?.focus();
+    }
+  }, [renamingFolderPath, folderRenameValue, renameFolder]);
+
+  const handleFolderRenameCancel = React.useCallback(() => {
+    setRenamingFolderPath(null);
+    setFolderRenameValue("");
+    setFolderRenameError(null);
+  }, []);
+
+  const handleFolderRenameKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleFolderRenameCommit();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      handleFolderRenameCancel();
+    }
+  }, [handleFolderRenameCommit, handleFolderRenameCancel]);
+
+  const handleFolderDuplicateClick = React.useCallback(async (folderPath: string) => {
+    try {
+      const result = await duplicateFolder(folderPath);
+      if (!result.success) {
+        console.error("Failed to duplicate folder:", result.error);
+        // TODO: Show error toast/notification
+      }
+    } catch (error) {
+      console.error("Failed to duplicate folder:", error);
+      // TODO: Show error toast/notification
+    }
+  }, [duplicateFolder]);
 
   const handleRenameStart = useCallback(
     (fileId: string) => {
@@ -313,7 +395,7 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
               <ContextMenu>
                 <ContextMenuTrigger asChild>
                   <button
-                    onClick={() => toggleFolder(node.id)}
+                    onClick={() => renamingFolderPath !== node.path && toggleFolder(node.id)}
                     className={cn(
                       "flex items-center gap-1 w-full px-2 py-1 text-sm hover:bg-accent hover:text-accent-foreground rounded-sm transition-colors",
                       "cursor-pointer select-none"
@@ -327,10 +409,52 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
                       <ChevronRight className="h-4 w-4 shrink-0" data-lucide="chevron-right" />
                     )}
                     <Folder className="h-4 w-4 shrink-0 text-blue-500" />
-                    <span className="truncate">{node.name}</span>
+                    {renamingFolderPath === node.path ? (
+                      <div className="flex-1 flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          ref={folderRenameInputRef}
+                          type="text"
+                          value={folderRenameValue}
+                          onChange={(e) => setFolderRenameValue(e.target.value)}
+                          onBlur={handleFolderRenameCommit}
+                          onKeyDown={handleFolderRenameKeyDown}
+                          className={cn(
+                            "flex-1 px-1 py-0.5 text-sm bg-background border rounded",
+                            folderRenameError ? "border-destructive" : "border-input"
+                          )}
+                          data-testid={`folder-rename-input-${node.name}`}
+                        />
+                        {folderRenameError && (
+                          <span className="text-xs text-destructive" data-testid="folder-rename-error">
+                            {folderRenameError}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="truncate">{node.name}</span>
+                    )}
                   </button>
                 </ContextMenuTrigger>
                 <ContextMenuContent>
+                  <ContextMenuItem
+                    onClick={() => handleFolderRenameStart(node.path, node.name)}
+                    aria-label={`Rename folder ${node.name}`}
+                    data-testid="context-menu-rename-folder"
+                  >
+                    <Edit3 className="h-4 w-4 mr-2" aria-hidden="true" />
+                    <span className="flex-1">Rename</span>
+                    <kbd className="ml-auto text-xs text-muted-foreground">F2</kbd>
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    onClick={() => handleFolderDuplicateClick(node.path)}
+                    aria-label={`Duplicate folder ${node.name}`}
+                    data-testid="context-menu-duplicate-folder"
+                  >
+                    <Copy className="h-4 w-4 mr-2" aria-hidden="true" />
+                    <span className="flex-1">Duplicate</span>
+                    <kbd className="ml-auto text-xs text-muted-foreground">Ctrl+D</kbd>
+                  </ContextMenuItem>
+                  <ContextMenuSeparator />
                   <ContextMenuItem
                     onClick={() => handleFolderDeleteClick(node.path, node.name)}
                     className="text-destructive focus:text-destructive"

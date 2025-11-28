@@ -116,21 +116,21 @@
 
 ### Tests for User Story 3 (TDD) ⚠️
 
-- [ ] T038 [P] [US3] Integration tests for folder rename workflow in `frontend/tests/integration/folder-management/RenameFolder.test.tsx`
-- [ ] T039 [P] [US3] Integration tests for folder duplicate workflow in `frontend/tests/integration/folder-management/DuplicateFolder.test.tsx`
+- [x] T038 [P] [US3] Integration tests for folder rename workflow in `frontend/tests/integration/folder-management/RenameFolder.test.tsx`
+- [x] T039 [P] [US3] Integration tests for folder duplicate workflow in `frontend/tests/integration/folder-management/DuplicateFolder.test.tsx`
 
 ### Implementation for User Story 3
 
-- [ ] T040 [US3] Implement `renameFolder()` action with optimistic update in `frontend/src/shared/store/index.ts`
-- [ ] T041 [US3] Implement `ProjectManager.updateFolderPaths()` method with single transaction in `frontend/src/project-management/ProjectManager.ts`
-- [ ] T042 [US3] Add "Rename" option to folder context menu in `frontend/src/file-tree/FileTreeView.tsx`
-- [ ] T043 [US3] Implement inline folder rename editing (reuse file rename pattern) in `frontend/src/file-tree/FileTreeView.tsx`
-- [ ] T044 [US3] Handle active file path update when parent folder is renamed in `frontend/src/shared/store/index.ts`
-- [ ] T045 [US3] Implement `duplicateFolder()` action in Zustand FileSlice in `frontend/src/shared/store/index.ts`
-- [ ] T046 [US3] Implement `ProjectManager.duplicateFolderContents()` method with single transaction in `frontend/src/project-management/ProjectManager.ts`
-- [ ] T047 [US3] Add "Duplicate" option to folder context menu in `frontend/src/file-tree/FileTreeView.tsx`
+- [x] T040 [US3] Implement `renameFolder()` action with optimistic update in `frontend/src/shared/store/index.ts`
+- [x] T041 [US3] Implement `ProjectManager.updateFolderPaths()` method with single transaction in `frontend/src/project-management/ProjectManager.ts`
+- [x] T042 [US3] Add "Rename" option to folder context menu in `frontend/src/file-tree/FileTreeView.tsx`
+- [x] T043 [US3] Implement inline folder rename editing (reuse file rename pattern) in `frontend/src/file-tree/FileTreeView.tsx`
+- [x] T044 [US3] Handle active file path update when parent folder is renamed in `frontend/src/shared/store/index.ts`
+- [x] T045 [US3] Implement `duplicateFolder()` action in Zustand FileSlice in `frontend/src/shared/store/index.ts`
+- [x] T046 [US3] Implement `ProjectManager.duplicateFolderContents()` method with single transaction in `frontend/src/project-management/ProjectManager.ts`
+- [x] T047 [US3] Add "Duplicate" option to folder context menu in `frontend/src/file-tree/FileTreeView.tsx`
 
-**Checkpoint**: User Stories 1, 2, AND 3 complete - Full folder management functionality
+**Checkpoint**: User Stories 1, 2, AND 3 complete - Full folder management functionality ✅
 
 ---
 

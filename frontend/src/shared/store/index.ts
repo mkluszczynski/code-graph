@@ -52,6 +52,8 @@ interface FileSlice {
   createEmptyFile: (name: string, parentPath: string) => Promise<ProjectFile>;
   createFolder: (name: string, parentPath: string) => Promise<void>;
   deleteFolder: (folderPath: string) => Promise<{ success: boolean; affectedCount: number; error?: string }>;
+  renameFolder: (oldPath: string, newPath: string) => Promise<{ success: boolean; affectedCount: number; newPath?: string; error?: string }>;
+  duplicateFolder: (folderPath: string) => Promise<{ success: boolean; affectedCount: number; newPath?: string; error?: string }>;
   setActiveFile: (fileId: string | null) => void;
   getFileById: (fileId: string) => ProjectFile | undefined;
   setLoadingFiles: (isLoading: boolean) => void;
@@ -411,6 +413,207 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
         success: false,
         affectedCount: 0,
         error: `Failed to delete folder: ${errorMessage}`,
+      };
+    }
+  },
+
+  renameFolder: async (oldPath: string, newPath: string) => {
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const { getFilesInFolder, updatePathForRename, getParentPath } = await import("../../file-tree/FolderOperations");
+    const { validateItemName } = await import("../../file-tree/FileOperations");
+    const projectManager = new ProjectManager();
+
+    // Extract folder name from new path for validation
+    const newFolderName = newPath.split("/").filter(Boolean).pop() || "";
+
+    // Validate new folder name
+    const nameValidation = validateItemName(newFolderName, "folder");
+    if (!nameValidation.isValid) {
+      return {
+        success: false,
+        affectedCount: 0,
+        error: nameValidation.error,
+      };
+    }
+
+    // Check for duplicate folder name at same level
+    const parentPath = getParentPath(newPath);
+    const allFiles = get().files;
+    const existingFolders = new Set<string>();
+    allFiles.forEach((file) => {
+      if (file.parentPath.startsWith(parentPath) && file.parentPath !== oldPath) {
+        const relativePath = file.parentPath.slice(parentPath.length);
+        const firstFolder = relativePath.split("/").filter(Boolean)[0];
+        if (firstFolder) {
+          existingFolders.add(firstFolder);
+        }
+      }
+    });
+
+    if (existingFolders.has(newFolderName)) {
+      return {
+        success: false,
+        affectedCount: 0,
+        error: `A folder named "${newFolderName}" already exists`,
+      };
+    }
+
+    // Store original state for rollback
+    const originalState = {
+      files: get().files,
+      activeFileId: get().activeFileId,
+    };
+
+    try {
+      // Get all files in folder
+      const filesToUpdate = getFilesInFolder(get().files, oldPath);
+      const affectedCount = filesToUpdate.length;
+
+      // Optimistic update: Update paths in store immediately
+      set((state) => ({
+        files: state.files.map((file) => {
+          if (!filesToUpdate.some((f) => f.id === file.id)) {
+            return file;
+          }
+          const newFilePath = updatePathForRename(file.path, oldPath, newPath);
+          const newParentPath = updatePathForRename(file.parentPath, oldPath, newPath);
+          return {
+            ...file,
+            path: newFilePath,
+            parentPath: newParentPath,
+          };
+        }),
+      }));
+
+      // Update in IndexedDB
+      if (affectedCount > 0) {
+        await projectManager.updateFolderPaths(oldPath, newPath);
+      }
+
+      return {
+        success: true,
+        affectedCount,
+        newPath,
+      };
+    } catch (error) {
+      console.error("Failed to rename folder:", error);
+
+      // Rollback to original state on failure
+      set({
+        files: originalState.files,
+      });
+
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (errorMessage.includes("quota")) {
+        return {
+          success: false,
+          affectedCount: 0,
+          error: "Storage quota exceeded. Please free up space and try again.",
+        };
+      } else if (errorMessage.includes("database") || errorMessage.includes("IndexedDB")) {
+        return {
+          success: false,
+          affectedCount: 0,
+          error: "Database error. Please try again or refresh the page.",
+        };
+      }
+      return {
+        success: false,
+        affectedCount: 0,
+        error: `Failed to rename folder: ${errorMessage}`,
+      };
+    }
+  },
+
+  duplicateFolder: async (folderPath: string) => {
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const { getFilesInFolder, generateDuplicateFolderName, getParentPath } = await import("../../file-tree/FolderOperations");
+    const projectManager = new ProjectManager();
+
+    // Store original state for rollback
+    const originalFiles = get().files;
+
+    try {
+      // Get all files in source folder
+      const sourceFiles = getFilesInFolder(get().files, folderPath);
+      const affectedCount = sourceFiles.length;
+
+      // Extract folder name and parent path
+      const parentPath = getParentPath(folderPath);
+      const folderName = folderPath.split("/").filter(Boolean).pop() || "folder";
+
+      // Get existing folder names at same level
+      const existingFolders = new Set<string>();
+      originalFiles.forEach((file) => {
+        if (file.parentPath.startsWith(parentPath)) {
+          const relativePath = file.parentPath.slice(parentPath.length);
+          const firstFolder = relativePath.split("/").filter(Boolean)[0];
+          if (firstFolder) {
+            existingFolders.add(firstFolder);
+          }
+        }
+      });
+
+      // Generate unique folder name
+      const newFolderName = generateDuplicateFolderName(folderName, Array.from(existingFolders));
+      const newFolderPath = parentPath === "/" ? `/${newFolderName}` : `${parentPath}/${newFolderName}`;
+
+      // Generate new files with updated paths
+      const newFiles: ProjectFile[] = sourceFiles.map((file) => {
+        const relativePath = file.path.slice(folderPath.length);
+        const newFilePath = newFolderPath + relativePath;
+        const relativeParentPath = file.parentPath.slice(folderPath.length);
+        const newParentPath = newFolderPath + relativeParentPath;
+
+        return {
+          ...file,
+          id: crypto.randomUUID(),
+          path: newFilePath,
+          parentPath: newParentPath,
+          lastModified: Date.now(),
+          isActive: false,
+        };
+      });
+
+      // Persist to IndexedDB
+      if (newFiles.length > 0) {
+        await projectManager.duplicateFolderContents(folderPath, newFolderPath);
+      }
+
+      // Add new files to store
+      set((state) => ({
+        files: [...state.files, ...newFiles],
+      }));
+
+      return {
+        success: true,
+        affectedCount,
+        newPath: newFolderPath,
+      };
+    } catch (error) {
+      console.error("Failed to duplicate folder:", error);
+
+      // Rollback to original state on failure
+      set({ files: originalFiles });
+
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (errorMessage.includes("quota") || errorMessage.includes("QuotaExceededError")) {
+        return {
+          success: false,
+          affectedCount: 0,
+          error: "Storage quota exceeded. Please delete some files to free up space.",
+        };
+      } else if (errorMessage.includes("database") || errorMessage.includes("IndexedDB")) {
+        return {
+          success: false,
+          affectedCount: 0,
+          error: "Database error. Please try again or refresh the page.",
+        };
+      }
+      return {
+        success: false,
+        affectedCount: 0,
+        error: `Failed to duplicate folder: ${errorMessage}`,
       };
     }
   },

@@ -439,6 +439,131 @@ export class ProjectManager {
   }
 
   /**
+   * Update paths for all files within a renamed folder
+   * Uses single transaction for atomicity
+   *
+   * @param oldPath - Original folder path (e.g., "/src/models")
+   * @param newPath - New folder path (e.g., "/src/entities")
+   * @returns Number of files updated
+   * @throws StorageError if IndexedDB operation fails
+   */
+  async updateFolderPaths(oldPath: string, newPath: string): Promise<number> {
+    await this.ensureDB();
+
+    try {
+      // Normalize folder path to ensure consistent matching
+      const normalizedOldPath = oldPath.endsWith("/")
+        ? oldPath
+        : `${oldPath}/`;
+
+      // Get all files in the folder
+      const allFiles = await this.db!.getAll("files");
+      const filesToUpdate = allFiles.filter((file) =>
+        file.path.startsWith(normalizedOldPath)
+      );
+
+      if (filesToUpdate.length === 0) {
+        return 0;
+      }
+
+      // Update all files in a single transaction
+      const tx = this.db!.transaction("files", "readwrite");
+      const store = tx.objectStore("files");
+
+      for (const file of filesToUpdate) {
+        // Update path by replacing old folder prefix with new
+        const newFilePath = newPath + file.path.slice(oldPath.length);
+        const newParentPath = newPath + file.parentPath.slice(oldPath.length);
+
+        const updatedFile: ProjectFile = {
+          ...file,
+          path: newFilePath,
+          parentPath: newParentPath,
+          lastModified: Date.now(),
+        };
+
+        await store.put(updatedFile);
+      }
+
+      await tx.done;
+
+      return filesToUpdate.length;
+    } catch (error) {
+      throw new StorageError(
+        "updateFolderPaths",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
+
+  /**
+   * Duplicate all files within a folder to a new location
+   * Uses single transaction for atomicity
+   *
+   * @param sourcePath - Source folder path (e.g., "/src/models")
+   * @param targetPath - Target folder path (e.g., "/src/models copy")
+   * @returns Array of newly created file IDs
+   * @throws StorageError if IndexedDB operation fails
+   */
+  async duplicateFolderContents(
+    sourcePath: string,
+    targetPath: string
+  ): Promise<string[]> {
+    await this.ensureDB();
+
+    try {
+      // Normalize folder path to ensure consistent matching
+      const normalizedSourcePath = sourcePath.endsWith("/")
+        ? sourcePath
+        : `${sourcePath}/`;
+
+      // Get all files in the source folder
+      const allFiles = await this.db!.getAll("files");
+      const filesToDuplicate = allFiles.filter((file) =>
+        file.path.startsWith(normalizedSourcePath)
+      );
+
+      if (filesToDuplicate.length === 0) {
+        return [];
+      }
+
+      // Create new files in a single transaction
+      const tx = this.db!.transaction("files", "readwrite");
+      const store = tx.objectStore("files");
+      const newFileIds: string[] = [];
+
+      for (const file of filesToDuplicate) {
+        // Create new path by replacing source folder with target
+        const relativePath = file.path.slice(sourcePath.length);
+        const newFilePath = targetPath + relativePath;
+        const relativeParentPath = file.parentPath.slice(sourcePath.length);
+        const newParentPath = targetPath + relativeParentPath;
+
+        const newFile: ProjectFile = {
+          ...file,
+          id: generateId(),
+          path: newFilePath,
+          parentPath: newParentPath,
+          lastModified: Date.now(),
+          isActive: false,
+        };
+
+        await store.put(newFile);
+        newFileIds.push(newFile.id);
+      }
+
+      await tx.done;
+
+      return newFileIds;
+    } catch (error) {
+      throw new StorageError(
+        "duplicateFolderContents",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
+
+  /**
    * Ensures database is initialized
    *
    * @throws StorageError if database is not initialized

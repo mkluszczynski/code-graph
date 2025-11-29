@@ -1,6 +1,6 @@
 # TypeScript UML Graph Visualizer - User Guide
 
-**Version**: 1.2.0  
+**Version**: 1.3.0  
 **Last Updated**: November 16, 2025
 
 ## Table of Contents
@@ -11,12 +11,13 @@
 4. [User Interface Overview](#user-interface-overview)
 5. [Creating Files](#creating-files)
 6. [Managing Folders](#managing-folders)
-7. [Writing Code](#writing-code)
-8. [Navigating the Diagram](#navigating-the-diagram)
-9. [Understanding UML Diagrams](#understanding-uml-diagrams)
-10. [Keyboard Shortcuts](#keyboard-shortcuts)
-11. [Tips and Best Practices](#tips-and-best-practices)
-12. [Troubleshooting](#troubleshooting)
+7. [Drag and Drop Organization](#drag-and-drop-organization)
+8. [Writing Code](#writing-code)
+9. [Navigating the Diagram](#navigating-the-diagram)
+10. [Understanding UML Diagrams](#understanding-uml-diagrams)
+11. [Keyboard Shortcuts](#keyboard-shortcuts)
+12. [Tips and Best Practices](#tips-and-best-practices)
+13. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -222,6 +223,82 @@ After creating folders, you can create files directly inside them:
 - Keep interface files near their implementations
 - Use meaningful folder names that describe the content
 - Limit folder nesting to 3-4 levels for clarity
+
+---
+
+## Drag and Drop Organization
+
+Easily reorganize your project structure by dragging files and folders to new locations.
+
+### Moving Files
+
+1. **Start Drag**: Click and hold on any file in the file tree
+2. **Drag to Folder**: Move the file over a target folder
+3. **Drop Indicator**: The folder will highlight to show it's a valid target
+4. **Release**: Drop the file to move it into the folder
+
+**Visual Feedback**:
+- **Valid Drop Target**: Folder highlights with a colored border when you can drop
+- **Invalid Drop Target**: Red indicator or no-drop cursor when move is not allowed
+- **Dragging State**: The dragged item appears slightly faded
+
+### Moving Folders
+
+1. **Start Drag**: Click and hold on any folder in the file tree
+2. **Drag to Folder**: Move the folder over a target folder
+3. **Drop**: Release to move the folder and all its contents
+
+**Important**: Moving a folder also moves all files and subfolders inside it. This is an atomic operation - either everything moves or nothing does.
+
+### Auto-Expand Folders
+
+When dragging over a collapsed folder:
+- **Wait 500ms**: The folder automatically expands to reveal its contents
+- **Deep Navigation**: Continue dragging into expanded subfolders
+- **Cancel**: Press **Escape** or drag away to close auto-expanded folders
+
+### Validation Rules
+
+The application prevents invalid moves to protect your project structure:
+
+| Scenario | Behavior |
+|----------|----------|
+| **Same Location** | Cannot drop item where it already is |
+| **Circular Reference** | Cannot move folder into itself or its subfolders |
+| **Duplicate Name** | Cannot move if item with same name exists at target |
+
+**Error Handling**:
+- Invalid drop attempts are silently prevented (no error dialogs)
+- The cursor changes to indicate when a drop is not allowed
+- Original item position is preserved if drop is invalid
+
+### Cancel Drag Operation
+
+To cancel a drag operation at any time:
+- Press the **Escape** key
+- The item returns to its original position
+- All visual indicators are cleared
+
+### Keyboard Support
+
+| Key | Action |
+|-----|--------|
+| `Escape` | Cancel current drag operation |
+| `Enter` | Confirm drop (when hovering valid target) |
+
+### Best Practices
+
+1. **Use Folders First**: Create your folder structure before adding many files
+2. **Batch Moves**: Drag folders to move multiple files at once
+3. **Check Names**: Ensure no naming conflicts before moving
+4. **Undo Not Available**: File moves cannot be undone, so be careful
+
+### Performance
+
+- **File Moves**: Complete in under 500ms
+- **Folder Moves**: Complete in under 1 second (even with many files)
+- **Visual Feedback**: Appears within 100ms of starting drag
+- **All moves are atomic**: Database transaction ensures consistency
 
 ---
 
@@ -671,6 +748,16 @@ Check browser console for performance metrics.
 ---
 
 ## Version History
+
+### Version 1.3.0 (November 2025)
+- **NEW**: Drag and drop file organization - move files between folders
+- **NEW**: Drag and drop folder organization - move folders with all contents
+- **NEW**: Auto-expand folders when hovering during drag (500ms delay)
+- **NEW**: Add file directly to folder via context menu (right-click → Add File)
+- **IMPROVED**: Visual feedback for drag operations (drop target highlighting)
+- **IMPROVED**: Validation prevents circular references and duplicate names
+- **IMPROVED**: Atomic transactions ensure database consistency during moves
+- **IMPROVED**: ARIA attributes for accessibility during drag operations
 
 ### Version 1.2.0 (November 2025)
 - **NEW**: Folder management - create, delete, rename, and duplicate folders

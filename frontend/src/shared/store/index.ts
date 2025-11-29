@@ -25,12 +25,13 @@ import type {
   ProjectFolder,
   StorageMetadata,
 } from "../types";
+import type { DragState, DropTarget } from "../../file-tree/types";
 
 // ============================================================================
 // Type Helpers
 // ============================================================================
 
-type StoreState = FileSlice & EditorSlice & DiagramSlice & ParserSlice & FileTreeSlice & PersistenceSlice & ViewModeSlice & ThemeSlice;
+type StoreState = FileSlice & EditorSlice & DiagramSlice & ParserSlice & FileTreeSlice & PersistenceSlice & ViewModeSlice & ThemeSlice & DragDropSlice;
 type StateSliceCreator<T> = StateCreator<StoreState, [], [], T>;
 
 // ============================================================================
@@ -1025,6 +1026,148 @@ const createViewModeSlice: StateSliceCreator<ViewModeSlice> = (set, get) => ({
 });
 
 // ============================================================================
+// Drag-and-Drop Slice (Feature 007)
+// ============================================================================
+
+/**
+ * Drag-and-drop state management slice
+ * 
+ * Manages drag state and drop target validation for file/folder reorganization
+ */
+interface DragDropSlice {
+  /** Current drag state (null when not dragging) */
+  dragState: DragState | null;
+  /** Current drop target being hovered (null when not over a target) */
+  dropTarget: DropTarget | null;
+
+  /** Start a drag operation */
+  startDrag: (item: { type: 'file' | 'folder'; id: string; path: string; parentPath: string; name: string }) => void;
+  /** End the current drag operation */
+  endDrag: () => void;
+  /** Set or clear the current drop target */
+  setDropTarget: (target: DropTarget | null) => void;
+  /** Cancel the current drag operation (e.g., on Escape key) */
+  cancelDrag: () => void;
+  /** Move a file to a new folder */
+  moveFile: (fileId: string, targetFolderPath: string) => Promise<{ success: boolean; error?: string }>;
+  /** Move a folder to a new parent folder */
+  moveFolder: (sourceFolderPath: string, targetFolderPath: string) => Promise<{ success: boolean; error?: string }>;
+}
+
+const createDragDropSlice: StateSliceCreator<DragDropSlice> = (set, get) => ({
+  dragState: null,
+  dropTarget: null,
+
+  startDrag: (item) => {
+    set({
+      dragState: {
+        itemType: item.type,
+        itemId: item.id,
+        sourcePath: item.path,
+        sourceParentPath: item.parentPath,
+        name: item.name,
+        dragStartTime: performance.now(),
+      },
+      dropTarget: null,
+    });
+  },
+
+  endDrag: () => {
+    set({
+      dragState: null,
+      dropTarget: null,
+    });
+  },
+
+  setDropTarget: (target) => {
+    set({ dropTarget: target });
+  },
+
+  cancelDrag: () => {
+    set({
+      dragState: null,
+      dropTarget: null,
+    });
+  },
+
+  moveFile: async (fileId: string, targetFolderPath: string) => {
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const projectManager = new ProjectManager();
+
+    // Store original state for rollback
+    const originalFiles = get().files;
+
+    try {
+      // Execute the move in IndexedDB
+      const movedFile = await projectManager.moveFile(fileId, targetFolderPath);
+
+      // Update store state
+      set((state) => ({
+        files: state.files.map((file) =>
+          file.id === fileId ? movedFile : file
+        ),
+      }));
+
+      return { success: true };
+    } catch (error) {
+      // Rollback to original state on failure
+      set({ files: originalFiles });
+
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      return {
+        success: false,
+        error: errorMessage.includes("exists")
+          ? `A file with that name already exists in the target folder`
+          : `Failed to move file: ${errorMessage}`,
+      };
+    }
+  },
+
+  moveFolder: async (sourceFolderPath: string, targetFolderPath: string) => {
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const projectManager = new ProjectManager();
+
+    // Store original state for rollback
+    const originalFiles = get().files;
+    const originalFolders = get().folders;
+
+    try {
+      // Execute the move in IndexedDB
+      await projectManager.moveFolder(sourceFolderPath, targetFolderPath);
+
+      // Reload files and folders from storage
+      const updatedFiles = await projectManager.getAllFiles();
+      const updatedFolders = await projectManager.getAllFolders();
+
+      // Update store state
+      set({
+        files: updatedFiles,
+        folders: updatedFolders,
+      });
+
+      // If active file was moved, its ID stays the same (unchanged)
+      // so the editor should continue working
+
+      return { success: true };
+    } catch (error) {
+      // Rollback to original state on failure
+      set({
+        files: originalFiles,
+        folders: originalFolders,
+      });
+
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      return {
+        success: false,
+        error: errorMessage.includes("exists")
+          ? `A folder with that name already exists in the target folder`
+          : `Failed to move folder: ${errorMessage}`,
+      };
+    }
+  },
+});
+
+// ============================================================================
 // Theme Slice
 // ============================================================================
 
@@ -1150,6 +1293,7 @@ export const useStore = create<StoreState>()(
       ...createFileTreeSlice(...args),
       ...createPersistenceSlice(...args),
       ...createViewModeSlice(...args),
+      ...createDragDropSlice(...args),
       ...createThemeSlice(...args),
     }),
     {

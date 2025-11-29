@@ -713,6 +713,222 @@ export class ProjectManager {
     return newFolder;
   }
 
+  // ============================================================================
+  // Move Operations (Feature 007)
+  // ============================================================================
+
+  /**
+   * Move a file to a new folder location
+   *
+   * @param fileId - ID of the file to move
+   * @param targetFolderPath - Path of the destination folder
+   * @returns The updated file with new path
+   * @throws FileExistsError if a file with the same name exists at target
+   * @throws StorageError if file not found or database operation fails
+   */
+  async moveFile(fileId: string, targetFolderPath: string): Promise<ProjectFile> {
+    await this.ensureDB();
+
+    try {
+      // Get existing file
+      const file = await this.db!.get("files", fileId);
+      if (!file) {
+        throw new StorageError("moveFile", `File with ID ${fileId} not found`);
+      }
+
+      // Compute new path
+      const newPath = targetFolderPath === "/"
+        ? `/${file.name}`
+        : `${targetFolderPath}/${file.name}`;
+
+      // Check for duplicate at target
+      const existingFile = await this.getFileByPath(newPath);
+      if (existingFile) {
+        throw new FileExistsError(file.name);
+      }
+
+      // Update file with new paths
+      const updatedFile: ProjectFile = {
+        ...file,
+        path: newPath,
+        parentPath: targetFolderPath,
+        lastModified: Date.now(),
+      };
+
+      await this.db!.put("files", updatedFile);
+      return updatedFile;
+    } catch (error) {
+      if (error instanceof FileExistsError || error instanceof StorageError) {
+        throw error;
+      }
+      throw new StorageError(
+        "moveFile",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
+
+  /**
+   * Move a folder and all its contents to a new parent folder
+   * Uses a single IndexedDB transaction for atomicity
+   *
+   * @param sourceFolderPath - Path of the folder to move
+   * @param targetFolderPath - Path of the destination parent folder
+   * @returns Object with new path and count of affected items
+   * @throws FileExistsError if a folder with the same name exists at target
+   * @throws StorageError if folder not found or database operation fails
+   */
+  async moveFolder(
+    sourceFolderPath: string,
+    targetFolderPath: string
+  ): Promise<{ newPath: string; affectedFileCount: number; affectedFolderCount: number }> {
+    await this.ensureDB();
+
+    try {
+      // Extract folder name from source path
+      const folderName = sourceFolderPath.split("/").filter(Boolean).pop() || "";
+      const newFolderPath = targetFolderPath === "/"
+        ? `/${folderName}`
+        : `${targetFolderPath}/${folderName}`;
+
+      // Check if folder with same name exists at target
+      const existingFolder = await this.getFolderByPath(newFolderPath);
+      if (existingFolder) {
+        throw new FileExistsError(folderName);
+      }
+
+      // Also check if a file exists with the same name at target
+      const existingFile = await this.getFileByPath(newFolderPath);
+      if (existingFile) {
+        throw new FileExistsError(folderName);
+      }
+
+      // Get all files in the folder
+      const allFiles = await this.db!.getAll("files");
+      const filesToUpdate = allFiles.filter((file) =>
+        file.path.startsWith(sourceFolderPath + "/") || file.parentPath === sourceFolderPath
+      );
+
+      // Get all folders in the folder (including the source folder itself)
+      const allFolders = await this.db!.getAll("folders");
+      const foldersToUpdate = allFolders.filter((folder) =>
+        folder.path === sourceFolderPath || folder.path.startsWith(sourceFolderPath + "/")
+      );
+
+      // Use a single transaction for atomicity
+      const tx = this.db!.transaction(["files", "folders"], "readwrite");
+      const fileStore = tx.objectStore("files");
+      const folderStore = tx.objectStore("folders");
+
+      // Update all files
+      for (const file of filesToUpdate) {
+        const newFilePath = newFolderPath + file.path.slice(sourceFolderPath.length);
+        const newParentPath = newFolderPath + file.parentPath.slice(sourceFolderPath.length);
+
+        const updatedFile: ProjectFile = {
+          ...file,
+          path: newFilePath,
+          parentPath: newParentPath,
+          lastModified: Date.now(),
+        };
+
+        await fileStore.put(updatedFile);
+      }
+
+      // Update all folders
+      for (const folder of foldersToUpdate) {
+        const newPath = newFolderPath + folder.path.slice(sourceFolderPath.length);
+        const newParentPath = folder.path === sourceFolderPath
+          ? targetFolderPath
+          : newFolderPath + folder.parentPath.slice(sourceFolderPath.length);
+        const newName = folder.path === sourceFolderPath
+          ? folderName
+          : folder.name;
+
+        const updatedFolder: ProjectFolder = {
+          ...folder,
+          name: newName,
+          path: newPath,
+          parentPath: newParentPath,
+        };
+
+        await folderStore.put(updatedFolder);
+      }
+
+      await tx.done;
+
+      return {
+        newPath: newFolderPath,
+        affectedFileCount: filesToUpdate.length,
+        affectedFolderCount: foldersToUpdate.length,
+      };
+    } catch (error) {
+      if (error instanceof FileExistsError) {
+        throw error;
+      }
+      throw new StorageError(
+        "moveFolder",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
+
+  /**
+   * Check if a name exists at a given folder path
+   * Checks both files and folders
+   *
+   * @param name - Name to check for
+   * @param parentPath - Folder path to check in
+   * @returns true if name exists, false otherwise
+   */
+  async nameExistsInFolder(name: string, parentPath: string): Promise<boolean> {
+    await this.ensureDB();
+
+    // Check files
+    const filePath = parentPath === "/" ? `/${name}` : `${parentPath}/${name}`;
+    const existingFile = await this.getFileByPath(filePath);
+    if (existingFile) {
+      return true;
+    }
+
+    // Check folders
+    const existingFolder = await this.getFolderByPath(filePath);
+    if (existingFolder) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Get all items (files and folders) in a folder
+   * Used for duplicate name checking
+   *
+   * @param folderPath - Folder path to list
+   * @returns Array of names in the folder
+   */
+  async getItemNamesInFolder(folderPath: string): Promise<string[]> {
+    await this.ensureDB();
+
+    const names: string[] = [];
+
+    // Get files in folder
+    const allFiles = await this.db!.getAll("files");
+    const filesInFolder = allFiles.filter((file) => file.parentPath === folderPath);
+    for (const file of filesInFolder) {
+      names.push(file.name);
+    }
+
+    // Get folders in folder
+    const allFolders = await this.db!.getAll("folders");
+    const foldersInFolder = allFolders.filter((folder) => folder.parentPath === folderPath);
+    for (const folder of foldersInFolder) {
+      names.push(folder.name);
+    }
+
+    return names;
+  }
+
   /**
    * Ensures database is initialized
    *

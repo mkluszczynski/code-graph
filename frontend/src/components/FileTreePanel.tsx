@@ -21,10 +21,13 @@ export function FileTreePanel({
 }: FileTreePanelProps) {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [createType, setCreateType] = useState<CreateItemType>("file");
+    const [targetParentPath, setTargetParentPath] = useState("/src");
 
     const createEmptyFile = useStore((s) => s.createEmptyFile);
     const folders = useStore((s) => s.folders);
     const loadFolders = useStore((s) => s.loadFolders);
+    const expandedPaths = useStore((s) => s.expandedPaths);
+    const setExpanded = useStore((s) => s.setExpanded);
 
     // Load folders on mount
     useEffect(() => {
@@ -38,25 +41,33 @@ export function FileTreePanel({
         return fileTreeManager.buildTree(files, folders);
     }, [files, folders, fileTreeManager]);
 
-    // Get existing file and folder names at root level for duplicate detection
+    // Get existing file and folder names in target parent folder for duplicate detection
     const existingNames = useMemo(() => {
-        // For now, we create files at /src by default
         const fileNames = files
-            .filter((f) => f.parentPath === "/src")
+            .filter((f) => f.parentPath === targetParentPath)
             .map((f) => f.name);
         const folderNames = folders
-            .filter((f) => f.parentPath === "/src")
+            .filter((f) => f.parentPath === targetParentPath)
             .map((f) => f.name);
         return [...fileNames, ...folderNames];
-    }, [files, folders]);
+    }, [files, folders, targetParentPath]);
 
     const handleAddFile = useCallback(() => {
         setCreateType("file");
+        setTargetParentPath("/src");
         setDialogOpen(true);
     }, []);
 
     const handleAddFolder = useCallback(() => {
         setCreateType("folder");
+        setTargetParentPath("/src");
+        setDialogOpen(true);
+    }, []);
+
+    // Handler for adding file to a specific folder via context menu
+    const handleAddFileToFolder = useCallback((folderPath: string) => {
+        setCreateType("file");
+        setTargetParentPath(folderPath);
         setDialogOpen(true);
     }, []);
 
@@ -64,12 +75,16 @@ export function FileTreePanel({
 
     const handleSubmit = useCallback(async (name: string) => {
         if (createType === "file") {
-            await createEmptyFile(name, "/src");
+            await createEmptyFile(name, targetParentPath);
+            // Auto-expand the parent folder after file creation
+            if (targetParentPath !== "/src" && !expandedPaths.has(targetParentPath)) {
+                setExpanded(targetParentPath, true);
+            }
         } else {
-            await createFolder(name, "/src");
+            await createFolder(name, targetParentPath);
         }
         setDialogOpen(false);
-    }, [createType, createEmptyFile, createFolder]);
+    }, [createType, targetParentPath, createEmptyFile, createFolder, expandedPaths, setExpanded]);
 
     const handleCancel = useCallback(() => {
         setDialogOpen(false);
@@ -94,7 +109,10 @@ export function FileTreePanel({
                             </div>
                         }
                     >
-                        <FileTreeView nodes={fileTree} />
+                        <FileTreeView 
+                            nodes={fileTree} 
+                            onAddFileToFolder={handleAddFileToFolder}
+                        />
                     </ErrorBoundary>
                 ) : (
                     <div className="text-sm text-muted-foreground">
@@ -106,7 +124,7 @@ export function FileTreePanel({
             <CreateDialog
                 open={dialogOpen}
                 type={createType}
-                parentPath="/src"
+                parentPath={targetParentPath}
                 existingNames={existingNames}
                 onSubmit={handleSubmit}
                 onCancel={handleCancel}

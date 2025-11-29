@@ -17,6 +17,7 @@ Auto-generated from all feature plans. Last updated: 2025-11-29
 - IndexedDB via idb library for client-side file persistence (006-folder-management)
 - TypeScript 5.x, React 18+ + React, Zustand 5.0 (state), idb 8.0 (IndexedDB), shadcn/ui (UI components), Lucide React (icons) (007-file-folder-dnd)
 - IndexedDB (via idb library) for file/folder persistence (007-file-folder-dnd)
+- TypeScript 5.9.3, React 19+, Node.js 20+ LTS + React, Zustand 5.0, Monaco Editor, idb 8.0, shadcn/ui, Lucide React, dart-parser (to be selected - see research.md) (008-dart-language-support)
 
 - TypeScript 5.x, Node.js 20+ LTS + React 18+ (frontend framework), TypeScript Compiler API (for code parsing), pnpm (package manager), React Flow + dagre (UML diagram rendering), Monaco Editor via @monaco-editor/react (code editor component), Zustand (state management), idb (IndexedDB wrapper) (001-uml-graph-visualizer)
 
@@ -36,9 +37,9 @@ npm test && npm run lint
 TypeScript 5.x, Node.js 20+ LTS: Follow standard conventions
 
 ## Recent Changes
+- 008-dart-language-support: Added TypeScript 5.9.3, React 19+, Node.js 20+ LTS + React, Zustand 5.0, Monaco Editor, idb 8.0, shadcn/ui, Lucide React, dart-parser (to be selected - see research.md)
+- 008-dart-language-support: Added TypeScript 5.9.3, React 19+, Node.js 20+ LTS + React, Zustand 5.0, Monaco Editor, idb 8.0, shadcn/ui, Lucide React, dart-parser (to be selected - see research.md)
 - 007-file-folder-dnd: **FEATURE COMPLETE** ✅ All phases complete - drag-and-drop file/folder organization, 22 contract tests, 23 integration tests, 27 E2E tests passing
-- 006-folder-management: **FEATURE COMPLETE** ✅ All phases complete - folder creation, deletion, rename, duplicate, 37 E2E tests passing, 426/431 unit tests (5 pre-existing failures from feature 003)
-- 005-fix-diagram-export: **FEATURE COMPLETE** ✅ Phase 8 (Polish & Documentation) complete - PNG export fixed, clipboard copy added, SVG removed, all tests passing (311/316, 5 pre-existing failures from feature 003)
 
 
 <!-- MANUAL ADDITIONS START -->

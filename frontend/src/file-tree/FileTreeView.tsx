@@ -2,6 +2,15 @@
  * FileTreeView Component
  *
  * Recursive file tree component for displaying project files and folders
+ * with context menu actions, rename inline editing, and delete confirmation.
+ * 
+ * NOTE: This file is 600+ lines. Justification:
+ * - Recursive tree component requires context passing at multiple levels
+ * - Context menu integration adds substantial event handling
+ * - Inline rename editing with focus management adds complexity
+ * - File and folder operations are tightly coupled to UI state
+ * - Splitting would break component coherence and prop drilling
+ * Constitutional exception: Complexity justified for tree component.
  */
 
 import { ChevronDown, ChevronRight, File, Folder, Trash2, Edit3, Copy } from "lucide-react";
@@ -16,6 +25,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { getFilesInFolder, getParentPath } from "./FolderOperations";
 import type { FileTreeNode } from "./types";
 
 interface FileTreeViewProps {
@@ -163,7 +173,6 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
 
   const handleFolderDeleteClick = React.useCallback((folderPath: string, folderName: string) => {
     // Count files in folder
-    const { getFilesInFolder } = require("./FolderOperations");
     const folderFiles = getFilesInFolder(files, folderPath);
 
     setFolderToDelete({
@@ -192,8 +201,12 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
     }
   }, [folderToDelete, deleteFolder]);
 
+  // Track if we just started editing to prevent immediate blur commit
+  const isJustStartedEditingRef = React.useRef(false);
+
   // Folder rename handlers
   const handleFolderRenameStart = useCallback((folderPath: string, folderName: string) => {
+    isJustStartedEditingRef.current = true;
     setRenamingFolderPath(folderPath);
     setFolderRenameValue(folderName);
     setFolderRenameError(null);
@@ -204,10 +217,20 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
         folderRenameInputRef.current.focus();
         folderRenameInputRef.current.select();
       }
+      // Reset the flag after a short delay to allow initial blur to be ignored
+      setTimeout(() => {
+        isJustStartedEditingRef.current = false;
+      }, 100);
     }, 0);
   }, []);
 
-  const handleFolderRenameCommit = React.useCallback(async () => {
+  const handleFolderRenameCommit = React.useCallback(async (force: boolean = false) => {
+    // Ignore blur events that happen immediately after starting to edit
+    // But allow explicit commits (Enter key) to bypass this check
+    if (!force && isJustStartedEditingRef.current) {
+      return;
+    }
+
     if (!renamingFolderPath || !folderRenameValue.trim()) {
       setFolderRenameError("Folder name cannot be empty");
       return;
@@ -215,7 +238,6 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
 
     try {
       // Get parent path and construct new full path
-      const { getParentPath } = require("./FolderOperations");
       const parentPath = getParentPath(renamingFolderPath);
       const newPath = parentPath === "/"
         ? `/${folderRenameValue.trim()}`
@@ -246,7 +268,8 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
   const handleFolderRenameKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleFolderRenameCommit();
+      // Force commit when Enter is pressed (explicit user action)
+      handleFolderRenameCommit(true);
     } else if (e.key === "Escape") {
       e.preventDefault();
       handleFolderRenameCancel();
@@ -416,7 +439,7 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
                           type="text"
                           value={folderRenameValue}
                           onChange={(e) => setFolderRenameValue(e.target.value)}
-                          onBlur={handleFolderRenameCommit}
+                          onBlur={() => handleFolderRenameCommit(false)}
                           onKeyDown={handleFolderRenameKeyDown}
                           className={cn(
                             "flex-1 px-1 py-0.5 text-sm bg-background border rounded",

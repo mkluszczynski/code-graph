@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { FileTreeManager } from "../file-tree/FileTreeManager";
 import { FileTreeView } from "../file-tree/FileTreeView";
 import { AddButton } from "./AddButton";
@@ -23,19 +23,32 @@ export function FileTreePanel({
     const [createType, setCreateType] = useState<CreateItemType>("file");
 
     const createEmptyFile = useStore((s) => s.createEmptyFile);
+    const folders = useStore((s) => s.folders);
+    const loadFolders = useStore((s) => s.loadFolders);
+
+    // Load folders on mount
+    useEffect(() => {
+        if (isInitialized) {
+            loadFolders();
+        }
+    }, [isInitialized, loadFolders]);
 
     const fileTreeManager = useMemo(() => new FileTreeManager(), []);
     const fileTree = useMemo(() => {
-        return fileTreeManager.buildTree(files);
-    }, [files, fileTreeManager]);
+        return fileTreeManager.buildTree(files, folders);
+    }, [files, folders, fileTreeManager]);
 
-    // Get existing file names at root level for duplicate detection
+    // Get existing file and folder names at root level for duplicate detection
     const existingNames = useMemo(() => {
         // For now, we create files at /src by default
-        return files
+        const fileNames = files
             .filter((f) => f.parentPath === "/src")
             .map((f) => f.name);
-    }, [files]);
+        const folderNames = folders
+            .filter((f) => f.parentPath === "/src")
+            .map((f) => f.name);
+        return [...fileNames, ...folderNames];
+    }, [files, folders]);
 
     const handleAddFile = useCallback(() => {
         setCreateType("file");

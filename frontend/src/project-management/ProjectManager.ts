@@ -7,7 +7,7 @@
 
 import type { IDBPDatabase } from "idb";
 import { openDB } from "idb";
-import type { ProjectFile } from "../shared/types";
+import type { ProjectFile, ProjectFolder } from "../shared/types";
 import {
   FileExistsError,
   InvalidFileNameError,
@@ -30,6 +30,14 @@ interface UMLGraphDB {
       "by-modified": number;
     };
   };
+  folders: {
+    key: string;
+    value: ProjectFolder;
+    indexes: {
+      "by-path": string;
+      "by-parent-path": string;
+    };
+  };
 }
 
 /**
@@ -45,7 +53,7 @@ const INVALID_FILENAME_CHARS = /[/\\:*?"<>|]/;
 export class ProjectManager {
   private db: IDBPDatabase<UMLGraphDB> | null = null;
   private readonly dbName: string;
-  private readonly dbVersion = 2; // Bumped for new index
+  private readonly dbVersion = 3; // Bumped for folders store
 
   constructor(dbName = "uml-graph-visualizer") {
     this.dbName = dbName;
@@ -78,6 +86,13 @@ export class ProjectManager {
             if (!store.indexNames.contains("by-parent-path")) {
               store.createIndex("by-parent-path", "parentPath", { unique: false });
             }
+          }
+
+          // Create folders store (v3)
+          if (!db.objectStoreNames.contains("folders")) {
+            const folderStore = db.createObjectStore("folders", { keyPath: "id" });
+            folderStore.createIndex("by-path", "path", { unique: true });
+            folderStore.createIndex("by-parent-path", "parentPath", { unique: false });
           }
         },
       });
@@ -561,6 +576,141 @@ export class ProjectManager {
         error instanceof Error ? error.message : String(error)
       );
     }
+  }
+
+  // ============================================================================
+  // Folder Operations
+  // ============================================================================
+
+  /**
+   * Creates a new folder
+   *
+   * @param name - Folder name
+   * @param parentPath - Parent folder path
+   * @returns The created folder
+   */
+  async createFolder(name: string, parentPath: string): Promise<ProjectFolder> {
+    await this.ensureDB();
+
+    const folderPath = parentPath === "/" ? `/${name}` : `${parentPath}/${name}`;
+
+    // Check if folder already exists
+    const existingFolder = await this.db!.getFromIndex("folders", "by-path", folderPath);
+    if (existingFolder) {
+      throw new FileExistsError(folderPath);
+    }
+
+    const folder: ProjectFolder = {
+      id: generateId(),
+      name,
+      path: folderPath,
+      parentPath,
+      createdAt: Date.now(),
+    };
+
+    await this.db!.put("folders", folder);
+    return folder;
+  }
+
+  /**
+   * Gets all folders
+   *
+   * @returns Array of all folders
+   */
+  async getAllFolders(): Promise<ProjectFolder[]> {
+    await this.ensureDB();
+    return this.db!.getAll("folders");
+  }
+
+  /**
+   * Gets a folder by path
+   *
+   * @param path - Folder path
+   * @returns The folder or undefined
+   */
+  async getFolderByPath(path: string): Promise<ProjectFolder | undefined> {
+    await this.ensureDB();
+    return this.db!.getFromIndex("folders", "by-path", path);
+  }
+
+  /**
+   * Deletes a folder
+   *
+   * @param path - Folder path to delete
+   */
+  async deleteFolder(path: string): Promise<void> {
+    await this.ensureDB();
+
+    const folder = await this.db!.getFromIndex("folders", "by-path", path);
+    if (folder) {
+      await this.db!.delete("folders", folder.id);
+    }
+
+    // Also delete any child folders
+    const allFolders = await this.db!.getAll("folders");
+    const childFolders = allFolders.filter(f => f.path.startsWith(path + "/"));
+    for (const childFolder of childFolders) {
+      await this.db!.delete("folders", childFolder.id);
+    }
+  }
+
+  /**
+   * Renames a folder and updates all child folder paths
+   *
+   * @param oldPath - Current folder path
+   * @param newPath - New folder path
+   */
+  async renameFolder(oldPath: string, newPath: string): Promise<void> {
+    await this.ensureDB();
+
+    const folder = await this.db!.getFromIndex("folders", "by-path", oldPath);
+    if (folder) {
+      const newName = newPath.split("/").pop() || "";
+      const newParentPath = newPath.substring(0, newPath.lastIndexOf("/")) || "/";
+
+      folder.name = newName;
+      folder.path = newPath;
+      folder.parentPath = newParentPath;
+      await this.db!.put("folders", folder);
+    }
+
+    // Update child folders
+    const allFolders = await this.db!.getAll("folders");
+    const childFolders = allFolders.filter(f => f.path.startsWith(oldPath + "/"));
+    for (const childFolder of childFolders) {
+      childFolder.path = childFolder.path.replace(oldPath, newPath);
+      childFolder.parentPath = childFolder.parentPath.replace(oldPath, newPath);
+      await this.db!.put("folders", childFolder);
+    }
+  }
+
+  /**
+   * Duplicates a folder (just the folder entry, not contents)
+   *
+   * @param sourcePath - Source folder path
+   * @param targetPath - Target folder path
+   */
+  async duplicateFolder(sourcePath: string, targetPath: string): Promise<ProjectFolder | undefined> {
+    await this.ensureDB();
+
+    const sourceFolder = await this.db!.getFromIndex("folders", "by-path", sourcePath);
+    if (!sourceFolder) {
+      return undefined;
+    }
+
+    const newName = targetPath.split("/").pop() || "";
+    const newParentPath = targetPath.substring(0, targetPath.lastIndexOf("/")) || "/";
+
+    const newFolder: ProjectFolder = {
+      id: generateId(),
+      name: newName,
+      path: targetPath,
+      parentPath: newParentPath,
+      createdAt: Date.now(),
+    };
+
+    await this.db!.put("folders", newFolder);
+    return newFolder;
   }
 
   /**

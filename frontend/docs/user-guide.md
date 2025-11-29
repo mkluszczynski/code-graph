@@ -1,7 +1,7 @@
 # TypeScript UML Graph Visualizer - User Guide
 
-**Version**: 1.0.0  
-**Last Updated**: November 14, 2025
+**Version**: 1.2.0  
+**Last Updated**: November 16, 2025
 
 ## Table of Contents
 
@@ -10,12 +10,13 @@
 3. [Core Features](#core-features)
 4. [User Interface Overview](#user-interface-overview)
 5. [Creating Files](#creating-files)
-6. [Writing Code](#writing-code)
-7. [Navigating the Diagram](#navigating-the-diagram)
-8. [Understanding UML Diagrams](#understanding-uml-diagrams)
-9. [Keyboard Shortcuts](#keyboard-shortcuts)
-10. [Tips and Best Practices](#tips-and-best-practices)
-11. [Troubleshooting](#troubleshooting)
+6. [Managing Folders](#managing-folders)
+7. [Writing Code](#writing-code)
+8. [Navigating the Diagram](#navigating-the-diagram)
+9. [Understanding UML Diagrams](#understanding-uml-diagrams)
+10. [Keyboard Shortcuts](#keyboard-shortcuts)
+11. [Tips and Best Practices](#tips-and-best-practices)
+12. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -139,6 +140,88 @@ export interface InterfaceName {
   // Add properties and methods
 }
 ```
+
+---
+
+## Managing Folders
+
+Organize your TypeScript files into folders for better project structure. Folders help group related classes and interfaces logically.
+
+### Creating Folders
+
+1. Click the **"Add File"** button (dropdown) in the left panel
+2. Select **"Add Folder"**
+3. Enter a folder name (e.g., `models`, `services`, `components`)
+4. The folder will appear in the file tree
+
+**Folder Naming Rules**:
+- Must start with a letter
+- Can contain letters, numbers, underscores, and hyphens
+- No spaces or special characters
+- Names must be unique within the parent folder
+- Maximum folder depth: 10 levels
+
+### Deleting Folders
+
+1. Right-click on a folder in the file tree
+2. Select **"Delete"** from the context menu
+3. A confirmation dialog appears showing how many files will be deleted
+4. Click **"Delete"** to confirm, or **"Cancel"** to abort
+
+**Important**: Deleting a folder also deletes all files and subfolders inside it. This action cannot be undone.
+
+### Renaming Folders
+
+1. Right-click on a folder in the file tree
+2. Select **"Rename"** from the context menu
+3. Type the new name in the inline input
+4. Press **Enter** to confirm or **Escape** to cancel
+
+**Notes**:
+- All files within the folder will have their paths updated automatically
+- If the renamed folder contains the currently active file, the editor will update accordingly
+- The rename operation is atomic - either all files update or none do
+
+### Duplicating Folders
+
+1. Right-click on a folder in the file tree
+2. Select **"Duplicate"** from the context menu
+3. A copy of the folder (and all its contents) is created with a " copy" suffix
+
+**Example**: Duplicating `/src/models` creates `/src/models copy` with all the same files.
+
+### Organizing Files in Folders
+
+After creating folders, you can create files directly inside them:
+1. Navigate to the folder in the file tree
+2. Use the **"Add File"** button 
+3. New files are created at the root level by default
+4. Files can be created in specific folders in future updates
+
+### Best Practices
+
+**Recommended Folder Structure**:
+```
+/
+├── models/          # Data classes and entities
+│   ├── Person.ts
+│   ├── Employee.ts
+│   └── interfaces/  # Model interfaces
+│       └── IEntity.ts
+├── services/        # Business logic
+│   ├── UserService.ts
+│   └── OrderService.ts
+├── repositories/    # Data access
+│   └── UserRepository.ts
+└── utils/           # Utility functions
+    └── helpers.ts
+```
+
+**Tips**:
+- Group related classes in the same folder
+- Keep interface files near their implementations
+- Use meaningful folder names that describe the content
+- Limit folder nesting to 3-4 levels for clarity
 
 ---
 
@@ -588,6 +671,16 @@ Check browser console for performance metrics.
 ---
 
 ## Version History
+
+### Version 1.2.0 (November 2025)
+- **NEW**: Folder management - create, delete, rename, and duplicate folders
+- **NEW**: Folder context menu with right-click access to folder operations
+- **NEW**: Inline folder rename with Enter/Escape key support
+- **NEW**: Folder duplication with automatic "copy" suffix naming
+- **NEW**: Confirmation dialog for folder deletion (shows affected file count)
+- **IMPROVED**: File tree now displays folders with proper hierarchy
+- **IMPROVED**: Folders persist to IndexedDB with atomic operations
+- **IMPROVED**: Error handling for storage quota and database failures
 
 ### Version 1.1.0 (November 2025)
 - **NEW**: File View and Project View toggle for different analysis perspectives

@@ -11,6 +11,18 @@ import userEvent from "@testing-library/user-event";
 import { useStore } from "../../../src/shared/store";
 import type { ProjectFile } from "../../../src/shared/types";
 
+// Mock ProjectManager at module level
+vi.mock("@/project-management/ProjectManager", () => ({
+    ProjectManager: class {
+        async deleteFolderContents() {
+            return 2; // 2 files deleted
+        }
+        async deleteFolder() {
+            return; // void
+        }
+    },
+}));
+
 describe("Delete Folder Integration", () => {
     beforeEach(() => {
         // Reset store state
@@ -67,15 +79,6 @@ describe("Delete Folder Integration", () => {
 
         useStore.setState({ files });
 
-        // Mock ProjectManager
-        vi.mock("@/project-management/ProjectManager", () => ({
-            ProjectManager: class {
-                async deleteFolderContents() {
-                    return 2; // 2 files deleted
-                }
-            },
-        }));
-
         const deleteFolder = useStore.getState().deleteFolder;
         const result = await deleteFolder("/src/models");
 
@@ -107,15 +110,6 @@ describe("Delete Folder Integration", () => {
             isDirty: false,
         });
 
-        // Mock ProjectManager
-        vi.mock("@/project-management/ProjectManager", () => ({
-            ProjectManager: class {
-                async deleteFolderContents() {
-                    return 1;
-                }
-            },
-        }));
-
         const deleteFolder = useStore.getState().deleteFolder;
         await deleteFolder("/src/models");
 
@@ -144,20 +138,14 @@ describe("Delete Folder Integration", () => {
                 {
                     id: "Person",
                     type: "class",
-                    data: { name: "Person", properties: [], methods: [] },
+                    data: { name: "Person", properties: [], methods: [], fileId: "1" },
                     position: { x: 0, y: 0 },
+                    width: 200,
+                    height: 100,
                 },
             ],
             edges: [],
         });
-
-        vi.mock("@/project-management/ProjectManager", () => ({
-            ProjectManager: class {
-                async deleteFolderContents() {
-                    return 1;
-                }
-            },
-        }));
 
         const deleteFolder = useStore.getState().deleteFolder;
         await deleteFolder("/src/models");
@@ -191,7 +179,7 @@ describe("Delete Folder Integration", () => {
         );
 
         // Should show folder-specific message with file count
-        expect(screen.getByText(/5 files/i)).toBeInTheDocument();
+        expect(screen.getByText(/5 files/i)).toBeTruthy();
 
         // Click confirm
         const confirmButton = screen.getByRole("button", { name: /delete/i });
@@ -258,14 +246,6 @@ describe("Delete Folder Integration", () => {
         ];
 
         useStore.setState({ files });
-
-        vi.mock("@/project-management/ProjectManager", () => ({
-            ProjectManager: class {
-                async deleteFolderContents() {
-                    return 2;
-                }
-            },
-        }));
 
         const deleteFolder = useStore.getState().deleteFolder;
         const result = await deleteFolder("/src/models");

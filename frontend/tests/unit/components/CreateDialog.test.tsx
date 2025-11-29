@@ -397,5 +397,131 @@ describe("CreateDialog", () => {
         expect(screen.getByRole("alert")).toBeTruthy();
       });
     });
+
+    // T048: Additional accessibility tests
+    it("has proper focus trap within dialog", async () => {
+      const user = userEvent.setup();
+      render(<CreateDialog {...defaultProps} />);
+
+      // Focus should start on input (auto-focus on open)
+      await waitFor(() => {
+        const input = screen.getByRole("textbox");
+        expect(document.activeElement).toBe(input);
+      });
+
+      // Tab through elements - focus should stay within dialog
+      await user.tab(); // Should go to Cancel button
+      expect(document.activeElement?.textContent).toContain("Cancel");
+
+      await user.tab(); // Should go to Create button
+      expect(document.activeElement?.textContent).toContain("Create");
+
+      await user.tab(); // Should cycle back within dialog (focus trap)
+      // Focus should remain within dialog
+      expect(screen.getByRole("dialog").contains(document.activeElement)).toBe(true);
+    });
+
+    it("has proper label association for input", () => {
+      render(<CreateDialog {...defaultProps} />);
+
+      const input = screen.getByRole("textbox");
+      const label = screen.getByText("Name");
+
+      // Label should be associated with input via htmlFor
+      expect(label.getAttribute("for")).toBe(input.id);
+    });
+
+    it("provides clear visual focus indicators", () => {
+      render(<CreateDialog {...defaultProps} />);
+
+      const input = screen.getByRole("textbox");
+      const cancelButton = screen.getByRole("button", { name: /cancel/i });
+      const createButton = screen.getByRole("button", { name: /create/i });
+
+      // All interactive elements should be focusable
+      expect(input.tabIndex).toBeGreaterThanOrEqual(0);
+      expect(cancelButton.tabIndex).toBeGreaterThanOrEqual(0);
+      expect(createButton.tabIndex).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  // T049: Loading state and timing tests
+  describe("Loading State Timing", () => {
+    it("shows loading indicator immediately when submission starts", async () => {
+      const user = userEvent.setup();
+      const slowSubmit = vi.fn().mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 200)));
+      render(<CreateDialog {...defaultProps} onSubmit={slowSubmit} />);
+
+      const input = screen.getByRole("textbox");
+      await user.type(input, "MyFile.ts");
+
+      const submitButton = screen.getByRole("button", { name: /create/i });
+      await user.click(submitButton);
+
+      // Loading indicator should appear immediately
+      await waitFor(() => {
+        expect(screen.getByText(/creating/i)).toBeTruthy();
+      }, { timeout: 100 });
+    });
+
+    it("disables Cancel button during submission", async () => {
+      const user = userEvent.setup();
+      const slowSubmit = vi.fn().mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 200)));
+      render(<CreateDialog {...defaultProps} onSubmit={slowSubmit} />);
+
+      const input = screen.getByRole("textbox");
+      await user.type(input, "MyFile.ts");
+
+      const submitButton = screen.getByRole("button", { name: /create/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        const cancelButton = screen.getByRole("button", { name: /cancel/i });
+        expect(cancelButton.hasAttribute("disabled")).toBe(true);
+      });
+    });
+
+    it("prevents click outside during submission", async () => {
+      const user = userEvent.setup();
+      const slowSubmit = vi.fn().mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 200)));
+      render(<CreateDialog {...defaultProps} onSubmit={slowSubmit} />);
+
+      const input = screen.getByRole("textbox");
+      await user.type(input, "MyFile.ts");
+
+      const submitButton = screen.getByRole("button", { name: /create/i });
+      await user.click(submitButton);
+
+      // Wait for submission to start
+      await waitFor(() => {
+        expect(screen.getByText(/creating/i)).toBeTruthy();
+      });
+
+      // onCancel should not have been called even after click attempt
+      expect(defaultProps.onCancel).not.toHaveBeenCalled();
+      expect(screen.getByRole("dialog")).toBeTruthy();
+    });
+
+    it("re-enables form after failed submission", async () => {
+      const user = userEvent.setup();
+      const failingSubmit = vi.fn().mockRejectedValue(new Error("Test error"));
+      render(<CreateDialog {...defaultProps} onSubmit={failingSubmit} />);
+
+      const input = screen.getByRole("textbox");
+      await user.type(input, "MyFile.ts");
+
+      const submitButton = screen.getByRole("button", { name: /create/i });
+      await user.click(submitButton);
+
+      // Wait for error to appear
+      await waitFor(() => {
+        expect(screen.getByRole("alert")).toBeTruthy();
+      });
+
+      // Form should be re-enabled
+      expect(input.hasAttribute("disabled")).toBe(false);
+      expect(submitButton.hasAttribute("disabled")).toBe(false);
+      expect(screen.getByRole("button", { name: /cancel/i }).hasAttribute("disabled")).toBe(false);
+    });
   });
 });

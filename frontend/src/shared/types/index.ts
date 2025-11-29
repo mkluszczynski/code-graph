@@ -37,6 +37,22 @@ export interface ProjectFile {
 }
 
 /**
+ * Represents a folder in the project (stored in IndexedDB for persistence)
+ */
+export interface ProjectFolder {
+  /** Unique identifier (UUID) */
+  id: string;
+  /** Folder name (e.g., "components") */
+  name: string;
+  /** Full folder path (e.g., "/src/components") */
+  path: string;
+  /** Parent folder path (e.g., "/src") */
+  parentPath: string;
+  /** Timestamp (milliseconds since epoch) */
+  createdAt: number;
+}
+
+/**
  * Represents a TypeScript class extracted from parsed code
  */
 export interface ClassDefinition {

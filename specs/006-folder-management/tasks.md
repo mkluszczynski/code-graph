@@ -142,16 +142,16 @@
 
 ### Tests for User Story 4 (TDD) ⚠️
 
-- [ ] T048 [P] [US4] Accessibility tests for CreateDialog in `frontend/tests/unit/components/CreateDialog.test.tsx`
-- [ ] T049 [P] [US4] Unit tests for loading state and keyboard navigation in `frontend/tests/unit/components/CreateDialog.test.tsx`
+- [x] T048 [P] [US4] Accessibility tests for CreateDialog in `frontend/tests/unit/components/CreateDialog.test.tsx`
+- [x] T049 [P] [US4] Unit tests for loading state and keyboard navigation in `frontend/tests/unit/components/CreateDialog.test.tsx`
 
 ### Implementation for User Story 4
 
-- [ ] T050 [US4] Add loading indicator for operations >500ms in `frontend/src/components/CreateDialog.tsx`
-- [ ] T051 [US4] Add loading indicator for folder operations >500ms in `frontend/src/file-tree/FileTreeView.tsx`
-- [ ] T052 [US4] Ensure focus trap during submission (prevent Escape) in `frontend/src/components/CreateDialog.tsx`
-- [ ] T053 [US4] Add screen reader announcements for dialog title/description in `frontend/src/components/CreateDialog.tsx`
-- [ ] T054 [US4] Polish dialog styling consistency with existing shadcn components in `frontend/src/components/CreateDialog.tsx`
+- [x] T050 [US4] Add loading indicator for operations >500ms in `frontend/src/components/CreateDialog.tsx`
+- [x] T051 [US4] Add loading indicator for folder operations >500ms in `frontend/src/file-tree/FileTreeView.tsx`
+- [x] T052 [US4] Ensure focus trap during submission (prevent Escape) in `frontend/src/components/CreateDialog.tsx`
+- [x] T053 [US4] Add screen reader announcements for dialog title/description in `frontend/src/components/CreateDialog.tsx`
+- [x] T054 [US4] Polish dialog styling consistency with existing shadcn components in `frontend/src/components/CreateDialog.tsx`
 
 **Checkpoint**: All user stories complete with polished UX
 

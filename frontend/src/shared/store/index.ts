@@ -22,6 +22,7 @@ import type {
   ParseError,
   Position,
   ProjectFile,
+  ProjectFolder,
   StorageMetadata,
 } from "../types";
 
@@ -38,11 +39,13 @@ type StateSliceCreator<T> = StateCreator<StoreState, [], [], T>;
 
 interface FileSlice {
   files: ProjectFile[];
+  folders: ProjectFolder[];
   activeFileId: string | null;
   isLoadingFiles: boolean;
   isCreatingFile: boolean;
 
   setFiles: (files: ProjectFile[]) => void;
+  setFolders: (folders: ProjectFolder[]) => void;
   addFile: (file: ProjectFile) => void;
   updateFile: (fileId: string, updates: Partial<ProjectFile>) => void;
   removeFile: (fileId: string) => void;
@@ -58,15 +61,19 @@ interface FileSlice {
   getFileById: (fileId: string) => ProjectFile | undefined;
   setLoadingFiles: (isLoading: boolean) => void;
   setCreatingFile: (isCreating: boolean) => void;
+  loadFolders: () => Promise<void>;
 }
 
 const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
   files: [],
+  folders: [],
   activeFileId: null,
   isLoadingFiles: false,
   isCreatingFile: false,
 
   setFiles: (files: ProjectFile[]) => set({ files }),
+
+  setFolders: (folders: ProjectFolder[]) => set({ folders }),
 
   addFile: (file: ProjectFile) =>
     set((state) => ({
@@ -324,6 +331,7 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
   createFolder: async (name: string, parentPath: string) => {
     const { validateItemName } = await import("../../file-tree/FileOperations");
     const { validateFolderDepth } = await import("../../file-tree/FolderOperations");
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
 
     // Validate folder name
     const nameValidation = validateItemName(name, "folder");
@@ -340,8 +348,21 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
       throw new Error(depthValidation.error);
     }
 
-    // Folders are virtual - no IndexedDB storage needed
-    // They appear in the file tree when files with matching parentPath exist
+    // Persist folder to IndexedDB
+    const projectManager = new ProjectManager();
+    const newFolder = await projectManager.createFolder(name, parentPath);
+
+    // Update local state
+    set((state) => ({
+      folders: [...state.folders, newFolder],
+    }));
+  },
+
+  loadFolders: async () => {
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const projectManager = new ProjectManager();
+    const folders = await projectManager.getAllFolders();
+    set({ folders });
   },
 
   deleteFolder: async (folderPath: string) => {
@@ -352,6 +373,7 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
     // Store original state for rollback
     const originalState = {
       files: get().files,
+      folders: get().folders,
       activeFileId: get().activeFileId,
       editorContent: get().editorContent,
       isDirty: get().isDirty,
@@ -362,9 +384,12 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
       const filesToDelete = getFilesInFolder(get().files, folderPath);
       const affectedCount = filesToDelete.length;
 
-      // Optimistic update: Remove files from store immediately
+      // Optimistic update: Remove files and folders from store immediately
       set((state) => ({
         files: state.files.filter((file) => !filesToDelete.some((f) => f.id === file.id)),
+        folders: state.folders.filter((folder) =>
+          folder.path !== folderPath && !folder.path.startsWith(folderPath + "/")
+        ),
         // Close editor if active file is in deleted folder
         activeFileId: filesToDelete.some((f) => f.id === state.activeFileId)
           ? null
@@ -377,8 +402,9 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
           : state.isDirty,
       }));
 
-      // Delete from IndexedDB
+      // Delete from IndexedDB (files and folder entry)
       await projectManager.deleteFolderContents(folderPath);
+      await projectManager.deleteFolder(folderPath);
 
       return {
         success: true,
@@ -390,6 +416,7 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
       // Rollback to original state on failure
       set({
         files: originalState.files,
+        folders: originalState.folders,
         activeFileId: originalState.activeFileId,
         editorContent: originalState.editorContent,
         isDirty: originalState.isDirty,
@@ -461,8 +488,14 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
     // Store original state for rollback
     const originalState = {
       files: get().files,
+      folders: get().folders,
       activeFileId: get().activeFileId,
     };
+
+    // Get folders to rename (the folder itself and any nested folders)
+    const foldersToRename = get().folders.filter(
+      (folder) => folder.path === oldPath || folder.path.startsWith(`${oldPath}/`)
+    );
 
     try {
       // Get all files in folder
@@ -483,11 +516,29 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
             parentPath: newParentPath,
           };
         }),
+        folders: state.folders.map((folder) => {
+          if (!foldersToRename.some((f) => f.id === folder.id)) {
+            return folder;
+          }
+          const newFolderPath = updatePathForRename(folder.path, oldPath, newPath);
+          const newFolderParentPath = updatePathForRename(folder.parentPath, oldPath, newPath);
+          return {
+            ...folder,
+            name: folder.path === oldPath ? newFolderName : folder.name,
+            path: newFolderPath,
+            parentPath: newFolderParentPath,
+          };
+        }),
       }));
 
-      // Update in IndexedDB
+      // Update file paths in IndexedDB
       if (affectedCount > 0) {
         await projectManager.updateFolderPaths(oldPath, newPath);
+      }
+
+      // Update folder entries in IndexedDB
+      if (foldersToRename.length > 0) {
+        await projectManager.renameFolder(oldPath, newPath);
       }
 
       return {
@@ -501,6 +552,7 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
       // Rollback to original state on failure
       set({
         files: originalState.files,
+        folders: originalState.folders,
       });
 
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -532,17 +584,23 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
 
     // Store original state for rollback
     const originalFiles = get().files;
+    const originalFolders = get().folders;
 
     try {
       // Get all files in source folder
       const sourceFiles = getFilesInFolder(get().files, folderPath);
       const affectedCount = sourceFiles.length;
 
+      // Get all folder entries in source folder
+      const sourceFolders = get().folders.filter(
+        (folder) => folder.path === folderPath || folder.path.startsWith(`${folderPath}/`)
+      );
+
       // Extract folder name and parent path
       const parentPath = getParentPath(folderPath);
       const folderName = folderPath.split("/").filter(Boolean).pop() || "folder";
 
-      // Get existing folder names at same level
+      // Get existing folder names at same level (from both files and folders)
       const existingFolders = new Set<string>();
       originalFiles.forEach((file) => {
         if (file.parentPath.startsWith(parentPath)) {
@@ -551,6 +609,11 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
           if (firstFolder) {
             existingFolders.add(firstFolder);
           }
+        }
+      });
+      originalFolders.forEach((folder) => {
+        if (folder.parentPath === parentPath) {
+          existingFolders.add(folder.name);
         }
       });
 
@@ -575,14 +638,37 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
         };
       });
 
-      // Persist to IndexedDB
+      // Generate new folder entries with updated paths
+      const newFolders: ProjectFolder[] = sourceFolders.map((folder) => {
+        const relativePath = folder.path.slice(folderPath.length);
+        const newPath = newFolderPath + relativePath;
+        const relativeParentPath = folder.parentPath.slice(folderPath.length);
+        const newParent = folder.path === folderPath ? parentPath : newFolderPath + relativeParentPath;
+
+        return {
+          ...folder,
+          id: crypto.randomUUID(),
+          name: folder.path === folderPath ? newFolderName : folder.name,
+          path: newPath,
+          parentPath: newParent,
+          createdAt: Date.now(),
+        };
+      });
+
+      // Persist files to IndexedDB
       if (newFiles.length > 0) {
         await projectManager.duplicateFolderContents(folderPath, newFolderPath);
       }
 
-      // Add new files to store
+      // Persist folder entries to IndexedDB
+      for (const folder of newFolders) {
+        await projectManager.createFolder(folder);
+      }
+
+      // Add new files and folders to store
       set((state) => ({
         files: [...state.files, ...newFiles],
+        folders: [...state.folders, ...newFolders],
       }));
 
       return {
@@ -594,7 +680,7 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
       console.error("Failed to duplicate folder:", error);
 
       // Rollback to original state on failure
-      set({ files: originalFiles });
+      set({ files: originalFiles, folders: originalFolders });
 
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       if (errorMessage.includes("quota") || errorMessage.includes("QuotaExceededError")) {

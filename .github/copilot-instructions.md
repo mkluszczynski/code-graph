@@ -1,6 +1,6 @@
 # code-graph Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2025-11-13
+Auto-generated from all feature plans. Last updated: 2025-11-29
 
 ## Active Technologies
 - TypeScript 5.x, Node.js 20+ LTS + React 18+ (frontend framework), TypeScript Compiler API (for code parsing), pnpm (package manager), React Flow + dagre (UML diagram rendering), Monaco Editor via @monaco-editor/react (code editor component), Zustand (state management), idb (IndexedDB wrapper), shadcn/ui (UI components), Lucide React (icons), Tailwind CSS (styling) (001-uml-graph-visualizer)

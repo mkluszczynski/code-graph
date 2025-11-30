@@ -5,6 +5,11 @@
  */
 
 /**
+ * Type of item to create (file or folder)
+ */
+export type CreateItemType = "file" | "folder";
+
+/**
  * Represents a node in the hierarchical file tree
  */
 export interface FileTreeNode {
@@ -71,4 +76,59 @@ export interface DuplicateNameOptions {
   existingNames: string[];
   /** Maximum number of attempts to find unique name */
   maxAttempts?: number;
+}
+
+/**
+ * Result of a folder operation (create, delete, rename, duplicate)
+ */
+export interface FolderOperationResult {
+  /** Whether operation succeeded */
+  success: boolean;
+  /** Number of files affected (created, deleted, or updated) */
+  affectedCount: number;
+  /** New folder path (for rename/duplicate operations) */
+  newPath?: string;
+  /** Error message if operation failed */
+  error?: string;
+}
+
+// ============================================================================
+// Drag-and-Drop Types (Feature 007)
+// ============================================================================
+
+/**
+ * Type of item being dragged
+ */
+export type DragItemType = 'file' | 'folder';
+
+/**
+ * Represents the state of an active drag operation
+ */
+export interface DragState {
+  /** Type of item being dragged */
+  itemType: DragItemType;
+  /** ID of the dragged item (fileId for files, folder path for folders) */
+  itemId: string;
+  /** Full path of the dragged item */
+  sourcePath: string;
+  /** Parent folder path of the dragged item (for rollback) */
+  sourceParentPath: string;
+  /** Name of the item being dragged */
+  name: string;
+  /** Timestamp when drag started (for performance monitoring) */
+  dragStartTime: number;
+}
+
+/**
+ * Represents a potential drop target during drag hover
+ */
+export interface DropTarget {
+  /** Path of the target folder */
+  targetPath: string;
+  /** Whether this is a valid drop target for current drag */
+  isValid: boolean;
+  /** Timestamp when hover started (for auto-expand) */
+  hoverStartTime: number;
+  /** Validation error message (if isValid === false) */
+  errorMessage?: string;
 }

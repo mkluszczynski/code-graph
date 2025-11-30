@@ -1,14 +1,15 @@
 /**
- * CodeEditor - Monaco-based TypeScript code editor
+ * CodeEditor - Monaco-based code editor with multi-language support
  * Implementation for T063, T109
  */
 
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useMemo } from 'react';
 import type { EditorProps } from '@monaco-editor/react';
 import { useStore, useActiveFile } from '../shared/store';
 import { useEditorController } from './useEditorController';
 import { useTheme } from '../shared/hooks/useTheme';
 import { SaveIndicator } from '../components/SaveIndicator';
+import { detectLanguage } from '../parsers/utils';
 
 // Lazy load Monaco Editor to reduce initial bundle size (T109)
 const Editor = lazy(() =>
@@ -38,6 +39,26 @@ export function CodeEditor() {
     // Monaco theme based on current app theme - derived from resolvedTheme
     const monacoTheme = resolvedTheme === 'dark' ? 'vs-dark' : 'vs';
 
+    // Detect Monaco language from file extension
+    // Must be called before any early returns to follow Rules of Hooks
+    const editorLanguage = useMemo(() => {
+        if (!activeFile) return 'typescript';
+        try {
+            const language = detectLanguage(activeFile.name);
+            switch (language) {
+                case 'dart':
+                    return 'dart';
+                case 'typescript':
+                    return 'typescript';
+                default:
+                    // Fallback to plaintext for unsupported languages
+                    return 'plaintext';
+            }
+        } catch {
+            return 'typescript';
+        }
+    }, [activeFile?.name]);
+
     if (!activeFile) {
         return (
             <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -64,7 +85,7 @@ export function CodeEditor() {
     return (
         <div className="h-full w-full flex flex-col">
             {/* Save status indicator */}
-            <div className="px-3 py-1 border-b bg-background/50 flex items-center justify-between min-h-[32px]">
+            <div className="px-3 py-1 border-b bg-background/50 flex items-center justify-between min-h-8">
                 <span className="text-sm text-muted-foreground">{activeFile.name}</span>
                 <SaveIndicator />
             </div>
@@ -75,6 +96,7 @@ export function CodeEditor() {
                     <Editor
                         height="100%"
                         defaultLanguage="typescript"
+                        language={editorLanguage}
                         value={editorContent}
                         onChange={handleEditorChange}
                         onMount={handleEditorMount}

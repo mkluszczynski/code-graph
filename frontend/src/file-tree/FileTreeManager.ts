@@ -4,7 +4,7 @@
  * Converts flat file lists into hierarchical tree structures for display
  */
 
-import type { ProjectFile } from "../shared/types";
+import type { ProjectFile, ProjectFolder } from "../shared/types";
 import type { FileTreeNode, FileTreeOptions } from "./types";
 
 /**
@@ -12,21 +12,57 @@ import type { FileTreeNode, FileTreeOptions } from "./types";
  */
 export class FileTreeManager {
   /**
-   * Build hierarchical file tree from flat file list
+   * Build hierarchical file tree from flat file list and folders
    *
    * @param files - Flat array of ProjectFile objects
+   * @param folders - Flat array of ProjectFolder objects (optional)
    * @param options - Optional configuration for tree building
    * @returns Array of root-level FileTreeNode objects
    */
-  buildTree(files: ProjectFile[], options?: FileTreeOptions): FileTreeNode[] {
-    if (files.length === 0) {
-      return [];
-    }
-
+  buildTree(files: ProjectFile[], folders?: ProjectFolder[], options?: FileTreeOptions): FileTreeNode[] {
     // Map to store all nodes by their path
     const nodeMap = new Map<string, FileTreeNode>();
 
-    // Create file nodes first
+    // Create folder nodes from explicit folders first
+    if (folders) {
+      for (const folder of folders) {
+        const folderId = `folder-${folder.path.replace(/\//g, "-")}`;
+        const folderNode: FileTreeNode = {
+          id: folderId,
+          name: folder.name,
+          path: folder.path,
+          type: "folder",
+          children: [],
+          parentId: null,
+          isExpanded: false,
+        };
+        nodeMap.set(folder.path, folderNode);
+
+        // Also create parent folders if they don't exist
+        const pathParts = folder.path.split("/").filter((part) => part !== "");
+        let currentPath = "";
+        for (let i = 0; i < pathParts.length - 1; i++) {
+          const folderName = pathParts[i];
+          currentPath += "/" + folderName;
+
+          if (!nodeMap.has(currentPath)) {
+            const parentFolderId = `folder-${currentPath.replace(/\//g, "-")}`;
+            const parentFolderNode: FileTreeNode = {
+              id: parentFolderId,
+              name: folderName,
+              path: currentPath,
+              type: "folder",
+              children: [],
+              parentId: null,
+              isExpanded: false,
+            };
+            nodeMap.set(currentPath, parentFolderNode);
+          }
+        }
+      }
+    }
+
+    // Create file nodes
     for (const file of files) {
       const pathParts = file.path.split("/").filter((part) => part !== "");
       const fileName = pathParts[pathParts.length - 1];
@@ -46,7 +82,7 @@ export class FileTreeManager {
 
       nodeMap.set(file.path, fileNode);
 
-      // Create folder nodes for all parent directories
+      // Create folder nodes for all parent directories (if not already created)
       let currentPath = "";
       for (let i = 0; i < pathParts.length - 1; i++) {
         const folderName = pathParts[i];
@@ -66,6 +102,11 @@ export class FileTreeManager {
           nodeMap.set(currentPath, folderNode);
         }
       }
+    }
+
+    // If no files or folders, return empty tree
+    if (nodeMap.size === 0) {
+      return [];
     }
 
     // Build parent-child relationships

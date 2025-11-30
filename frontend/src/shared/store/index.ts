@@ -22,14 +22,16 @@ import type {
   ParseError,
   Position,
   ProjectFile,
+  ProjectFolder,
   StorageMetadata,
 } from "../types";
+import type { DragState, DropTarget } from "../../file-tree/types";
 
 // ============================================================================
 // Type Helpers
 // ============================================================================
 
-type StoreState = FileSlice & EditorSlice & DiagramSlice & ParserSlice & FileTreeSlice & PersistenceSlice & ViewModeSlice & ThemeSlice;
+type StoreState = FileSlice & EditorSlice & DiagramSlice & ParserSlice & FileTreeSlice & PersistenceSlice & ViewModeSlice & ThemeSlice & DragDropSlice;
 type StateSliceCreator<T> = StateCreator<StoreState, [], [], T>;
 
 // ============================================================================
@@ -38,30 +40,41 @@ type StateSliceCreator<T> = StateCreator<StoreState, [], [], T>;
 
 interface FileSlice {
   files: ProjectFile[];
+  folders: ProjectFolder[];
   activeFileId: string | null;
   isLoadingFiles: boolean;
   isCreatingFile: boolean;
 
   setFiles: (files: ProjectFile[]) => void;
+  setFolders: (folders: ProjectFolder[]) => void;
   addFile: (file: ProjectFile) => void;
   updateFile: (fileId: string, updates: Partial<ProjectFile>) => void;
   removeFile: (fileId: string) => void;
   deleteFile: (fileId: string) => Promise<void>;
   renameFile: (fileId: string, newName: string) => Promise<void>;
   duplicateFile: (fileId: string) => Promise<{ success: boolean; newFileId?: string; error?: string }>;
+  createEmptyFile: (name: string, parentPath: string) => Promise<ProjectFile>;
+  createFolder: (name: string, parentPath: string) => Promise<void>;
+  deleteFolder: (folderPath: string) => Promise<{ success: boolean; affectedCount: number; error?: string }>;
+  renameFolder: (oldPath: string, newPath: string) => Promise<{ success: boolean; affectedCount: number; newPath?: string; error?: string }>;
+  duplicateFolder: (folderPath: string) => Promise<{ success: boolean; affectedCount: number; newPath?: string; error?: string }>;
   setActiveFile: (fileId: string | null) => void;
   getFileById: (fileId: string) => ProjectFile | undefined;
   setLoadingFiles: (isLoading: boolean) => void;
   setCreatingFile: (isCreating: boolean) => void;
+  loadFolders: () => Promise<void>;
 }
 
 const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
   files: [],
+  folders: [],
   activeFileId: null,
   isLoadingFiles: false,
   isCreatingFile: false,
 
   setFiles: (files: ProjectFile[]) => set({ files }),
+
+  setFolders: (folders: ProjectFolder[]) => set({ folders }),
 
   addFile: (file: ProjectFile) =>
     set((state) => ({
@@ -285,6 +298,412 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
 
   setCreatingFile: (isCreating: boolean) =>
     set({ isCreatingFile: isCreating }),
+
+  createEmptyFile: async (name: string, parentPath: string) => {
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const projectManager = new ProjectManager();
+
+    try {
+      set({ isCreatingFile: true });
+
+      // Create file via ProjectManager
+      const file = await projectManager.createEmptyFile(name, parentPath);
+
+      // Add to store
+      get().addFile(file);
+
+      // Set as active file
+      set({ activeFileId: file.id });
+
+      return file;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (errorMessage.includes("quota")) {
+        throw new Error("Storage quota exceeded. Please delete some files to free up space.");
+      } else if (errorMessage.includes("database") || errorMessage.includes("IndexedDB")) {
+        throw new Error("Database error. Please try again or refresh the page.");
+      }
+      throw new Error(`Failed to create file: ${errorMessage}`);
+    } finally {
+      set({ isCreatingFile: false });
+    }
+  },
+
+  createFolder: async (name: string, parentPath: string) => {
+    const { validateItemName } = await import("../../file-tree/FileOperations");
+    const { validateFolderDepth } = await import("../../file-tree/FolderOperations");
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+
+    // Validate folder name
+    const nameValidation = validateItemName(name, "folder");
+    if (!nameValidation.isValid) {
+      throw new Error(nameValidation.error);
+    }
+
+    // Compute full folder path
+    const folderPath = parentPath === "/" ? `/${name}` : `${parentPath}/${name}`;
+
+    // Validate folder depth
+    const depthValidation = validateFolderDepth(folderPath);
+    if (!depthValidation.isValid) {
+      throw new Error(depthValidation.error);
+    }
+
+    // Persist folder to IndexedDB
+    const projectManager = new ProjectManager();
+    const newFolder = await projectManager.createFolder(name, parentPath);
+
+    // Update local state
+    set((state) => ({
+      folders: [...state.folders, newFolder],
+    }));
+  },
+
+  loadFolders: async () => {
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const projectManager = new ProjectManager();
+    const folders = await projectManager.getAllFolders();
+    set({ folders });
+  },
+
+  deleteFolder: async (folderPath: string) => {
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const { getFilesInFolder } = await import("../../file-tree/FolderOperations");
+    const projectManager = new ProjectManager();
+
+    // Store original state for rollback
+    const originalState = {
+      files: get().files,
+      folders: get().folders,
+      activeFileId: get().activeFileId,
+      editorContent: get().editorContent,
+      isDirty: get().isDirty,
+    };
+
+    try {
+      // Get all files in folder
+      const filesToDelete = getFilesInFolder(get().files, folderPath);
+      const affectedCount = filesToDelete.length;
+
+      // Optimistic update: Remove files and folders from store immediately
+      set((state) => ({
+        files: state.files.filter((file) => !filesToDelete.some((f) => f.id === file.id)),
+        folders: state.folders.filter((folder) =>
+          folder.path !== folderPath && !folder.path.startsWith(folderPath + "/")
+        ),
+        // Close editor if active file is in deleted folder
+        activeFileId: filesToDelete.some((f) => f.id === state.activeFileId)
+          ? null
+          : state.activeFileId,
+        editorContent: filesToDelete.some((f) => f.id === state.activeFileId)
+          ? ""
+          : state.editorContent,
+        isDirty: filesToDelete.some((f) => f.id === state.activeFileId)
+          ? false
+          : state.isDirty,
+      }));
+
+      // Delete from IndexedDB (files and folder entry)
+      await projectManager.deleteFolderContents(folderPath);
+      await projectManager.deleteFolder(folderPath);
+
+      return {
+        success: true,
+        affectedCount,
+      };
+    } catch (error) {
+      console.error("Failed to delete folder:", error);
+
+      // Rollback to original state on failure
+      set({
+        files: originalState.files,
+        folders: originalState.folders,
+        activeFileId: originalState.activeFileId,
+        editorContent: originalState.editorContent,
+        isDirty: originalState.isDirty,
+      });
+
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (errorMessage.includes("quota")) {
+        return {
+          success: false,
+          affectedCount: 0,
+          error: "Storage quota exceeded. Please free up space and try again.",
+        };
+      } else if (errorMessage.includes("database") || errorMessage.includes("IndexedDB")) {
+        return {
+          success: false,
+          affectedCount: 0,
+          error: "Database error. Please try again or refresh the page.",
+        };
+      }
+      return {
+        success: false,
+        affectedCount: 0,
+        error: `Failed to delete folder: ${errorMessage}`,
+      };
+    }
+  },
+
+  renameFolder: async (oldPath: string, newPath: string) => {
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const { getFilesInFolder, updatePathForRename, getParentPath } = await import("../../file-tree/FolderOperations");
+    const { validateItemName } = await import("../../file-tree/FileOperations");
+    const projectManager = new ProjectManager();
+
+    // Extract folder name from new path for validation
+    const newFolderName = newPath.split("/").filter(Boolean).pop() || "";
+
+    // Validate new folder name
+    const nameValidation = validateItemName(newFolderName, "folder");
+    if (!nameValidation.isValid) {
+      return {
+        success: false,
+        affectedCount: 0,
+        error: nameValidation.error,
+      };
+    }
+
+    // Check for duplicate folder name at same level
+    const parentPath = getParentPath(newPath);
+    const allFiles = get().files;
+    const existingFolders = new Set<string>();
+    allFiles.forEach((file) => {
+      if (file.parentPath.startsWith(parentPath) && file.parentPath !== oldPath) {
+        const relativePath = file.parentPath.slice(parentPath.length);
+        const firstFolder = relativePath.split("/").filter(Boolean)[0];
+        if (firstFolder) {
+          existingFolders.add(firstFolder);
+        }
+      }
+    });
+
+    if (existingFolders.has(newFolderName)) {
+      return {
+        success: false,
+        affectedCount: 0,
+        error: `A folder named "${newFolderName}" already exists`,
+      };
+    }
+
+    // Store original state for rollback
+    const originalState = {
+      files: get().files,
+      folders: get().folders,
+      activeFileId: get().activeFileId,
+    };
+
+    // Get folders to rename (the folder itself and any nested folders)
+    const foldersToRename = get().folders.filter(
+      (folder) => folder.path === oldPath || folder.path.startsWith(`${oldPath}/`)
+    );
+
+    try {
+      // Get all files in folder
+      const filesToUpdate = getFilesInFolder(get().files, oldPath);
+      const affectedCount = filesToUpdate.length;
+
+      // Optimistic update: Update paths in store immediately
+      set((state) => ({
+        files: state.files.map((file) => {
+          if (!filesToUpdate.some((f) => f.id === file.id)) {
+            return file;
+          }
+          const newFilePath = updatePathForRename(file.path, oldPath, newPath);
+          const newParentPath = updatePathForRename(file.parentPath, oldPath, newPath);
+          return {
+            ...file,
+            path: newFilePath,
+            parentPath: newParentPath,
+          };
+        }),
+        folders: state.folders.map((folder) => {
+          if (!foldersToRename.some((f) => f.id === folder.id)) {
+            return folder;
+          }
+          const newFolderPath = updatePathForRename(folder.path, oldPath, newPath);
+          const newFolderParentPath = updatePathForRename(folder.parentPath, oldPath, newPath);
+          return {
+            ...folder,
+            name: folder.path === oldPath ? newFolderName : folder.name,
+            path: newFolderPath,
+            parentPath: newFolderParentPath,
+          };
+        }),
+      }));
+
+      // Update file paths in IndexedDB
+      if (affectedCount > 0) {
+        await projectManager.updateFolderPaths(oldPath, newPath);
+      }
+
+      // Update folder entries in IndexedDB
+      if (foldersToRename.length > 0) {
+        await projectManager.renameFolder(oldPath, newPath);
+      }
+
+      return {
+        success: true,
+        affectedCount,
+        newPath,
+      };
+    } catch (error) {
+      console.error("Failed to rename folder:", error);
+
+      // Rollback to original state on failure
+      set({
+        files: originalState.files,
+        folders: originalState.folders,
+      });
+
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (errorMessage.includes("quota")) {
+        return {
+          success: false,
+          affectedCount: 0,
+          error: "Storage quota exceeded. Please free up space and try again.",
+        };
+      } else if (errorMessage.includes("database") || errorMessage.includes("IndexedDB")) {
+        return {
+          success: false,
+          affectedCount: 0,
+          error: "Database error. Please try again or refresh the page.",
+        };
+      }
+      return {
+        success: false,
+        affectedCount: 0,
+        error: `Failed to rename folder: ${errorMessage}`,
+      };
+    }
+  },
+
+  duplicateFolder: async (folderPath: string) => {
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const { getFilesInFolder, generateDuplicateFolderName, getParentPath } = await import("../../file-tree/FolderOperations");
+    const projectManager = new ProjectManager();
+
+    // Store original state for rollback
+    const originalFiles = get().files;
+    const originalFolders = get().folders;
+
+    try {
+      // Get all files in source folder
+      const sourceFiles = getFilesInFolder(get().files, folderPath);
+      const affectedCount = sourceFiles.length;
+
+      // Get all folder entries in source folder
+      const sourceFolders = get().folders.filter(
+        (folder) => folder.path === folderPath || folder.path.startsWith(`${folderPath}/`)
+      );
+
+      // Extract folder name and parent path
+      const parentPath = getParentPath(folderPath);
+      const folderName = folderPath.split("/").filter(Boolean).pop() || "folder";
+
+      // Get existing folder names at same level (from both files and folders)
+      const existingFolders = new Set<string>();
+      originalFiles.forEach((file) => {
+        if (file.parentPath.startsWith(parentPath)) {
+          const relativePath = file.parentPath.slice(parentPath.length);
+          const firstFolder = relativePath.split("/").filter(Boolean)[0];
+          if (firstFolder) {
+            existingFolders.add(firstFolder);
+          }
+        }
+      });
+      originalFolders.forEach((folder) => {
+        if (folder.parentPath === parentPath) {
+          existingFolders.add(folder.name);
+        }
+      });
+
+      // Generate unique folder name
+      const newFolderName = generateDuplicateFolderName(folderName, Array.from(existingFolders));
+      const newFolderPath = parentPath === "/" ? `/${newFolderName}` : `${parentPath}/${newFolderName}`;
+
+      // Generate new files with updated paths
+      const newFiles: ProjectFile[] = sourceFiles.map((file) => {
+        const relativePath = file.path.slice(folderPath.length);
+        const newFilePath = newFolderPath + relativePath;
+        const relativeParentPath = file.parentPath.slice(folderPath.length);
+        const newParentPath = newFolderPath + relativeParentPath;
+
+        return {
+          ...file,
+          id: crypto.randomUUID(),
+          path: newFilePath,
+          parentPath: newParentPath,
+          lastModified: Date.now(),
+          isActive: false,
+        };
+      });
+
+      // Generate new folder entries with updated paths
+      const newFolders: ProjectFolder[] = sourceFolders.map((folder) => {
+        const relativePath = folder.path.slice(folderPath.length);
+        const newPath = newFolderPath + relativePath;
+        const relativeParentPath = folder.parentPath.slice(folderPath.length);
+        const newParent = folder.path === folderPath ? parentPath : newFolderPath + relativeParentPath;
+
+        return {
+          ...folder,
+          id: crypto.randomUUID(),
+          name: folder.path === folderPath ? newFolderName : folder.name,
+          path: newPath,
+          parentPath: newParent,
+          createdAt: Date.now(),
+        };
+      });
+
+      // Persist files to IndexedDB
+      if (newFiles.length > 0) {
+        await projectManager.duplicateFolderContents(folderPath, newFolderPath);
+      }
+
+      // Persist folder entries to IndexedDB
+      for (const folder of newFolders) {
+        await projectManager.createFolder(folder);
+      }
+
+      // Add new files and folders to store
+      set((state) => ({
+        files: [...state.files, ...newFiles],
+        folders: [...state.folders, ...newFolders],
+      }));
+
+      return {
+        success: true,
+        affectedCount,
+        newPath: newFolderPath,
+      };
+    } catch (error) {
+      console.error("Failed to duplicate folder:", error);
+
+      // Rollback to original state on failure
+      set({ files: originalFiles, folders: originalFolders });
+
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (errorMessage.includes("quota") || errorMessage.includes("QuotaExceededError")) {
+        return {
+          success: false,
+          affectedCount: 0,
+          error: "Storage quota exceeded. Please delete some files to free up space.",
+        };
+      } else if (errorMessage.includes("database") || errorMessage.includes("IndexedDB")) {
+        return {
+          success: false,
+          affectedCount: 0,
+          error: "Database error. Please try again or refresh the page.",
+        };
+      }
+      return {
+        success: false,
+        affectedCount: 0,
+        error: `Failed to duplicate folder: ${errorMessage}`,
+      };
+    }
+  },
 });
 
 // ============================================================================
@@ -607,6 +1026,148 @@ const createViewModeSlice: StateSliceCreator<ViewModeSlice> = (set, get) => ({
 });
 
 // ============================================================================
+// Drag-and-Drop Slice (Feature 007)
+// ============================================================================
+
+/**
+ * Drag-and-drop state management slice
+ * 
+ * Manages drag state and drop target validation for file/folder reorganization
+ */
+interface DragDropSlice {
+  /** Current drag state (null when not dragging) */
+  dragState: DragState | null;
+  /** Current drop target being hovered (null when not over a target) */
+  dropTarget: DropTarget | null;
+
+  /** Start a drag operation */
+  startDrag: (item: { type: 'file' | 'folder'; id: string; path: string; parentPath: string; name: string }) => void;
+  /** End the current drag operation */
+  endDrag: () => void;
+  /** Set or clear the current drop target */
+  setDropTarget: (target: DropTarget | null) => void;
+  /** Cancel the current drag operation (e.g., on Escape key) */
+  cancelDrag: () => void;
+  /** Move a file to a new folder */
+  moveFile: (fileId: string, targetFolderPath: string) => Promise<{ success: boolean; error?: string }>;
+  /** Move a folder to a new parent folder */
+  moveFolder: (sourceFolderPath: string, targetFolderPath: string) => Promise<{ success: boolean; error?: string }>;
+}
+
+const createDragDropSlice: StateSliceCreator<DragDropSlice> = (set, get) => ({
+  dragState: null,
+  dropTarget: null,
+
+  startDrag: (item) => {
+    set({
+      dragState: {
+        itemType: item.type,
+        itemId: item.id,
+        sourcePath: item.path,
+        sourceParentPath: item.parentPath,
+        name: item.name,
+        dragStartTime: performance.now(),
+      },
+      dropTarget: null,
+    });
+  },
+
+  endDrag: () => {
+    set({
+      dragState: null,
+      dropTarget: null,
+    });
+  },
+
+  setDropTarget: (target) => {
+    set({ dropTarget: target });
+  },
+
+  cancelDrag: () => {
+    set({
+      dragState: null,
+      dropTarget: null,
+    });
+  },
+
+  moveFile: async (fileId: string, targetFolderPath: string) => {
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const projectManager = new ProjectManager();
+
+    // Store original state for rollback
+    const originalFiles = get().files;
+
+    try {
+      // Execute the move in IndexedDB
+      const movedFile = await projectManager.moveFile(fileId, targetFolderPath);
+
+      // Update store state
+      set((state) => ({
+        files: state.files.map((file) =>
+          file.id === fileId ? movedFile : file
+        ),
+      }));
+
+      return { success: true };
+    } catch (error) {
+      // Rollback to original state on failure
+      set({ files: originalFiles });
+
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      return {
+        success: false,
+        error: errorMessage.includes("exists")
+          ? `A file with that name already exists in the target folder`
+          : `Failed to move file: ${errorMessage}`,
+      };
+    }
+  },
+
+  moveFolder: async (sourceFolderPath: string, targetFolderPath: string) => {
+    const { ProjectManager } = await import("../../project-management/ProjectManager");
+    const projectManager = new ProjectManager();
+
+    // Store original state for rollback
+    const originalFiles = get().files;
+    const originalFolders = get().folders;
+
+    try {
+      // Execute the move in IndexedDB
+      await projectManager.moveFolder(sourceFolderPath, targetFolderPath);
+
+      // Reload files and folders from storage
+      const updatedFiles = await projectManager.getAllFiles();
+      const updatedFolders = await projectManager.getAllFolders();
+
+      // Update store state
+      set({
+        files: updatedFiles,
+        folders: updatedFolders,
+      });
+
+      // If active file was moved, its ID stays the same (unchanged)
+      // so the editor should continue working
+
+      return { success: true };
+    } catch (error) {
+      // Rollback to original state on failure
+      set({
+        files: originalFiles,
+        folders: originalFolders,
+      });
+
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      return {
+        success: false,
+        error: errorMessage.includes("exists")
+          ? `A folder with that name already exists in the target folder`
+          : `Failed to move folder: ${errorMessage}`,
+      };
+    }
+  },
+});
+
+// ============================================================================
 // Theme Slice
 // ============================================================================
 
@@ -732,6 +1293,7 @@ export const useStore = create<StoreState>()(
       ...createFileTreeSlice(...args),
       ...createPersistenceSlice(...args),
       ...createViewModeSlice(...args),
+      ...createDragDropSlice(...args),
       ...createThemeSlice(...args),
     }),
     {

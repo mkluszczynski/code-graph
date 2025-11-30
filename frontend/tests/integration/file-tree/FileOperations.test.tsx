@@ -5,7 +5,12 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { validateFileName, generateDuplicateName } from "../../../src/file-tree/FileOperations";
+import {
+    validateFileName,
+    generateDuplicateName,
+    validateItemName,
+    normalizeFileName
+} from "../../../src/file-tree/FileOperations";
 
 describe("FileOperations", () => {
     describe("validateFileName", () => {
@@ -35,18 +40,18 @@ describe("FileOperations", () => {
             invalidNames.forEach((name) => {
                 const result = validateFileName(name);
                 expect(result.isValid).toBe(false);
-                expect(result.error).toBe("Filename cannot be empty");
+                expect(result.error).toBe("File name cannot be empty");
             });
         });
 
         it("should reject reserved names", () => {
             const result1 = validateFileName(".");
             expect(result1.isValid).toBe(false);
-            expect(result1.error).toBe("Filename cannot be '.' or '..'");
+            expect(result1.error).toBe("File name cannot be '.' or '..'");
 
             const result2 = validateFileName("..");
             expect(result2.isValid).toBe(false);
-            expect(result2.error).toBe("Filename cannot be '.' or '..'");
+            expect(result2.error).toBe("File name cannot be '.' or '..'");
         });
 
         it("should reject filenames with invalid characters", () => {
@@ -63,7 +68,7 @@ describe("FileOperations", () => {
             const longName = "a".repeat(256) + ".ts";
             const result = validateFileName(longName);
             expect(result.isValid).toBe(false);
-            expect(result.error).toBe("Filename is too long (max 255 characters)");
+            expect(result.error).toBe("File name is too long (max 255 characters)");
         });
 
         it("should accept filenames at maximum valid length", () => {
@@ -192,6 +197,85 @@ describe("FileOperations", () => {
                 existingNames: [originalName],
             });
             expect(result).toBe(`${longBaseName} copy.ts`);
+        });
+    });
+
+    describe("validateItemName", () => {
+        describe("for files", () => {
+            it("should accept valid file names", () => {
+                const result = validateItemName("MyFile.ts", "file");
+                expect(result.isValid).toBe(true);
+            });
+
+            it("should reject empty file names with appropriate message", () => {
+                const result = validateItemName("", "file");
+                expect(result.isValid).toBe(false);
+                expect(result.error).toBe("File name cannot be empty");
+            });
+
+            it("should reject invalid characters with appropriate message", () => {
+                const result = validateItemName("file/name.ts", "file");
+                expect(result.isValid).toBe(false);
+                expect(result.error).toContain("File name cannot contain");
+            });
+        });
+
+        describe("for folders", () => {
+            it("should accept valid folder names", () => {
+                const result = validateItemName("components", "folder");
+                expect(result.isValid).toBe(true);
+            });
+
+            it("should reject empty folder names with appropriate message", () => {
+                const result = validateItemName("", "folder");
+                expect(result.isValid).toBe(false);
+                expect(result.error).toBe("Folder name cannot be empty");
+            });
+
+            it("should reject invalid characters with appropriate message", () => {
+                const result = validateItemName("my/folder", "folder");
+                expect(result.isValid).toBe(false);
+                expect(result.error).toContain("Folder name cannot contain");
+            });
+
+            it("should accept folder names without extension", () => {
+                const result = validateItemName("my-folder", "folder");
+                expect(result.isValid).toBe(true);
+            });
+        });
+    });
+
+    describe("normalizeFileName", () => {
+        it("should add .ts extension when missing", () => {
+            const result = normalizeFileName("MyFile");
+            expect(result).toBe("MyFile.ts");
+        });
+
+        it("should not add extension when already present", () => {
+            const result = normalizeFileName("MyFile.ts");
+            expect(result).toBe("MyFile.ts");
+        });
+
+        it("should preserve other extensions", () => {
+            const result = normalizeFileName("component.tsx");
+            expect(result).toBe("component.tsx");
+        });
+
+        it("should trim whitespace", () => {
+            const result = normalizeFileName("  MyFile  ");
+            expect(result).toBe("MyFile.ts");
+        });
+
+        it("should handle files with multiple dots", () => {
+            const result = normalizeFileName("file.test.ts");
+            expect(result).toBe("file.test.ts");
+        });
+
+        it("should add .ts to files with dot but no extension", () => {
+            // A file like "." is a special case that would be caught by validation
+            // but we test the normalize behavior: if it has a dot, we don't add .ts
+            const result = normalizeFileName("my.file");
+            expect(result).toBe("my.file"); // Already has extension
         });
     });
 });

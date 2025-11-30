@@ -17,6 +17,11 @@
 // ============================================================================
 
 /**
+ * Supported programming languages for diagram visualization
+ */
+export type SupportedLanguage = 'typescript' | 'dart' | 'unsupported';
+
+/**
  * Represents a TypeScript file in the project
  */
 export interface ProjectFile {
@@ -26,12 +31,30 @@ export interface ProjectFile {
   name: string;
   /** Virtual file path (e.g., "/src/MyClass.ts") */
   path: string;
+  /** Parent folder path (e.g., "/src") - for folder queries */
+  parentPath: string;
   /** TypeScript source code */
   content: string;
   /** Timestamp (milliseconds since epoch) */
   lastModified: number;
   /** Whether this file is currently open in the editor */
   isActive: boolean;
+}
+
+/**
+ * Represents a folder in the project (stored in IndexedDB for persistence)
+ */
+export interface ProjectFolder {
+  /** Unique identifier (UUID) */
+  id: string;
+  /** Folder name (e.g., "components") */
+  name: string;
+  /** Full folder path (e.g., "/src/components") */
+  path: string;
+  /** Parent folder path (e.g., "/src") */
+  parentPath: string;
+  /** Timestamp (milliseconds since epoch) */
+  createdAt: number;
 }
 
 /**
@@ -537,4 +560,61 @@ export interface ClipboardResult {
   error?: string;
   /** Machine-readable error code (if failed) */
   errorCode?: ClipboardErrorCode;
+}
+
+// ============================================================================
+// Drag-and-Drop Move Types (Feature 007)
+// ============================================================================
+
+/**
+ * Error codes for drop validation
+ */
+export type DropErrorCode =
+  | 'duplicate_name'      // Target folder contains item with same name
+  | 'circular_reference'  // Folder would be moved into its own descendant
+  | 'same_location'       // Item is already in target folder (no-op)
+  | 'invalid_target';     // Target is not a valid folder
+
+/**
+ * Result of drop validation check
+ */
+export interface DropValidation {
+  /** Whether the drop is allowed */
+  isValid: boolean;
+  /** Specific validation error code */
+  errorCode?: DropErrorCode;
+  /** User-friendly error message */
+  errorMessage?: string;
+}
+
+/**
+ * Represents a completed move operation
+ */
+export interface MoveOperation {
+  /** Type of move operation */
+  type: 'file' | 'folder';
+  /** Original path before move */
+  sourcePath: string;
+  /** New path after move */
+  targetPath: string;
+  /** Affected file paths (for folder moves, includes all nested files) */
+  affectedPaths: string[];
+  /** Operation timestamp */
+  timestamp: number;
+  /** Whether operation succeeded */
+  success: boolean;
+  /** Error message if failed */
+  error?: string;
+}
+
+/**
+ * Result of a move operation in ProjectManager
+ */
+export interface MoveResult {
+  /** New path after move */
+  newPath: string;
+  /** Number of files affected */
+  affectedFileCount: number;
+  /** Number of folders affected (for folder moves) */
+  affectedFolderCount?: number;
 }

@@ -1,30 +1,34 @@
-# TypeScript UML Graph Visualizer - User Guide
+# Code Graph UML Visualizer - User Guide
 
-**Version**: 1.0.0  
-**Last Updated**: November 14, 2025
+**Version**: 1.4.0  
+**Last Updated**: November 30, 2025
 
 ## Table of Contents
 
 1. [Introduction](#introduction)
 2. [Getting Started](#getting-started)
-3. [Core Features](#core-features)
-4. [User Interface Overview](#user-interface-overview)
-5. [Creating Files](#creating-files)
-6. [Writing Code](#writing-code)
-7. [Navigating the Diagram](#navigating-the-diagram)
-8. [Understanding UML Diagrams](#understanding-uml-diagrams)
-9. [Keyboard Shortcuts](#keyboard-shortcuts)
-10. [Tips and Best Practices](#tips-and-best-practices)
-11. [Troubleshooting](#troubleshooting)
+3. [Supported Languages](#supported-languages)
+4. [Core Features](#core-features)
+5. [User Interface Overview](#user-interface-overview)
+6. [Creating Files](#creating-files)
+7. [Managing Folders](#managing-folders)
+8. [Drag and Drop Organization](#drag-and-drop-organization)
+9. [Writing Code](#writing-code)
+9. [Navigating the Diagram](#navigating-the-diagram)
+10. [Understanding UML Diagrams](#understanding-uml-diagrams)
+11. [Keyboard Shortcuts](#keyboard-shortcuts)
+12. [Tips and Best Practices](#tips-and-best-practices)
+13. [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Introduction
 
-The TypeScript UML Graph Visualizer is an IDE-like web application that provides real-time UML class diagram visualization for your TypeScript code. As you write classes and interfaces, the application automatically generates and updates UML diagrams to help you visualize code structure and relationships.
+The Code Graph UML Visualizer is an IDE-like web application that provides real-time UML class diagram visualization for your TypeScript and Dart code. As you write classes and interfaces, the application automatically generates and updates UML diagrams to help you visualize code structure and relationships.
 
 ### Key Benefits
 
+- **Multi-Language Support**: Visualize TypeScript and Dart code in the same project
 - **Real-time Visualization**: See your code structure as UML diagrams instantly
 - **Bidirectional Navigation**: Click on diagram nodes to jump to code, or navigate via file tree
 - **Relationship Visualization**: Understand inheritance, implementation, and associations at a glance
@@ -51,6 +55,55 @@ The TypeScript UML Graph Visualizer is an IDE-like web application that provides
 - **Screen Resolution**: Minimum 1280px width recommended
 - **Storage**: ~5MB local storage for average projects
 - **Internet**: Not required after initial load (works offline)
+
+---
+
+## Supported Languages
+
+The application supports the following programming languages for UML visualization:
+
+### TypeScript (.ts, .tsx)
+
+Full support for TypeScript classes, interfaces, and their relationships:
+- Classes with properties and methods
+- Interfaces with method signatures
+- Access modifiers (public, private, protected)
+- Inheritance (extends) and implementation (implements)
+- Generic types and constraints
+- Static members and readonly properties
+
+### Dart (.dart)
+
+Full support for Dart classes, abstract classes, and mixins:
+- Classes with properties and methods
+- Abstract classes (displayed as interfaces in UML)
+- Mixins (displayed as interfaces with «mixin» stereotype)
+- Access modifiers (public by default, private with `_` prefix)
+- Inheritance (extends), implementation (implements), and mixins (with)
+- Named constructors and factory constructors
+- Getters and setters
+- Static and final/const members
+- Generic types with constraints
+
+### Unsupported Languages
+
+Files with unsupported extensions (e.g., `.js`, `.py`, `.json`, `.md`) are marked with a warning icon (⚠️) in the file tree. These files:
+- Can still be created and edited
+- Will not generate UML diagrams
+- Are useful for documentation or configuration
+
+### Creating Language-Specific Files
+
+1. Click the **"Add File"** button
+2. Select **"Add File"** (not class/interface templates)
+3. Enter the filename **with extension**:
+   - TypeScript: `MyClass.ts` or `Component.tsx`
+   - Dart: `my_class.dart`
+4. The file will be created and ready for editing
+
+**Tip**: Use the appropriate naming convention for each language:
+- TypeScript: PascalCase (`MyClassName.ts`)
+- Dart: snake_case (`my_class_name.dart`)
 
 ---
 
@@ -121,8 +174,14 @@ The application is divided into three main panels:
 - Must start with a letter
 - Can contain letters, numbers, underscores
 - No spaces or special characters
-- File extension `.ts` is added automatically
+- **Include the file extension** (e.g., `.ts`, `.tsx`, `.dart`)
+- If no extension provided, `.ts` is added by default
 - Names must be unique within the project
+
+**Supported Extensions**:
+- `.ts` - TypeScript
+- `.tsx` - TypeScript React
+- `.dart` - Dart
 
 ### Class Template
 
@@ -139,6 +198,164 @@ export interface InterfaceName {
   // Add properties and methods
 }
 ```
+
+---
+
+## Managing Folders
+
+Organize your TypeScript files into folders for better project structure. Folders help group related classes and interfaces logically.
+
+### Creating Folders
+
+1. Click the **"Add File"** button (dropdown) in the left panel
+2. Select **"Add Folder"**
+3. Enter a folder name (e.g., `models`, `services`, `components`)
+4. The folder will appear in the file tree
+
+**Folder Naming Rules**:
+- Must start with a letter
+- Can contain letters, numbers, underscores, and hyphens
+- No spaces or special characters
+- Names must be unique within the parent folder
+- Maximum folder depth: 10 levels
+
+### Deleting Folders
+
+1. Right-click on a folder in the file tree
+2. Select **"Delete"** from the context menu
+3. A confirmation dialog appears showing how many files will be deleted
+4. Click **"Delete"** to confirm, or **"Cancel"** to abort
+
+**Important**: Deleting a folder also deletes all files and subfolders inside it. This action cannot be undone.
+
+### Renaming Folders
+
+1. Right-click on a folder in the file tree
+2. Select **"Rename"** from the context menu
+3. Type the new name in the inline input
+4. Press **Enter** to confirm or **Escape** to cancel
+
+**Notes**:
+- All files within the folder will have their paths updated automatically
+- If the renamed folder contains the currently active file, the editor will update accordingly
+- The rename operation is atomic - either all files update or none do
+
+### Duplicating Folders
+
+1. Right-click on a folder in the file tree
+2. Select **"Duplicate"** from the context menu
+3. A copy of the folder (and all its contents) is created with a " copy" suffix
+
+**Example**: Duplicating `/src/models` creates `/src/models copy` with all the same files.
+
+### Organizing Files in Folders
+
+After creating folders, you can create files directly inside them:
+1. Navigate to the folder in the file tree
+2. Use the **"Add File"** button 
+3. New files are created at the root level by default
+4. Files can be created in specific folders in future updates
+
+### Best Practices
+
+**Recommended Folder Structure**:
+```
+/
+├── models/          # Data classes and entities
+│   ├── Person.ts
+│   ├── Employee.ts
+│   └── interfaces/  # Model interfaces
+│       └── IEntity.ts
+├── services/        # Business logic
+│   ├── UserService.ts
+│   └── OrderService.ts
+├── repositories/    # Data access
+│   └── UserRepository.ts
+└── utils/           # Utility functions
+    └── helpers.ts
+```
+
+**Tips**:
+- Group related classes in the same folder
+- Keep interface files near their implementations
+- Use meaningful folder names that describe the content
+- Limit folder nesting to 3-4 levels for clarity
+
+---
+
+## Drag and Drop Organization
+
+Easily reorganize your project structure by dragging files and folders to new locations.
+
+### Moving Files
+
+1. **Start Drag**: Click and hold on any file in the file tree
+2. **Drag to Folder**: Move the file over a target folder
+3. **Drop Indicator**: The folder will highlight to show it's a valid target
+4. **Release**: Drop the file to move it into the folder
+
+**Visual Feedback**:
+- **Valid Drop Target**: Folder highlights with a colored border when you can drop
+- **Invalid Drop Target**: Red indicator or no-drop cursor when move is not allowed
+- **Dragging State**: The dragged item appears slightly faded
+
+### Moving Folders
+
+1. **Start Drag**: Click and hold on any folder in the file tree
+2. **Drag to Folder**: Move the folder over a target folder
+3. **Drop**: Release to move the folder and all its contents
+
+**Important**: Moving a folder also moves all files and subfolders inside it. This is an atomic operation - either everything moves or nothing does.
+
+### Auto-Expand Folders
+
+When dragging over a collapsed folder:
+- **Wait 500ms**: The folder automatically expands to reveal its contents
+- **Deep Navigation**: Continue dragging into expanded subfolders
+- **Cancel**: Press **Escape** or drag away to close auto-expanded folders
+
+### Validation Rules
+
+The application prevents invalid moves to protect your project structure:
+
+| Scenario | Behavior |
+|----------|----------|
+| **Same Location** | Cannot drop item where it already is |
+| **Circular Reference** | Cannot move folder into itself or its subfolders |
+| **Duplicate Name** | Cannot move if item with same name exists at target |
+
+**Error Handling**:
+- Invalid drop attempts are silently prevented (no error dialogs)
+- The cursor changes to indicate when a drop is not allowed
+- Original item position is preserved if drop is invalid
+
+### Cancel Drag Operation
+
+To cancel a drag operation at any time:
+- Press the **Escape** key
+- The item returns to its original position
+- All visual indicators are cleared
+
+### Keyboard Support
+
+| Key | Action |
+|-----|--------|
+| `Escape` | Cancel current drag operation |
+| `Enter` | Confirm drop (when hovering valid target) |
+
+### Best Practices
+
+1. **Use Folders First**: Create your folder structure before adding many files
+2. **Batch Moves**: Drag folders to move multiple files at once
+3. **Check Names**: Ensure no naming conflicts before moving
+4. **Undo Not Available**: File moves cannot be undone, so be careful
+
+### Performance
+
+- **File Moves**: Complete in under 500ms
+- **Folder Moves**: Complete in under 1 second (even with many files)
+- **Visual Feedback**: Appears within 100ms of starting drag
+- **All moves are atomic**: Database transaction ensures consistency
 
 ---
 
@@ -211,6 +428,70 @@ export class UserRepository implements IRepository<User> {
 export class Order {
   private customer: Customer;  // Association
   private items: OrderItem[];  // Association (array)
+}
+```
+
+### Dart Code Examples
+
+#### Classes
+```dart
+class Person {
+  // Properties
+  String _name;        // private (underscore prefix)
+  int age;             // public (default)
+  final String id;     // readonly
+  
+  // Constructor
+  Person(this._name, this.age, this.id);
+  
+  // Named constructor
+  Person.guest() : _name = 'Guest', age = 0, id = 'guest';
+  
+  // Getter
+  String get name => _name;
+  
+  // Setter
+  set name(String value) => _name = value;
+  
+  // Method
+  void greet() {
+    print('Hello, I am $_name');
+  }
+}
+```
+
+#### Abstract Classes (Displayed as Interfaces)
+```dart
+abstract class Repository<T> {
+  T? findById(String id);
+  void save(T entity);
+  bool delete(String id);
+}
+```
+
+#### Mixins
+```dart
+mixin Swimmer {
+  void swim() {
+    print('Swimming...');
+  }
+}
+
+class Duck extends Bird with Swimmer {
+  // Duck inherits from Bird and mixes in Swimmer
+}
+```
+
+#### Inheritance and Implementation
+```dart
+class Student extends Person implements Comparable<Student> {
+  final String studentId;
+  
+  Student(String name, int age, this.studentId) 
+      : super(name, age, studentId);
+  
+  @override
+  int compareTo(Student other) => studentId.compareTo(other.studentId);
 }
 ```
 
@@ -588,6 +869,35 @@ Check browser console for performance metrics.
 ---
 
 ## Version History
+
+### Version 1.4.0 (November 2025)
+- **NEW**: Dart language support - parse and visualize `.dart` files
+- **NEW**: Abstract classes and mixins from Dart displayed as interfaces
+- **NEW**: Dart-specific features: named constructors, getters/setters, factory constructors
+- **NEW**: File extension in file names - create `.ts`, `.tsx`, or `.dart` files
+- **NEW**: Warning icon for unsupported file types in file tree
+- **IMPROVED**: Parser registry architecture supports multiple languages
+- **IMPROVED**: Language detection based on file extension
+
+### Version 1.3.0 (November 2025)
+- **NEW**: Drag and drop file organization - move files between folders
+- **NEW**: Drag and drop folder organization - move folders with all contents
+- **NEW**: Auto-expand folders when hovering during drag (500ms delay)
+- **NEW**: Add file directly to folder via context menu (right-click → Add File)
+- **IMPROVED**: Visual feedback for drag operations (drop target highlighting)
+- **IMPROVED**: Validation prevents circular references and duplicate names
+- **IMPROVED**: Atomic transactions ensure database consistency during moves
+- **IMPROVED**: ARIA attributes for accessibility during drag operations
+
+### Version 1.2.0 (November 2025)
+- **NEW**: Folder management - create, delete, rename, and duplicate folders
+- **NEW**: Folder context menu with right-click access to folder operations
+- **NEW**: Inline folder rename with Enter/Escape key support
+- **NEW**: Folder duplication with automatic "copy" suffix naming
+- **NEW**: Confirmation dialog for folder deletion (shows affected file count)
+- **IMPROVED**: File tree now displays folders with proper hierarchy
+- **IMPROVED**: Folders persist to IndexedDB with atomic operations
+- **IMPROVED**: Error handling for storage quota and database failures
 
 ### Version 1.1.0 (November 2025)
 - **NEW**: File View and Project View toggle for different analysis perspectives

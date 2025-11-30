@@ -6,14 +6,16 @@
 import { useEffect, useRef, useCallback } from 'react';
 import type { editor } from 'monaco-editor';
 import { useStore, useActiveFile } from '../shared/store';
-import { parse } from '../typescript-parser/TypeScriptParser';
+import { parserRegistry } from '../parsers';
 import { generateDiagram } from '../diagram-visualization/DiagramGenerator';
 import type { ClassDefinition, InterfaceDefinition } from '../shared/types';
 import { EDITOR_DEBOUNCE_DELAY_MS } from '../shared/constants';
 import { usePersistenceController } from '../project-management/usePersistenceController';
 import { buildDependencyGraph } from '../diagram-visualization/ImportResolver';
 import { filterEntitiesByScope } from '../diagram-visualization/EntityFilter';
-import { extractRelationships } from '../typescript-parser/RelationshipAnalyzer';
+import { extractRelationships as extractTsRelationships } from '../parsers/typescript/RelationshipAnalyzer';
+import { extractRelationships as extractDartRelationships } from '../parsers/dart/RelationshipAnalyzer';
+import { detectLanguage } from '../parsers/utils';
 import { performanceMonitor } from '../shared/utils/performance';
 
 export function useEditorController() {
@@ -58,10 +60,20 @@ export function useEditorController() {
                 noResolve: true,
             });
 
-            // Disable semantic diagnostics (type checking) to prevent module resolution errors
+            // Disable ALL TypeScript diagnostics - we use our own parser for diagram generation
+            // This prevents TypeScript errors from showing on non-TypeScript files (like Dart)
+            // and also prevents confusing module resolution errors on TypeScript files
             monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-                noSemanticValidation: true, // Disable semantic errors (including module resolution)
-                noSyntaxValidation: false,  // Keep syntax validation enabled
+                noSemanticValidation: true,
+                noSyntaxValidation: true,
+                noSuggestionDiagnostics: true,
+            });
+
+            // Also disable JavaScript diagnostics (which might interfere)
+            monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+                noSemanticValidation: true,
+                noSyntaxValidation: true,
+                noSuggestionDiagnostics: true,
             });
         },
         []
@@ -105,7 +117,7 @@ export function useEditorController() {
      * Parses TypeScript code and updates diagram
      */
     const parseAndUpdateDiagram = useCallback(
-        (content: string, fileId: string) => {
+        async (content: string, fileId: string) => {
             setIsParsing(true);
             performanceMonitor.startTimer('Diagram Update (File View)');
 
@@ -114,9 +126,21 @@ export function useEditorController() {
                 const file = useStore.getState().files.find(f => f.id === fileId);
                 const fileName = file?.name || 'Untitled.ts';
 
-                // Parse the TypeScript code
-                // Pass both fileName (for TS compiler) and fileId (for entity references)
-                const parseResult = parse(content, fileName, fileId);
+                // Parse using the parser registry (supports multiple languages)
+                const parseResult = await parserRegistry.parse(content, fileName, fileId);
+
+                // If no parser available for this file type, clear diagram and return
+                if (!parseResult) {
+                    clearParseErrors(fileId);
+                    setParsedEntities(fileId, []);
+                    updateDiagram([], []);
+                    performanceMonitor.endTimer('Diagram Update (File View)', {
+                        unsupported: true,
+                        fileName
+                    });
+                    setIsParsing(false);
+                    return;
+                }
 
                 // Update parse errors
                 if (parseResult.errors.length > 0) {
@@ -147,18 +171,24 @@ export function useEditorController() {
                 const currentParsedEntities = new Map(currentState.parsedEntities);
 
                 // Parse any files that haven't been parsed yet
-                for (const file of currentFiles) {
-                    if (!currentParsedEntities.has(file.id)) {
-                        // Parse this file
-                        const fileParseResult = parse(file.content, file.name, file.id);
-                        const fileEntities: (ClassDefinition | InterfaceDefinition)[] = [
-                            ...fileParseResult.classes,
-                            ...fileParseResult.interfaces,
-                        ];
-                        currentParsedEntities.set(file.id, fileEntities);
+                for (const currentFile of currentFiles) {
+                    if (!currentParsedEntities.has(currentFile.id)) {
+                        // Parse this file using the registry
+                        const fileParseResult = await parserRegistry.parse(
+                            currentFile.content,
+                            currentFile.name,
+                            currentFile.id
+                        );
+                        if (fileParseResult) {
+                            const fileEntities: (ClassDefinition | InterfaceDefinition)[] = [
+                                ...fileParseResult.classes,
+                                ...fileParseResult.interfaces,
+                            ];
+                            currentParsedEntities.set(currentFile.id, fileEntities);
 
-                        // Also update the store with these parsed entities
-                        setParsedEntities(file.id, fileEntities);
+                            // Also update the store with these parsed entities
+                            setParsedEntities(currentFile.id, fileEntities);
+                        }
                     }
                 }
 
@@ -189,6 +219,12 @@ export function useEditorController() {
                 const interfaces = filteredResult.entities.filter(
                     (e): e is InterfaceDefinition => 'extendsInterfaces' in e
                 );
+
+                // Detect language and use appropriate relationship analyzer
+                const language = detectLanguage(fileName);
+                const extractRelationships = language === 'dart'
+                    ? extractDartRelationships
+                    : extractTsRelationships;
 
                 // Extract relationships from filtered entities
                 const relationships = extractRelationships(classes, interfaces);

@@ -230,7 +230,7 @@ describe("Store File Operations", () => {
 
             // Attempt to rename to empty string
             await expect(useStore.getState().renameFile("file-1", "")).rejects.toThrow(
-                "Filename cannot be empty"
+                "File name cannot be empty"
             );
 
             // Verify file name unchanged
@@ -252,7 +252,7 @@ describe("Store File Operations", () => {
 
             // Attempt to rename with invalid characters
             await expect(useStore.getState().renameFile("file-1", "test/invalid.ts")).rejects.toThrow(
-                "Filename cannot contain"
+                "File name cannot contain"
             );
 
             // Verify file name unchanged

@@ -9,7 +9,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useStore } from '../../src/shared/store';
-import { parse } from '../../src/typescript-parser/TypeScriptParser';
+import { parse } from '../../src/parsers/typescript/TypeScriptParser';
 import { generateDiagram } from '../../src/diagram-visualization/DiagramGenerator';
 
 describe('Integration: Edit and Re-visualize (US6/T093)', () => {

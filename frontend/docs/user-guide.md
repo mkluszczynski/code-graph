@@ -1,18 +1,19 @@
-# TypeScript UML Graph Visualizer - User Guide
+# Code Graph UML Visualizer - User Guide
 
-**Version**: 1.3.0  
-**Last Updated**: November 16, 2025
+**Version**: 1.4.0  
+**Last Updated**: November 30, 2025
 
 ## Table of Contents
 
 1. [Introduction](#introduction)
 2. [Getting Started](#getting-started)
-3. [Core Features](#core-features)
-4. [User Interface Overview](#user-interface-overview)
-5. [Creating Files](#creating-files)
-6. [Managing Folders](#managing-folders)
-7. [Drag and Drop Organization](#drag-and-drop-organization)
-8. [Writing Code](#writing-code)
+3. [Supported Languages](#supported-languages)
+4. [Core Features](#core-features)
+5. [User Interface Overview](#user-interface-overview)
+6. [Creating Files](#creating-files)
+7. [Managing Folders](#managing-folders)
+8. [Drag and Drop Organization](#drag-and-drop-organization)
+9. [Writing Code](#writing-code)
 9. [Navigating the Diagram](#navigating-the-diagram)
 10. [Understanding UML Diagrams](#understanding-uml-diagrams)
 11. [Keyboard Shortcuts](#keyboard-shortcuts)
@@ -23,10 +24,11 @@
 
 ## Introduction
 
-The TypeScript UML Graph Visualizer is an IDE-like web application that provides real-time UML class diagram visualization for your TypeScript code. As you write classes and interfaces, the application automatically generates and updates UML diagrams to help you visualize code structure and relationships.
+The Code Graph UML Visualizer is an IDE-like web application that provides real-time UML class diagram visualization for your TypeScript and Dart code. As you write classes and interfaces, the application automatically generates and updates UML diagrams to help you visualize code structure and relationships.
 
 ### Key Benefits
 
+- **Multi-Language Support**: Visualize TypeScript and Dart code in the same project
 - **Real-time Visualization**: See your code structure as UML diagrams instantly
 - **Bidirectional Navigation**: Click on diagram nodes to jump to code, or navigate via file tree
 - **Relationship Visualization**: Understand inheritance, implementation, and associations at a glance
@@ -53,6 +55,55 @@ The TypeScript UML Graph Visualizer is an IDE-like web application that provides
 - **Screen Resolution**: Minimum 1280px width recommended
 - **Storage**: ~5MB local storage for average projects
 - **Internet**: Not required after initial load (works offline)
+
+---
+
+## Supported Languages
+
+The application supports the following programming languages for UML visualization:
+
+### TypeScript (.ts, .tsx)
+
+Full support for TypeScript classes, interfaces, and their relationships:
+- Classes with properties and methods
+- Interfaces with method signatures
+- Access modifiers (public, private, protected)
+- Inheritance (extends) and implementation (implements)
+- Generic types and constraints
+- Static members and readonly properties
+
+### Dart (.dart)
+
+Full support for Dart classes, abstract classes, and mixins:
+- Classes with properties and methods
+- Abstract classes (displayed as interfaces in UML)
+- Mixins (displayed as interfaces with «mixin» stereotype)
+- Access modifiers (public by default, private with `_` prefix)
+- Inheritance (extends), implementation (implements), and mixins (with)
+- Named constructors and factory constructors
+- Getters and setters
+- Static and final/const members
+- Generic types with constraints
+
+### Unsupported Languages
+
+Files with unsupported extensions (e.g., `.js`, `.py`, `.json`, `.md`) are marked with a warning icon (⚠️) in the file tree. These files:
+- Can still be created and edited
+- Will not generate UML diagrams
+- Are useful for documentation or configuration
+
+### Creating Language-Specific Files
+
+1. Click the **"Add File"** button
+2. Select **"Add File"** (not class/interface templates)
+3. Enter the filename **with extension**:
+   - TypeScript: `MyClass.ts` or `Component.tsx`
+   - Dart: `my_class.dart`
+4. The file will be created and ready for editing
+
+**Tip**: Use the appropriate naming convention for each language:
+- TypeScript: PascalCase (`MyClassName.ts`)
+- Dart: snake_case (`my_class_name.dart`)
 
 ---
 
@@ -123,8 +174,14 @@ The application is divided into three main panels:
 - Must start with a letter
 - Can contain letters, numbers, underscores
 - No spaces or special characters
-- File extension `.ts` is added automatically
+- **Include the file extension** (e.g., `.ts`, `.tsx`, `.dart`)
+- If no extension provided, `.ts` is added by default
 - Names must be unique within the project
+
+**Supported Extensions**:
+- `.ts` - TypeScript
+- `.tsx` - TypeScript React
+- `.dart` - Dart
 
 ### Class Template
 
@@ -371,6 +428,70 @@ export class UserRepository implements IRepository<User> {
 export class Order {
   private customer: Customer;  // Association
   private items: OrderItem[];  // Association (array)
+}
+```
+
+### Dart Code Examples
+
+#### Classes
+```dart
+class Person {
+  // Properties
+  String _name;        // private (underscore prefix)
+  int age;             // public (default)
+  final String id;     // readonly
+  
+  // Constructor
+  Person(this._name, this.age, this.id);
+  
+  // Named constructor
+  Person.guest() : _name = 'Guest', age = 0, id = 'guest';
+  
+  // Getter
+  String get name => _name;
+  
+  // Setter
+  set name(String value) => _name = value;
+  
+  // Method
+  void greet() {
+    print('Hello, I am $_name');
+  }
+}
+```
+
+#### Abstract Classes (Displayed as Interfaces)
+```dart
+abstract class Repository<T> {
+  T? findById(String id);
+  void save(T entity);
+  bool delete(String id);
+}
+```
+
+#### Mixins
+```dart
+mixin Swimmer {
+  void swim() {
+    print('Swimming...');
+  }
+}
+
+class Duck extends Bird with Swimmer {
+  // Duck inherits from Bird and mixes in Swimmer
+}
+```
+
+#### Inheritance and Implementation
+```dart
+class Student extends Person implements Comparable<Student> {
+  final String studentId;
+  
+  Student(String name, int age, this.studentId) 
+      : super(name, age, studentId);
+  
+  @override
+  int compareTo(Student other) => studentId.compareTo(other.studentId);
 }
 ```
 
@@ -748,6 +869,15 @@ Check browser console for performance metrics.
 ---
 
 ## Version History
+
+### Version 1.4.0 (November 2025)
+- **NEW**: Dart language support - parse and visualize `.dart` files
+- **NEW**: Abstract classes and mixins from Dart displayed as interfaces
+- **NEW**: Dart-specific features: named constructors, getters/setters, factory constructors
+- **NEW**: File extension in file names - create `.ts`, `.tsx`, or `.dart` files
+- **NEW**: Warning icon for unsupported file types in file tree
+- **IMPROVED**: Parser registry architecture supports multiple languages
+- **IMPROVED**: Language detection based on file extension
 
 ### Version 1.3.0 (November 2025)
 - **NEW**: Drag and drop file organization - move files between folders

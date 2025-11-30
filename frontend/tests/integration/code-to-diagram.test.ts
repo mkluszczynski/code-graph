@@ -10,7 +10,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { generateDiagram } from "../../src/diagram-visualization/DiagramGenerator";
 import { ProjectManager } from "../../src/project-management/ProjectManager";
 import { useStore } from "../../src/shared/store";
-import { parse } from "../../src/typescript-parser/TypeScriptParser";
+import { parse } from "../../src/parsers/typescript/TypeScriptParser";
 import type {
     ClassDefinition,
     InterfaceDefinition,

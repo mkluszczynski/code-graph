@@ -143,3 +143,74 @@ export function normalizeFileName(name: string): string {
   }
   return trimmed;
 }
+
+/**
+ * Validates that a filename includes a valid file extension.
+ *
+ * This function checks that a filename has a proper extension format,
+ * but does NOT check if the extension is supported for diagram generation.
+ * Use isSupportedLanguage() from parsers/utils to check support.
+ *
+ * Valid: "Person.ts", "file.test.ts", "script.py", "data.json"
+ * Invalid: "Person" (no extension), ".ts" (no name), "file." (empty extension)
+ *
+ * @param name - Filename to validate
+ * @returns FileValidationResult with isValid and optional error
+ *
+ * @example
+ * validateFileExtension('Person.ts')     // { isValid: true }
+ * validateFileExtension('Person')        // { isValid: false, error: '...' }
+ * validateFileExtension('.ts')           // { isValid: false, error: '...' }
+ */
+export function validateFileExtension(name: string): FileValidationResult {
+  const trimmed = name.trim();
+
+  // Check for empty or whitespace-only names
+  if (!trimmed || trimmed.length === 0) {
+    return {
+      isValid: false,
+      error: "File name cannot be empty",
+    };
+  }
+
+  // Find the last dot in the filename
+  const lastDotIndex = trimmed.lastIndexOf(".");
+
+  // No dot found - no extension
+  if (lastDotIndex === -1) {
+    return {
+      isValid: false,
+      error: "File name must include an extension (e.g., .ts, .dart)",
+    };
+  }
+
+  // Dot is at the start - extension-only filename (e.g., ".ts")
+  if (lastDotIndex === 0) {
+    return {
+      isValid: false,
+      error: "File name cannot start with a dot without a name before it",
+    };
+  }
+
+  // Dot is at the end - empty extension (e.g., "file.")
+  if (lastDotIndex === trimmed.length - 1) {
+    return {
+      isValid: false,
+      error: "File extension cannot be empty",
+    };
+  }
+
+  // Check for multiple trailing dots (e.g., "file..")
+  const extension = trimmed.substring(lastDotIndex + 1);
+  if (extension.includes(".") && extension.endsWith(".")) {
+    return {
+      isValid: false,
+      error: "File extension cannot end with a dot",
+    };
+  }
+
+  // Valid extension format
+  return {
+    isValid: true,
+  };
+}

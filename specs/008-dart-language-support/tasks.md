@@ -25,15 +25,15 @@ Paths follow plan.md structure:
 
 **Purpose**: Project initialization, new dependencies, unified parsers module creation
 
-- [ ] T001 Install web-tree-sitter dependency via `pnpm add web-tree-sitter`
-- [ ] T002 [P] Create `frontend/public/wasm/` directory for WASM files
-- [ ] T003 [P] Add postinstall script to package.json to copy tree-sitter.wasm to public/wasm/
-- [ ] T004 [P] Update vite.config.ts to handle WASM (exclude fs, configure optimizeDeps)
-- [ ] T005 Add SupportedLanguage type to `frontend/src/shared/types/index.ts`
+- [X] T001 Install web-tree-sitter dependency via `pnpm add web-tree-sitter`
+- [X] T002 [P] Create `frontend/public/wasm/` directory for WASM files
+- [X] T003 [P] Add postinstall script to package.json to copy tree-sitter.wasm to public/wasm/
+- [X] T004 [P] Update vite.config.ts to handle WASM (exclude fs, configure optimizeDeps)
+- [X] T005 Add SupportedLanguage type to `frontend/src/shared/types/index.ts`
 
 ---
 
-## Phase 2: Foundational (Blocking Prerequisites)
+## Phase 2: Foundational (Blocking Prerequisites) ✅ COMPLETE
 
 **Purpose**: Create unified parsers module, migrate TypeScript parser, setup parser infrastructure
 
@@ -41,41 +41,41 @@ Paths follow plan.md structure:
 
 ### 2.1: Parser Abstraction Layer
 
-- [ ] T006 Create LanguageParser abstract base class in `frontend/src/parsers/LanguageParser.ts`
-- [ ] T007 [P] Create ParserRegistry class in `frontend/src/parsers/ParserRegistry.ts`
-- [ ] T008 [P] Create parser module index with exports in `frontend/src/parsers/index.ts`
+- [X] T006 Create LanguageParser abstract base class in `frontend/src/parsers/LanguageParser.ts`
+- [X] T007 [P] Create ParserRegistry class in `frontend/src/parsers/ParserRegistry.ts`
+- [X] T008 [P] Create parser module index with exports in `frontend/src/parsers/index.ts`
 
 ### 2.2: TypeScript Parser Migration
 
-- [ ] T009 Move TypeScriptParser to `frontend/src/parsers/typescript/TypeScriptParser.ts` (extend LanguageParser)
-- [ ] T010 [P] Move ClassExtractor to `frontend/src/parsers/typescript/ClassExtractor.ts`
-- [ ] T011 [P] Move InterfaceExtractor to `frontend/src/parsers/typescript/InterfaceExtractor.ts`
-- [ ] T012 [P] Move PropertyExtractor to `frontend/src/parsers/typescript/PropertyExtractor.ts`
-- [ ] T013 [P] Move MethodExtractor to `frontend/src/parsers/typescript/MethodExtractor.ts`
-- [ ] T014 [P] Move RelationshipAnalyzer to `frontend/src/parsers/typescript/RelationshipAnalyzer.ts`
-- [ ] T015 [P] Create typescript module index in `frontend/src/parsers/typescript/index.ts`
+- [X] T009 Move TypeScriptParser to `frontend/src/parsers/typescript/TypeScriptParser.ts` (extend LanguageParser)
+- [X] T010 [P] Move ClassExtractor to `frontend/src/parsers/typescript/ClassExtractor.ts`
+- [X] T011 [P] Move InterfaceExtractor to `frontend/src/parsers/typescript/InterfaceExtractor.ts`
+- [X] T012 [P] Move PropertyExtractor to `frontend/src/parsers/typescript/PropertyExtractor.ts`
+- [X] T013 [P] Move MethodExtractor to `frontend/src/parsers/typescript/MethodExtractor.ts`
+- [X] T014 [P] Move RelationshipAnalyzer to `frontend/src/parsers/typescript/RelationshipAnalyzer.ts`
+- [X] T015 [P] Create typescript module index in `frontend/src/parsers/typescript/index.ts`
 
 ### 2.3: Update Imports Across Codebase
 
-- [ ] T016 Update imports in `frontend/src/code-editor/useEditorController.ts` to use new parsers module
-- [ ] T017 [P] Update imports in `frontend/src/diagram-visualization/ImportResolver.ts`
-- [ ] T018 [P] Update test imports in `frontend/tests/` to use new parsers module
+- [X] T016 Update imports in `frontend/src/code-editor/useEditorController.ts` to use new parsers module
+- [X] T017 [P] Update imports in `frontend/src/diagram-visualization/ImportResolver.ts`
+- [X] T018 [P] Update test imports in `frontend/tests/` to use new parsers module
 
 ### 2.4: Language Detection Utilities
 
-- [ ] T019 Create detectLanguage() and isSupportedLanguage() utilities in `frontend/src/parsers/utils.ts`
-- [ ] T020 Register TypeScriptParser in parserRegistry in `frontend/src/parsers/index.ts`
+- [X] T019 Create detectLanguage() and isSupportedLanguage() utilities in `frontend/src/parsers/utils.ts`
+- [X] T020 Register TypeScriptParser in parserRegistry in `frontend/src/parsers/index.ts`
 
 ### 2.5: Regression Testing
 
-- [ ] T021 Run existing TypeScript parser tests to verify migration (regression check)
-- [ ] T022 Remove deprecated `frontend/src/typescript-parser/` directory after migration verified
+- [X] T021 Run existing TypeScript parser tests to verify migration (regression check)
+- [X] T022 Remove deprecated `frontend/src/typescript-parser/` directory after migration verified
 
-**Checkpoint**: Parser infrastructure ready - TypeScript parsing works via new unified module
+**Checkpoint**: Parser infrastructure ready - TypeScript parsing works via new unified module ✅
 
 ---
 
-## Phase 3: User Story 1 - Create File with Custom Extension (Priority: P1) 🎯 MVP
+## Phase 3: User Story 1 - Create File with Custom Extension (Priority: P1) 🎯 MVP ✅ COMPLETE
 
 **Goal**: Allow users to specify file extension when creating files, enabling multi-language support
 
@@ -85,21 +85,21 @@ Paths follow plan.md structure:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T023 [P] [US1] Contract test for validateFileExtension() in `frontend/tests/unit/file-tree/FileExtensionValidation.test.ts`
-- [ ] T024 [P] [US1] Contract test for extension validation edge cases (VE-001 to VE-007 from contracts)
+- [X] T023 [P] [US1] Contract test for validateFileExtension() in `frontend/tests/unit/file-tree/FileExtensionValidation.test.ts`
+- [X] T024 [P] [US1] Contract test for extension validation edge cases (VE-001 to VE-007 from contracts)
 
 ### Integration Tests for User Story 1
 
-- [ ] T025 [P] [US1] Integration test for CreateDialog extension validation in `frontend/tests/integration/file-tree/FileCreationExtension.test.tsx`
+- [X] T025 [P] [US1] Integration test for CreateDialog extension validation in `frontend/tests/integration/file-tree/FileCreationExtension.test.tsx`
 
 ### Implementation for User Story 1
 
-- [ ] T026 [US1] Add validateFileExtension() function to `frontend/src/file-tree/FileOperations.ts`
-- [ ] T027 [US1] Modify CreateDialog to require file extension (remove auto-.ts logic) in `frontend/src/components/CreateDialog.tsx`
-- [ ] T028 [US1] Add extension validation error messages to CreateDialog
-- [ ] T029 [US1] Update file creation flow to accept user-specified extension
+- [X] T026 [US1] Add validateFileExtension() function to `frontend/src/file-tree/FileOperations.ts`
+- [X] T027 [US1] Modify CreateDialog to require file extension (remove auto-.ts logic) in `frontend/src/components/CreateDialog.tsx`
+- [X] T028 [US1] Add extension validation error messages to CreateDialog
+- [X] T029 [US1] Update file creation flow to accept user-specified extension
 
-**Checkpoint**: Users can create files with any extension (.ts, .dart, .py, etc.)
+**Checkpoint**: Users can create files with any extension (.ts, .dart, .py, etc.) ✅
 
 ---
 
@@ -113,38 +113,38 @@ Paths follow plan.md structure:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T030 [P] [US2] Contract test for DartParser.parse() in `frontend/tests/unit/parsers/dart/DartParser.test.ts` (DP-001 to DP-010)
-- [ ] T031 [P] [US2] Contract test for ClassExtractor in `frontend/tests/unit/parsers/dart/ClassExtractor.test.ts` (CE-001 to CE-005)
-- [ ] T032 [P] [US2] Contract test for PropertyExtractor in `frontend/tests/unit/parsers/dart/PropertyExtractor.test.ts` (PE-001 to PE-008)
-- [ ] T033 [P] [US2] Contract test for MethodExtractor in `frontend/tests/unit/parsers/dart/MethodExtractor.test.ts` (ME-001 to ME-008)
-- [ ] T034 [P] [US2] Contract test for RelationshipAnalyzer in `frontend/tests/unit/parsers/dart/RelationshipAnalyzer.test.ts` (RA-001 to RA-005)
+- [X] T030 [P] [US2] Contract test for DartParser.parse() in `frontend/tests/unit/parsers/dart/DartParser.test.ts` (DP-001 to DP-010)
+- [X] T031 [P] [US2] Contract test for ClassExtractor in `frontend/tests/unit/parsers/dart/ClassExtractor.test.ts` (CE-001 to CE-005)
+- [X] T032 [P] [US2] Contract test for PropertyExtractor in `frontend/tests/unit/parsers/dart/PropertyExtractor.test.ts` (PE-001 to PE-008)
+- [X] T033 [P] [US2] Contract test for MethodExtractor in `frontend/tests/unit/parsers/dart/MethodExtractor.test.ts` (ME-001 to ME-008)
+- [X] T034 [P] [US2] Contract test for RelationshipAnalyzer in `frontend/tests/unit/parsers/dart/RelationshipAnalyzer.test.ts` (RA-001 to RA-005)
 
 ### Integration Tests for User Story 2
 
-- [ ] T035 [P] [US2] Integration test for Dart parser + DiagramGenerator in `frontend/tests/integration/parsers/DartDiagramGeneration.test.tsx`
-- [ ] T036 [P] [US2] Integration test for mixed TypeScript/Dart project view in `frontend/tests/integration/parsers/MixedLanguageProject.test.tsx`
+- [X] T035 [P] [US2] Integration test for Dart parser + DiagramGenerator in `frontend/tests/integration/parsers/DartDiagramGeneration.test.tsx`
+- [X] T036 [P] [US2] Integration test for mixed TypeScript/Dart project view in `frontend/tests/integration/parsers/MixedLanguageProject.test.tsx`
 
 ### Implementation for User Story 2
 
 #### 4.1: WASM Setup
 
-- [ ] T037 [US2] Download/build tree-sitter-dart.wasm and place in `frontend/public/wasm/`
-- [ ] T038 [US2] Create WASM loader utility for Dart parser initialization
+- [X] T037 [US2] Download/build tree-sitter-dart.wasm and place in `frontend/public/wasm/`
+- [X] T038 [US2] Create WASM loader utility for Dart parser initialization
 
 #### 4.2: Dart Parser Core
 
-- [ ] T039 [US2] Create DartParser class (extends LanguageParser) in `frontend/src/parsers/dart/DartParser.ts`
-- [ ] T040 [P] [US2] Implement Dart ClassExtractor in `frontend/src/parsers/dart/ClassExtractor.ts`
-- [ ] T041 [P] [US2] Implement Dart InterfaceExtractor in `frontend/src/parsers/dart/InterfaceExtractor.ts`
-- [ ] T042 [P] [US2] Implement Dart PropertyExtractor in `frontend/src/parsers/dart/PropertyExtractor.ts`
-- [ ] T043 [P] [US2] Implement Dart MethodExtractor in `frontend/src/parsers/dart/MethodExtractor.ts`
-- [ ] T044 [US2] Implement Dart RelationshipAnalyzer in `frontend/src/parsers/dart/RelationshipAnalyzer.ts`
-- [ ] T045 [US2] Create dart module index in `frontend/src/parsers/dart/index.ts`
+- [X] T039 [US2] Create DartParser class (extends LanguageParser) in `frontend/src/parsers/dart/DartParser.ts`
+- [X] T040 [P] [US2] Implement Dart ClassExtractor in `frontend/src/parsers/dart/ClassExtractor.ts`
+- [X] T041 [P] [US2] Implement Dart InterfaceExtractor in `frontend/src/parsers/dart/InterfaceExtractor.ts`
+- [X] T042 [P] [US2] Implement Dart PropertyExtractor in `frontend/src/parsers/dart/PropertyExtractor.ts`
+- [X] T043 [P] [US2] Implement Dart MethodExtractor in `frontend/src/parsers/dart/MethodExtractor.ts`
+- [X] T044 [US2] Implement Dart RelationshipAnalyzer in `frontend/src/parsers/dart/RelationshipAnalyzer.ts`
+- [X] T045 [US2] Create dart module index in `frontend/src/parsers/dart/index.ts`
 
 #### 4.3: Parser Registration & Integration
 
-- [ ] T046 [US2] Register DartParser in parserRegistry in `frontend/src/parsers/index.ts`
-- [ ] T047 [US2] Update useEditorController to use parserRegistry.parse() for language routing
+- [X] T046 [US2] Register DartParser in parserRegistry in `frontend/src/parsers/index.ts`
+- [X] T047 [US2] Update useEditorController to use parserRegistry.parse() for language routing
 
 **Checkpoint**: Dart files display correct UML diagrams with classes, properties, methods, and relationships
 

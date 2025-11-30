@@ -11,6 +11,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    // Exclude web-tree-sitter from optimization to prevent WASM issues
+    exclude: ['web-tree-sitter'],
+    // Exclude TypeScript from optimization (uses fs internally)
+    include: [],
+  },
   build: {
     // Optimize chunk splitting for better caching (T109)
     rollupOptions: {

@@ -10,12 +10,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useEditorController } from '../useEditorController';
 import { useStore } from '../../shared/store';
-import type { ProjectFile } from '../../shared/types';
-import * as TypeScriptParser from '../../typescript-parser/TypeScriptParser';
+import type { ProjectFile, ParseResult } from '../../shared/types';
+import { parserRegistry } from '../../parsers';
 import * as DiagramGenerator from '../../diagram-visualization/DiagramGenerator';
 
-// Mock the parser and diagram generator
-vi.mock('../../typescript-parser/TypeScriptParser');
+// Mock the diagram generator
 vi.mock('../../diagram-visualization/DiagramGenerator');
 
 const createTestFile = (id: string, name: string, content: string): ProjectFile => ({
@@ -27,7 +26,17 @@ const createTestFile = (id: string, name: string, content: string): ProjectFile 
     isActive: false,
 });
 
+const mockParseResult: ParseResult = {
+    success: true,
+    errors: [],
+    classes: [],
+    interfaces: [],
+    relationships: [],
+};
+
 describe('useEditorController - Debouncing (T089)', () => {
+    let parseSpy: ReturnType<typeof vi.spyOn>;
+
     beforeEach(() => {
         // Reset store
         useStore.setState({
@@ -42,14 +51,8 @@ describe('useEditorController - Debouncing (T089)', () => {
             edges: [],
         });
 
-        // Setup default mocks
-        vi.mocked(TypeScriptParser.parse).mockReturnValue({
-            success: true,
-            errors: [],
-            classes: [],
-            interfaces: [],
-            relationships: [],
-        });
+        // Spy on parserRegistry.parse
+        parseSpy = vi.spyOn(parserRegistry, 'parse').mockResolvedValue(mockParseResult);
 
         vi.mocked(DiagramGenerator.generateDiagram).mockReturnValue({
             nodes: [],
@@ -63,10 +66,11 @@ describe('useEditorController - Debouncing (T089)', () => {
 
     afterEach(() => {
         vi.clearAllMocks();
+        vi.restoreAllMocks();
         vi.useRealTimers();
     });
 
-    it('should debounce rapid changes and only parse once after 500ms delay', () => {
+    it('should debounce rapid changes and only parse once after 500ms delay', async () => {
         const testFile = createTestFile('test-1', 'Test.ts', 'class Test {}');
         useStore.setState({
             files: [testFile],
@@ -75,8 +79,11 @@ describe('useEditorController - Debouncing (T089)', () => {
 
         const { result } = renderHook(() => useEditorController());
 
+        // Wait for initial parse to complete
+        await vi.runAllTimersAsync();
+
         // Clear mocks after initial load
-        vi.clearAllMocks();
+        parseSpy.mockClear();
 
         // Simulate rapid typing: 5 changes
         act(() => {
@@ -88,27 +95,28 @@ describe('useEditorController - Debouncing (T089)', () => {
         });
 
         // Parse should not be called yet
-        expect(TypeScriptParser.parse).not.toHaveBeenCalled();
+        expect(parseSpy).not.toHaveBeenCalled();
 
         // Advance timers by 400ms (less than 500ms)
-        act(() => {
+        await act(async () => {
             vi.advanceTimersByTime(400);
         });
 
         // Still not called
-        expect(TypeScriptParser.parse).not.toHaveBeenCalled();
+        expect(parseSpy).not.toHaveBeenCalled();
 
         // Advance to complete debounce (100ms more)
-        act(() => {
+        await act(async () => {
             vi.advanceTimersByTime(100);
+            await vi.runAllTimersAsync();
         });
 
         // Now parse should be called exactly once with final value
-        expect(TypeScriptParser.parse).toHaveBeenCalledTimes(1);
-        expect(TypeScriptParser.parse).toHaveBeenCalledWith('class Test { abc: string }', 'Test.ts', 'test-1');
+        expect(parseSpy).toHaveBeenCalledTimes(1);
+        expect(parseSpy).toHaveBeenCalledWith('class Test { abc: string }', 'Test.ts', 'test-1');
     });
 
-    it('should reset debounce timer on each new change', () => {
+    it('should reset debounce timer on each new change', async () => {
         const testFile = createTestFile('test-2', 'Test.ts', 'class Test {}');
         useStore.setState({
             files: [testFile],
@@ -116,7 +124,8 @@ describe('useEditorController - Debouncing (T089)', () => {
         });
 
         const { result } = renderHook(() => useEditorController());
-        vi.clearAllMocks();
+        await vi.runAllTimersAsync();
+        parseSpy.mockClear();
 
         // First change
         act(() => {
@@ -124,7 +133,7 @@ describe('useEditorController - Debouncing (T089)', () => {
         });
 
         // Wait 400ms
-        act(() => {
+        await act(async () => {
             vi.advanceTimersByTime(400);
         });
 
@@ -134,29 +143,25 @@ describe('useEditorController - Debouncing (T089)', () => {
         });
 
         // Wait 400ms more (800ms total, but only 400ms since last change)
-        act(() => {
+        await act(async () => {
             vi.advanceTimersByTime(400);
         });
 
         // Should not be called yet
-        expect(TypeScriptParser.parse).not.toHaveBeenCalled();
+        expect(parseSpy).not.toHaveBeenCalled();
 
-        // Wait final 100ms
-        act(() => {
+        // Wait final 100ms to trigger debounce
+        await act(async () => {
             vi.advanceTimersByTime(100);
-        });
-
-        // Wait another 500ms to trigger debounce
-        act(() => {
-            vi.advanceTimersByTime(500);
+            await vi.runAllTimersAsync();
         });
 
         // Now called with second value
-        expect(TypeScriptParser.parse).toHaveBeenCalledTimes(1);
-        expect(TypeScriptParser.parse).toHaveBeenCalledWith('class B {}', 'Test.ts', 'test-2');
+        expect(parseSpy).toHaveBeenCalledTimes(1);
+        expect(parseSpy).toHaveBeenCalledWith('class B {}', 'Test.ts', 'test-2');
     });
 
-    it('should update isDirty flag immediately without waiting for debounce', () => {
+    it('should update isDirty flag immediately without waiting for debounce', async () => {
         const testFile = createTestFile('test-3', 'Test.ts', 'class Original {}');
         useStore.setState({
             files: [testFile],
@@ -165,8 +170,9 @@ describe('useEditorController - Debouncing (T089)', () => {
 
         const { result } = renderHook(() => useEditorController());
 
-        // Clear mocks after initial load (which triggers a parse)
-        vi.clearAllMocks();
+        // Wait for initial load
+        await vi.runAllTimersAsync();
+        parseSpy.mockClear();
 
         // Initial state not dirty
         expect(useStore.getState().isDirty).toBe(false);
@@ -180,10 +186,10 @@ describe('useEditorController - Debouncing (T089)', () => {
         expect(useStore.getState().isDirty).toBe(true);
 
         // Parse should not be called yet (still debouncing)
-        expect(TypeScriptParser.parse).not.toHaveBeenCalled();
+        expect(parseSpy).not.toHaveBeenCalled();
     });
 
-    it('should mark isDirty as false when content matches original', () => {
+    it('should mark isDirty as false when content matches original', async () => {
         const testFile = createTestFile('test-4', 'Test.ts', 'class Original {}');
         useStore.setState({
             files: [testFile],
@@ -191,6 +197,7 @@ describe('useEditorController - Debouncing (T089)', () => {
         });
 
         const { result } = renderHook(() => useEditorController());
+        await vi.runAllTimersAsync();
 
         // Make a change
         act(() => {
@@ -207,15 +214,18 @@ describe('useEditorController - Debouncing (T089)', () => {
         expect(useStore.getState().isDirty).toBe(false);
     });
 
-    it('should handle parse errors during debounced parsing', () => {
+    it('should handle parse errors during debounced parsing', async () => {
         const testFile = createTestFile('test-5', 'Test.ts', 'class Test {}');
         useStore.setState({
             files: [testFile],
             activeFileId: testFile.id,
         });
 
+        const { result } = renderHook(() => useEditorController());
+        await vi.runAllTimersAsync();
+
         // Mock parser to return error
-        vi.mocked(TypeScriptParser.parse).mockReturnValue({
+        parseSpy.mockResolvedValue({
             success: false,
             errors: [{
                 line: 1,
@@ -227,9 +237,7 @@ describe('useEditorController - Debouncing (T089)', () => {
             interfaces: [],
             relationships: [],
         });
-
-        const { result } = renderHook(() => useEditorController());
-        vi.clearAllMocks();
+        parseSpy.mockClear();
 
         // Type invalid code
         act(() => {
@@ -237,19 +245,20 @@ describe('useEditorController - Debouncing (T089)', () => {
         });
 
         // Complete debounce
-        act(() => {
+        await act(async () => {
             vi.advanceTimersByTime(500);
+            await vi.runAllTimersAsync();
         });
 
         // Parse should be called and errors should be set
-        expect(TypeScriptParser.parse).toHaveBeenCalledTimes(1);
+        expect(parseSpy).toHaveBeenCalledTimes(1);
         const errors = useStore.getState().parseErrors.get(testFile.id);
         expect(errors).toBeDefined();
         expect(errors?.length).toBe(1);
         expect(errors?.[0].message).toBe('Syntax error');
     });
 
-    it('should handle multiple edit sessions with proper debouncing', () => {
+    it('should handle multiple edit sessions with proper debouncing', async () => {
         const testFile = createTestFile('test-6', 'Test.ts', 'class Test {}');
         useStore.setState({
             files: [testFile],
@@ -257,24 +266,26 @@ describe('useEditorController - Debouncing (T089)', () => {
         });
 
         const { result } = renderHook(() => useEditorController());
-        vi.clearAllMocks();
+        await vi.runAllTimersAsync();
+        parseSpy.mockClear();
 
         // First edit session
         act(() => {
             result.current.handleEditorChange('class A { x: string }');
         });
 
-        act(() => {
+        await act(async () => {
             vi.advanceTimersByTime(500);
+            await vi.runAllTimersAsync();
         });
 
-        expect(TypeScriptParser.parse).toHaveBeenCalledTimes(1);
-        expect(TypeScriptParser.parse).toHaveBeenCalledWith('class A { x: string }', 'Test.ts', 'test-6');
+        expect(parseSpy).toHaveBeenCalledTimes(1);
+        expect(parseSpy).toHaveBeenCalledWith('class A { x: string }', 'Test.ts', 'test-6');
 
-        vi.clearAllMocks();
+        parseSpy.mockClear();
 
         // Pause (user stops typing)
-        act(() => {
+        await act(async () => {
             vi.advanceTimersByTime(1000);
         });
 
@@ -283,12 +294,13 @@ describe('useEditorController - Debouncing (T089)', () => {
             result.current.handleEditorChange('class A { x: string; y: number }');
         });
 
-        act(() => {
+        await act(async () => {
             vi.advanceTimersByTime(500);
+            await vi.runAllTimersAsync();
         });
 
         // Parse called again with new value
-        expect(TypeScriptParser.parse).toHaveBeenCalledTimes(1);
-        expect(TypeScriptParser.parse).toHaveBeenCalledWith('class A { x: string; y: number }', 'Test.ts', 'test-6');
+        expect(parseSpy).toHaveBeenCalledTimes(1);
+        expect(parseSpy).toHaveBeenCalledWith('class A { x: string; y: number }', 'Test.ts', 'test-6');
     });
 });

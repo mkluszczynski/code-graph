@@ -108,7 +108,7 @@ describe("Create File Integration", () => {
     });
   });
 
-  it("adds .ts extension when omitted", async () => {
+  it("shows error when file name has no extension", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn().mockResolvedValue(undefined);
 
@@ -130,9 +130,11 @@ describe("Create File Integration", () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      // Should have .ts extension added
-      expect(onSubmit).toHaveBeenCalledWith("helper.ts");
+      // Should show error for missing extension
+      expect(screen.getByRole("alert")).toBeTruthy();
+      expect(screen.getByText(/extension/i)).toBeTruthy();
     });
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it("prevents duplicate file names", async () => {

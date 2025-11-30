@@ -14,12 +14,12 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useStore } from '../../../src/shared/store';
-import { parse } from '../../../src/typescript-parser/TypeScriptParser';
+import { parse } from '../../../src/parsers/typescript/TypeScriptParser';
 import { generateDiagram } from '../../../src/diagram-visualization/DiagramGenerator';
 import type { ProjectFile, ClassDefinition, InterfaceDefinition } from '../../../src/shared/types';
 import { buildDependencyGraph } from '../../../src/diagram-visualization/ImportResolver';
 import { filterEntitiesByScope } from '../../../src/diagram-visualization/EntityFilter';
-import { extractRelationships } from '../../../src/typescript-parser/RelationshipAnalyzer';
+import { extractRelationships } from '../../../src/parsers/typescript/RelationshipAnalyzer';
 
 describe('User Story 2: Cross-File Import Visualization', () => {
     beforeEach(() => {

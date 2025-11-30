@@ -1,10 +1,9 @@
 /**
  * MethodExtractor - Extracts class methods from TypeScript AST
- * Implementation for T059
  */
 
 import ts from 'typescript';
-import type { Method, Parameter, Visibility } from '../shared/types';
+import type { Method, Parameter, Visibility } from '../../shared/types';
 
 /**
  * Extracts all methods from a class declaration.

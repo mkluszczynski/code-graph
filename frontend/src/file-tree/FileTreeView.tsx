@@ -13,7 +13,7 @@
  * Constitutional exception: Complexity justified for tree component.
  */
 
-import { ChevronDown, ChevronRight, File, FilePlus, Folder, Trash2, Edit3, Copy } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronRight, File, FilePlus, Folder, Trash2, Edit3, Copy } from "lucide-react";
 import React, { useCallback, useRef } from "react";
 import { useStore } from "../shared/store";
 import { cn } from "../shared/utils";
@@ -27,6 +27,7 @@ import {
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { getFilesInFolder, getParentPath } from "./FolderOperations";
 import { DragDropManager, type DragItem } from "./DragDropManager";
+import { isSupportedLanguage } from "../parsers/utils";
 import type { FileTreeNode } from "./types";
 
 interface FileTreeViewProps {
@@ -811,6 +812,15 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
                   onClick={() => renamingFileId !== node.id && handleFileClick(node.id)}
                 >
                   <File className="h-4 w-4 shrink-0 text-gray-500" />
+                  {!isSupportedLanguage(node.name) && (
+                    <span
+                      data-testid="unsupported-warning"
+                      aria-label="File type not supported for diagram visualization"
+                      title="File type not supported for diagram visualization"
+                    >
+                      <AlertTriangle className="h-3 w-3 shrink-0 text-amber-500" aria-hidden="true" />
+                    </span>
+                  )}
                   {renamingFileId === node.id ? (
                     <div className="flex-1 flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
                       <input

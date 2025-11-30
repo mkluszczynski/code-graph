@@ -195,7 +195,7 @@ describe("CreateDialog", () => {
       });
     });
 
-    it("normalizes filename with .ts extension when missing", async () => {
+    it("shows error when file name has no extension", async () => {
       const user = userEvent.setup();
       render(<CreateDialog {...defaultProps} type="file" />);
 
@@ -206,8 +206,10 @@ describe("CreateDialog", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(defaultProps.onSubmit).toHaveBeenCalledWith("MyFile.ts");
+        expect(screen.getByRole("alert")).toBeTruthy();
+        expect(screen.getByText(/extension/i)).toBeTruthy();
       });
+      expect(defaultProps.onSubmit).not.toHaveBeenCalled();
     });
 
     it("does not normalize folder names", async () => {

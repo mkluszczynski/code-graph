@@ -1,6 +1,5 @@
 /**
  * InterfaceExtractor - Extracts interface information from TypeScript AST
- * Implementation for T057
  */
 
 import ts from 'typescript';
@@ -9,7 +8,7 @@ import type {
     PropertySignature,
     MethodSignature,
     Parameter,
-} from '../shared/types';
+} from '../../shared/types';
 
 /**
  * Extracts interface information from a TypeScript AST interface declaration node.

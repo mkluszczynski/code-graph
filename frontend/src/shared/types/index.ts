@@ -17,6 +17,11 @@
 // ============================================================================
 
 /**
+ * Supported programming languages for diagram visualization
+ */
+export type SupportedLanguage = 'typescript' | 'dart' | 'unsupported';
+
+/**
  * Represents a TypeScript file in the project
  */
 export interface ProjectFile {

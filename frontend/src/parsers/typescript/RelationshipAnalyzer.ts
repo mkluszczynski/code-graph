@@ -8,7 +8,7 @@
  * - Aggregation (class property is array of another class)
  */
 
-import type { ClassDefinition, InterfaceDefinition, Relationship } from "../shared/types";
+import type { ClassDefinition, InterfaceDefinition, Relationship } from "../../shared/types";
 
 // Built-in TypeScript types that should not create relationships
 const BUILT_IN_TYPES = new Set([

@@ -1,10 +1,9 @@
 /**
  * PropertyExtractor - Extracts class properties from TypeScript AST
- * Implementation for T058
  */
 
 import ts from 'typescript';
-import type { Property, Visibility } from '../shared/types';
+import type { Property, Visibility } from '../../shared/types';
 
 /**
  * Extracts all properties from a class declaration.

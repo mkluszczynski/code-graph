@@ -1,21 +1,43 @@
 /**
  * TypeScriptParser - Parses TypeScript source code and extracts class/interface definitions
- * Implementation for T055-T060
+ * 
+ * Extends LanguageParser abstract base class for integration with ParserRegistry.
+ * Supports TypeScript (.ts) and TSX (.tsx) files.
  */
 
 import ts from 'typescript';
-import type {
-    ParseResult,
-    ParseError,
-} from '../shared/types';
+import type { ParseResult, ParseError, SupportedLanguage } from '../../shared/types';
+import { LanguageParser } from '../LanguageParser';
 import { extractClassInfo } from './ClassExtractor';
 import { extractInterfaceInfo } from './InterfaceExtractor';
 import { extractRelationships } from './RelationshipAnalyzer';
-import { performanceMonitor } from '../shared/utils/performance';
+import { performanceMonitor } from '../../shared/utils/performance';
 
 /**
- * Parses TypeScript source code and extracts class and interface definitions.
- *
+ * TypeScript/TSX parser implementation.
+ * Uses the TypeScript compiler API for accurate parsing.
+ */
+export class TypeScriptParser extends LanguageParser {
+    readonly language: SupportedLanguage = 'typescript';
+    readonly extensions = ['ts', 'tsx'] as const;
+    readonly displayName = 'TypeScript';
+
+    /**
+     * Parses TypeScript source code and extracts class and interface definitions.
+     *
+     * @param sourceCode - TypeScript source code to parse
+     * @param fileName - Name of the file (for TypeScript compiler error reporting)
+     * @param fileId - Unique file identifier (for entity references and editor navigation)
+     * @returns ParseResult containing classes, interfaces, and any errors
+     */
+    parse(sourceCode: string, fileName: string, fileId?: string): ParseResult {
+        return parse(sourceCode, fileName, fileId);
+    }
+}
+
+/**
+ * Standalone parse function for backward compatibility.
+ * 
  * @param sourceCode - TypeScript source code to parse
  * @param fileName - Name of the file (for TypeScript compiler error reporting)
  * @param fileId - Unique file identifier (for entity references and editor navigation)
@@ -43,7 +65,6 @@ export function parse(sourceCode: string, fileName: string, fileId?: string): Pa
 
     try {
         // Create a source file from the source code
-        // Use fileName for TypeScript compiler (for error reporting)
         const sourceFile = ts.createSourceFile(
             fileName,
             sourceCode,
@@ -52,7 +73,9 @@ export function parse(sourceCode: string, fileName: string, fileId?: string): Pa
         );
 
         // Check for syntax errors
-        const syntacticDiagnostics = (sourceFile as ts.SourceFile & { parseDiagnostics?: ts.Diagnostic[] }).parseDiagnostics || [];
+        const syntacticDiagnostics = (sourceFile as ts.SourceFile & {
+            parseDiagnostics?: ts.Diagnostic[]
+        }).parseDiagnostics || [];
 
         if (syntacticDiagnostics.length > 0) {
             result.success = false;
@@ -65,7 +88,9 @@ export function parse(sourceCode: string, fileName: string, fileId?: string): Pa
                     line: line + 1, // Convert to 1-based
                     column: character + 1, // Convert to 1-based
                     message: ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'),
-                    severity: diagnostic.category === ts.DiagnosticCategory.Error ? 'error' : 'warning',
+                    severity: diagnostic.category === ts.DiagnosticCategory.Error
+                        ? 'error'
+                        : 'warning',
                 } as ParseError;
             });
             return result;
@@ -75,32 +100,26 @@ export function parse(sourceCode: string, fileName: string, fileId?: string): Pa
         function visit(node: ts.Node) {
             if (ts.isClassDeclaration(node)) {
                 try {
-                    // Pass fileName for ID generation and entityFileId for fileId property
                     const classInfo = extractClassInfo(node, fileName, entityFileId);
                     result.classes.push(classInfo);
                 } catch (error) {
-                    // Log error but continue parsing other classes
                     console.error('Error extracting class info:', error);
                 }
             } else if (ts.isInterfaceDeclaration(node)) {
                 try {
-                    // Pass fileName for ID generation and entityFileId for fileId property
                     const interfaceInfo = extractInterfaceInfo(node, fileName, entityFileId);
                     result.interfaces.push(interfaceInfo);
                 } catch (error) {
-                    // Log error but continue parsing other interfaces
                     console.error('Error extracting interface info:', error);
                 }
             }
 
-            // Recursively visit child nodes
             ts.forEachChild(node, visit);
         }
 
-        // Start visiting from the source file root
         visit(sourceFile);
 
-        // Extract relationships from parsed classes and interfaces (Phase 7 - US5)
+        // Extract relationships
         result.relationships = extractRelationships(result.classes, result.interfaces);
 
         performanceMonitor.endTimer('TypeScript Parsing', {
@@ -110,7 +129,6 @@ export function parse(sourceCode: string, fileName: string, fileId?: string): Pa
             relationshipCount: result.relationships.length,
         });
     } catch (error) {
-        // Unexpected error during parsing
         result.success = false;
         result.errors.push({
             line: 1,

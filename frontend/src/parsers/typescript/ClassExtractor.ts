@@ -1,10 +1,9 @@
 /**
  * ClassExtractor - Extracts class information from TypeScript AST
- * Implementation for T056
  */
 
 import ts from 'typescript';
-import type { ClassDefinition, Property, Method } from '../shared/types';
+import type { ClassDefinition, Property, Method } from '../../shared/types';
 import { extractProperties } from './PropertyExtractor';
 import { extractMethods } from './MethodExtractor';
 

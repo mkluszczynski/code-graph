@@ -8,7 +8,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import type { CreateItemType } from "../file-tree/types";
-import { validateItemName, normalizeFileName } from "../file-tree/FileOperations";
+import { validateItemName, validateFileExtension } from "../file-tree/FileOperations";
 import {
   Dialog,
   DialogContent,
@@ -83,7 +83,7 @@ export function CreateDialog({
     // Get the trimmed name
     const trimmedName = name.trim();
 
-    // Validate empty input BEFORE normalization
+    // Validate empty input BEFORE other validation
     if (!trimmedName) {
       const itemLabel = type === "file" ? "File" : "Folder";
       setError(`${itemLabel} name cannot be empty`);
@@ -91,10 +91,20 @@ export function CreateDialog({
       return;
     }
 
-    // Normalize for files (add .ts extension if missing)
-    const finalName = type === "file" ? normalizeFileName(trimmedName) : trimmedName;
+    // For files: validate extension is present (no auto-adding .ts)
+    if (type === "file") {
+      const extensionValidation = validateFileExtension(trimmedName);
+      if (!extensionValidation.isValid) {
+        setError(extensionValidation.error || "Invalid file extension");
+        inputRef.current?.focus();
+        return;
+      }
+    }
 
-    // Validate the final name for other rules
+    // Use trimmed name directly (no normalization)
+    const finalName = trimmedName;
+
+    // Validate the final name for other rules (invalid characters, length, etc.)
     const validation = validateItemName(finalName, type);
     if (!validation.isValid) {
       setError(validation.error || "Invalid name");
@@ -142,7 +152,7 @@ export function CreateDialog({
 
   const title = type === "file" ? "New File" : "New Folder";
   const description = `The ${type} will be created in ${parentPath}`;
-  const placeholder = type === "file" ? "Enter file name" : "Enter folder name";
+  const placeholder = type === "file" ? "e.g., MyClass.ts or Person.dart" : "Enter folder name";
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

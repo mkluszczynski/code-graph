@@ -21,6 +21,7 @@ const createTestFile = (id: string, name: string, content: string): ProjectFile 
     id,
     name,
     path: `/${name}`,
+    parentPath: "/",
     content,
     lastModified: Date.now(),
     isActive: false,

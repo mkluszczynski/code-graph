@@ -246,6 +246,7 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
         id: crypto.randomUUID(),
         name: newName,
         path: newPath,
+        parentPath: directory || "/",
         content: file.content,
         lastModified: Date.now(),
         isActive: false,
@@ -663,7 +664,7 @@ const createFileSlice: StateSliceCreator<FileSlice> = (set, get) => ({
 
       // Persist folder entries to IndexedDB
       for (const folder of newFolders) {
-        await projectManager.createFolder(folder);
+        await projectManager.createFolder(folder.name, folder.parentPath);
       }
 
       // Add new files and folders to store

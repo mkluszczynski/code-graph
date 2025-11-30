@@ -29,8 +29,8 @@ function App() {
 
   // Handle file creation (class/interface)
   const {
-    handleCreateClass,
-    handleCreateInterface,
+    handleCreateClass: _handleCreateClass,
+    handleCreateInterface: _handleCreateInterface,
     handleNewFileDialog,
     isCreatingFile,
   } = useFileCreation(createFile);

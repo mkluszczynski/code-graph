@@ -16,6 +16,9 @@ RUN npm install -g pnpm@10
 # Copy package files for dependency installation
 COPY package.json pnpm-lock.yaml ./
 
+# Create public/wasm directory for postinstall script (copies WASM files)
+RUN mkdir -p public/wasm
+
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 

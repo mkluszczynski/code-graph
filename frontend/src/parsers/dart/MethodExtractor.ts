@@ -141,6 +141,7 @@ function extractMethodsFromMethodSignature(node: TreeSitterNode, className: stri
 function extractMethodFromFunctionSignature(node: TreeSitterNode, isStatic: boolean): Method | null {
     let name = '';
     let returnType = 'void';
+    let typeArguments = ''; // Store generic type arguments separately
     let isAsync = false;
     const parameters: Parameter[] = [];
 
@@ -158,6 +159,10 @@ function extractMethodFromFunctionSignature(node: TreeSitterNode, isStatic: bool
             case 'inferred_type': // 'var' or 'dynamic'
                 returnType = child.text;
                 break;
+            case 'type_arguments':
+                // Capture generic type arguments like <List<Quest>>
+                typeArguments = child.text;
+                break;
             case 'function_type':
             case 'generic_type':
                 returnType = child.text;
@@ -170,6 +175,11 @@ function extractMethodFromFunctionSignature(node: TreeSitterNode, isStatic: bool
                 parameters.push(...extractParameters(child));
                 break;
         }
+    }
+
+    // Combine type with type arguments if present (e.g., Future + <List<Quest>> = Future<List<Quest>>)
+    if (typeArguments) {
+        returnType = returnType + typeArguments;
     }
 
     if (!name) {
@@ -225,6 +235,7 @@ function extractFactoryConstructor(node: TreeSitterNode, className: string): Met
 function extractMethodFromSignature(node: TreeSitterNode): Method | null {
     let name = '';
     let returnType = 'void';
+    let typeArguments = ''; // Store generic type arguments separately
     let isStatic = false;
     let isAbstract = false;
     let isAsync = false;
@@ -249,6 +260,10 @@ function extractMethodFromSignature(node: TreeSitterNode): Method | null {
             case 'void_type':
                 returnType = child.text;
                 break;
+            case 'type_arguments':
+                // Capture generic type arguments like <List<Quest>>
+                typeArguments = child.text;
+                break;
             case 'function_type':
             case 'generic_type':
                 returnType = child.text;
@@ -260,6 +275,11 @@ function extractMethodFromSignature(node: TreeSitterNode): Method | null {
                 parameters.push(...extractParameters(child));
                 break;
         }
+    }
+
+    // Combine type with type arguments if present
+    if (typeArguments) {
+        returnType = returnType + typeArguments;
     }
 
     if (!name) {
@@ -316,6 +336,7 @@ function extractConstructor(node: TreeSitterNode, className: string): Method | n
 function extractGetter(node: TreeSitterNode): Method | null {
     let name = '';
     let returnType = 'dynamic';
+    let typeArguments = ''; // Store generic type arguments separately
 
     for (let i = 0; i < node.childCount; i++) {
         const child = node.child(i);
@@ -328,10 +349,19 @@ function extractGetter(node: TreeSitterNode): Method | null {
             case 'generic_type':
                 returnType = child.text;
                 break;
+            case 'type_arguments':
+                // Capture generic type arguments
+                typeArguments = child.text;
+                break;
             case 'identifier':
                 name = child.text;
                 break;
         }
+    }
+
+    // Combine type with type arguments if present
+    if (typeArguments) {
+        returnType = returnType + typeArguments;
     }
 
     if (!name) {

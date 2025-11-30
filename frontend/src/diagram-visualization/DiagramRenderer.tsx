@@ -36,6 +36,7 @@ import { nodeTypes } from "./NodeRenderer";
 import { InheritanceEdge } from "./edges/InheritanceEdge";
 import { ImplementationEdge } from "./edges/ImplementationEdge";
 import { AssociationEdge } from "./edges/AssociationEdge";
+import { DependencyEdge } from "./edges/DependencyEdge";
 import { computeDiagramDiff, hasSignificantChanges, mergeNodesPreservingPositions } from "./DiagramDiffer";
 import { ExportButton } from "../components/ExportButton";
 import { exportToPng, copyImageToClipboard, getSuggestedFileName } from "./DiagramExporter";
@@ -46,6 +47,7 @@ const edgeTypes = {
     realization: ImplementationEdge,
     association: AssociationEdge,
     aggregation: AssociationEdge, // Use same component for now
+    dependency: DependencyEdge,
 };
 
 export interface DiagramRendererProps {
@@ -319,6 +321,24 @@ const DiagramRendererInternal: React.FC<DiagramRendererProps> = ({
                             <path
                                 d="M 0 0 L 10 5 L 0 10 L 3 5 Z"
                                 className="fill-muted-foreground"
+                            />
+                        </marker>
+
+                        {/* Dependency marker - open arrow (dashed line handled in component) */}
+                        <marker
+                            id="dependency-marker"
+                            markerWidth="10"
+                            markerHeight="10"
+                            refX="9"
+                            refY="5"
+                            orient="auto"
+                            markerUnits="userSpaceOnUse"
+                        >
+                            <path
+                                d="M 0 0 L 10 5 L 0 10"
+                                className="stroke-muted-foreground"
+                                fill="none"
+                                strokeWidth="1.5"
                             />
                         </marker>
                     </defs>

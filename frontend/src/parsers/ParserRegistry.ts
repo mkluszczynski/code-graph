@@ -75,16 +75,33 @@ export class ParserRegistry {
     ): Promise<ParseResult | null> {
         const parser = this.getParserForFile(fileName);
         if (!parser) {
+            console.warn(`[ParserRegistry] No parser found for file: ${fileName}`);
             return null;
         }
 
         // Initialize parser if needed and not already initialized
         if (parser.requiresInitialization && !this.initializedParsers.has(parser.language)) {
-            await parser.initialize();
-            this.initializedParsers.add(parser.language);
+            try {
+                console.log(`[ParserRegistry] Initializing ${parser.language} parser...`);
+                await parser.initialize();
+                this.initializedParsers.add(parser.language);
+                console.log(`[ParserRegistry] ${parser.language} parser initialized successfully`);
+            } catch (error) {
+                console.error(`[ParserRegistry] Failed to initialize ${parser.language} parser:`, error);
+                // Return null to indicate parsing failed
+                return null;
+            }
         }
 
-        return parser.parse(sourceCode, fileName, fileId);
+        const result = parser.parse(sourceCode, fileName, fileId);
+        console.log(`[ParserRegistry] Parsed ${fileName}:`, {
+            classes: result.classes.length,
+            interfaces: result.interfaces.length,
+            relationships: result.relationships.length,
+            errors: result.errors.length,
+        });
+
+        return result;
     }
 
     /**

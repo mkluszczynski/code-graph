@@ -22,6 +22,12 @@ const waitForDiagramUpdate = async (page: Page) => {
 
 // Helper function to type content in Monaco editor
 const typeInEditor = async (page: Page, content: string) => {
+  // Wait for Monaco editor to be visible and ready
+  await page.locator('.monaco-editor').first().waitFor({ state: 'visible', timeout: 5000 });
+
+  // Wait a bit for Monaco to fully initialize
+  await page.waitForTimeout(500);
+
   const success = await page.evaluate((newContent: string) => {
     const monaco = (window as any).monaco;
     if (!monaco?.editor) return false;
@@ -577,6 +583,151 @@ class Service with Logger {
       // Application should handle gracefully
       const editor = page.locator('.monaco-editor');
       await expect(editor).toBeVisible();
+    });
+  });
+
+  test.describe('T059: Dependency Relationships from Method Signatures', () => {
+    test('should display dependency edge for method return type', async ({ page }) => {
+      // Create Quest class
+      await createFileWithExtension(page, 'Quest', '.dart');
+      await ensureSrcFolderExpanded(page);
+      await clickFileInTree(page, 'Quest.dart');
+
+      await typeInEditor(
+        page,
+        `class Quest {
+  int id;
+  String title;
+  bool completed;
+  
+  Quest({
+    required this.id,
+    required this.title,
+    this.completed = false,
+  });
+}`
+      );
+
+      // Verify Quest appears
+      await expect(page.getByTestId('diagram-node-Quest')).toBeVisible({
+        timeout: 5000,
+      });
+
+      // Create QuestRepository with Future<List<Quest>> return type
+      await createFileWithExtension(page, 'QuestRepository', '.dart');
+      await clickFileInTree(page, 'QuestRepository.dart');
+
+      await typeInEditor(
+        page,
+        `import 'Quest.dart';
+
+class QuestRepository {
+  Future<List<Quest>> getQuests() async {
+    return [];
+  }
+  
+  Future<Quest?> findById(int id) async {
+    return null;
+  }
+  
+  Future<void> save(Quest quest) async {
+    // Save logic
+  }
+}`
+      );
+
+      // Verify QuestRepository appears
+      await expect(page.getByTestId('diagram-node-QuestRepository')).toBeVisible({
+        timeout: 5000,
+      });
+
+      // Switch to project view to see relationships
+      const projectViewToggle = page.getByRole('button', {
+        name: /project view/i,
+      });
+      if (await projectViewToggle.isVisible()) {
+        await projectViewToggle.click();
+        await waitForDiagramUpdate(page);
+      }
+
+      // Verify dependency edge exists (dashed line from QuestRepository to Quest)
+      const edges = page.locator('.react-flow__edge');
+      await expect(edges.first()).toBeVisible({ timeout: 3000 });
+
+      // Count edges - should have at least one relationship
+      const edgeCount = await edges.count();
+      expect(edgeCount).toBeGreaterThanOrEqual(1);
+    });
+
+    test('should display dependency edge for method parameter type', async ({ page }) => {
+      // Create Account class (unique name to avoid collision with other tests)
+      await createFileWithExtension(page, 'Account', '.dart');
+      await ensureSrcFolderExpanded(page);
+      await clickFileInTree(page, 'Account.dart');
+
+      await typeInEditor(
+        page,
+        `class Account {
+  int id;
+  String name;
+  
+  Account(this.id, this.name);
+}`
+      );
+
+      // Verify Account appears
+      await expect(page.getByTestId('diagram-node-Account')).toBeVisible({
+        timeout: 5000,
+      });
+
+      // Create AccountService with Account parameter
+      await createFileWithExtension(page, 'AccountService', '.dart');
+      await clickFileInTree(page, 'AccountService.dart');
+
+      await typeInEditor(
+        page,
+        `import 'Account.dart';
+
+class AccountService {
+  void createAccount(Account account) {
+    // Create account logic
+  }
+  
+  void updateAccount(Account account) {
+    // Update account logic
+  }
+  
+  void notifyAccount(Account account, String message) {
+    // Notify account
+  }
+}`
+      );
+
+      // Verify AccountService appears
+      await expect(page.getByTestId('diagram-node-AccountService')).toBeVisible({
+        timeout: 5000,
+      });
+
+      // Switch to project view
+      const projectViewToggle = page.getByRole('button', {
+        name: /project view/i,
+      });
+      if (await projectViewToggle.isVisible()) {
+        await projectViewToggle.click();
+        await waitForDiagramUpdate(page);
+      }
+
+      // Verify both nodes appear in project view
+      await expect(page.getByTestId('diagram-node-Account')).toBeVisible({
+        timeout: 5000,
+      });
+      await expect(page.getByTestId('diagram-node-AccountService')).toBeVisible({
+        timeout: 5000,
+      });
+
+      // Verify dependency edge exists
+      const edges = page.locator('.react-flow__edge');
+      await expect(edges.first()).toBeVisible({ timeout: 3000 });
     });
   });
 

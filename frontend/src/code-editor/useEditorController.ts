@@ -13,7 +13,9 @@ import { EDITOR_DEBOUNCE_DELAY_MS } from '../shared/constants';
 import { usePersistenceController } from '../project-management/usePersistenceController';
 import { buildDependencyGraph } from '../diagram-visualization/ImportResolver';
 import { filterEntitiesByScope } from '../diagram-visualization/EntityFilter';
-import { extractRelationships } from '../parsers/typescript/RelationshipAnalyzer';
+import { extractRelationships as extractTsRelationships } from '../parsers/typescript/RelationshipAnalyzer';
+import { extractRelationships as extractDartRelationships } from '../parsers/dart/RelationshipAnalyzer';
+import { detectLanguage } from '../parsers/utils';
 import { performanceMonitor } from '../shared/utils/performance';
 
 export function useEditorController() {
@@ -58,10 +60,20 @@ export function useEditorController() {
                 noResolve: true,
             });
 
-            // Disable semantic diagnostics (type checking) to prevent module resolution errors
+            // Disable ALL TypeScript diagnostics - we use our own parser for diagram generation
+            // This prevents TypeScript errors from showing on non-TypeScript files (like Dart)
+            // and also prevents confusing module resolution errors on TypeScript files
             monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-                noSemanticValidation: true, // Disable semantic errors (including module resolution)
-                noSyntaxValidation: false,  // Keep syntax validation enabled
+                noSemanticValidation: true,
+                noSyntaxValidation: true,
+                noSuggestionDiagnostics: true,
+            });
+
+            // Also disable JavaScript diagnostics (which might interfere)
+            monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+                noSemanticValidation: true,
+                noSyntaxValidation: true,
+                noSuggestionDiagnostics: true,
             });
         },
         []
@@ -207,6 +219,12 @@ export function useEditorController() {
                 const interfaces = filteredResult.entities.filter(
                     (e): e is InterfaceDefinition => 'extendsInterfaces' in e
                 );
+
+                // Detect language and use appropriate relationship analyzer
+                const language = detectLanguage(fileName);
+                const extractRelationships = language === 'dart'
+                    ? extractDartRelationships
+                    : extractTsRelationships;
 
                 // Extract relationships from filtered entities
                 const relationships = extractRelationships(classes, interfaces);

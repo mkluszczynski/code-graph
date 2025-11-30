@@ -360,4 +360,248 @@ describe("RelationshipAnalyzer Contract Tests", () => {
             expect(relationships).toHaveLength(0);
         });
     });
+
+    describe("extractRelationships() with dependency (method signatures)", () => {
+        it("should detect dependency from method return type", () => {
+            const classes: ClassDefinition[] = [
+                {
+                    id: "file1::QuestRepository",
+                    name: "QuestRepository",
+                    fileId: "file1",
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [
+                        {
+                            name: "getQuests",
+                            returnType: "Promise<Quest[]>",
+                            visibility: "public",
+                            isStatic: false,
+                            isAbstract: false,
+                            isAsync: true,
+                            parameters: [],
+                        },
+                    ],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+                {
+                    id: "file1::Quest",
+                    name: "Quest",
+                    fileId: "file1",
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+            ];
+            const interfaces: InterfaceDefinition[] = [];
+
+            const relationships = extractRelationships(classes, interfaces);
+
+            expect(relationships).toHaveLength(1);
+            expect(relationships[0]).toMatchObject({
+                type: "dependency",
+                sourceId: "file1::QuestRepository",
+                targetId: "file1::Quest",
+            });
+        });
+
+        it("should detect dependency from method parameter type", () => {
+            const classes: ClassDefinition[] = [
+                {
+                    id: "file1::QuestService",
+                    name: "QuestService",
+                    fileId: "file1",
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [
+                        {
+                            name: "saveQuest",
+                            returnType: "void",
+                            visibility: "public",
+                            isStatic: false,
+                            isAbstract: false,
+                            isAsync: false,
+                            parameters: [
+                                { name: "quest", type: "Quest", isOptional: false },
+                            ],
+                        },
+                    ],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+                {
+                    id: "file1::Quest",
+                    name: "Quest",
+                    fileId: "file1",
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+            ];
+            const interfaces: InterfaceDefinition[] = [];
+
+            const relationships = extractRelationships(classes, interfaces);
+
+            expect(relationships).toHaveLength(1);
+            expect(relationships[0]).toMatchObject({
+                type: "dependency",
+                sourceId: "file1::QuestService",
+                targetId: "file1::Quest",
+            });
+        });
+
+        it("should NOT create dependency if property relationship already exists", () => {
+            const classes: ClassDefinition[] = [
+                {
+                    id: "file1::QuestManager",
+                    name: "QuestManager",
+                    fileId: "file1",
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [
+                        {
+                            name: "activeQuest",
+                            type: "Quest",
+                            visibility: "private",
+                            isStatic: false,
+                            isReadonly: false,
+                        },
+                    ],
+                    methods: [
+                        {
+                            name: "getActiveQuest",
+                            returnType: "Quest",
+                            visibility: "public",
+                            isStatic: false,
+                            isAbstract: false,
+                            isAsync: false,
+                            parameters: [],
+                        },
+                    ],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+                {
+                    id: "file1::Quest",
+                    name: "Quest",
+                    fileId: "file1",
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+            ];
+            const interfaces: InterfaceDefinition[] = [];
+
+            const relationships = extractRelationships(classes, interfaces);
+
+            // Should only have association from property, NOT dependency from method
+            expect(relationships).toHaveLength(1);
+            expect(relationships[0]).toMatchObject({
+                type: "association",
+                sourceId: "file1::QuestManager",
+                targetId: "file1::Quest",
+            });
+        });
+
+        it("should detect dependency from Future<List<Type>> in Dart-style generics", () => {
+            const classes: ClassDefinition[] = [
+                {
+                    id: "file1::QuestRepository",
+                    name: "QuestRepository",
+                    fileId: "file1",
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [
+                        {
+                            name: "getQuests",
+                            returnType: "Future<List<Quest>>",
+                            visibility: "public",
+                            isStatic: false,
+                            isAbstract: false,
+                            isAsync: true,
+                            parameters: [],
+                        },
+                    ],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+                {
+                    id: "file1::Quest",
+                    name: "Quest",
+                    fileId: "file1",
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+            ];
+            const interfaces: InterfaceDefinition[] = [];
+
+            const relationships = extractRelationships(classes, interfaces);
+
+            expect(relationships).toHaveLength(1);
+            expect(relationships[0]).toMatchObject({
+                type: "dependency",
+                sourceId: "file1::QuestRepository",
+                targetId: "file1::Quest",
+            });
+        });
+
+        it("should ignore built-in types in method signatures", () => {
+            const classes: ClassDefinition[] = [
+                {
+                    id: "file1::Calculator",
+                    name: "Calculator",
+                    fileId: "file1",
+                    isAbstract: false,
+                    isExported: true,
+                    properties: [],
+                    methods: [
+                        {
+                            name: "add",
+                            returnType: "number",
+                            visibility: "public",
+                            isStatic: false,
+                            isAbstract: false,
+                            isAsync: false,
+                            parameters: [
+                                { name: "a", type: "number", isOptional: false },
+                                { name: "b", type: "number", isOptional: false },
+                            ],
+                        },
+                    ],
+                    typeParameters: [],
+                    extendsClass: null,
+                    implementsInterfaces: [],
+                },
+            ];
+            const interfaces: InterfaceDefinition[] = [];
+
+            const relationships = extractRelationships(classes, interfaces);
+
+            expect(relationships).toHaveLength(0);
+        });
+    });
 });

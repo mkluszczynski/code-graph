@@ -255,6 +255,16 @@ function getEdgeStyle(relationshipType: string): {
                     strokeWidth: 1.5,
                 },
             };
+        case 'dependency':
+            return {
+                type: 'dependency',
+                animated: false,
+                style: {
+                    stroke: '#888',
+                    strokeWidth: 1.5,
+                    strokeDasharray: '4 4',
+                },
+            };
         default:
             return {
                 type: 'default',
